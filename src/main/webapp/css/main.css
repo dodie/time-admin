@@ -1,0 +1,802 @@
+@CHARSET "UTF-8";
+
+@import url('help.css');
+.recover-description {
+	font-weight: normal;
+}
+
+.form-user {
+	max-width: 500px;
+	margin: auto;
+}
+
+.thin-page {
+	max-width: 1000px;
+	margin: auto;
+}
+
+.task-list-table td {
+	padding: 4px!important;
+}
+
+.ui-dialog-titlebar-close {
+  visibility: hidden;
+}
+
+/* -----
+ * Login screen new
+ * ----- */
+
+.form-signin {
+	max-width: 330px;
+	padding: 15px;
+	margin: 0 auto;
+}
+
+.form-signin .checkbox label {
+	display: none;
+}
+
+.form-signin .form-signin-heading,
+.form-signin .checkbox {
+	margin-bottom: 10px;
+}
+
+.form-signin .checkbox {
+	font-weight: normal;
+}
+
+.form-signin .form-control {
+	position: relative;
+	height: auto;
+	-webkit-box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	box-sizing: border-box;
+	padding: 10px;
+	font-size: 16px;
+}
+
+.form-signin .form-control:focus {
+	z-index: 2;
+}
+
+.form-signin input[type="email"] {
+	margin-bottom: -1px;
+	border-bottom-right-radius: 0;
+	border-bottom-left-radius: 0;
+}
+
+.form-signin input[type="password"] {
+	margin-bottom: 10px;
+	border-top-left-radius: 0;
+	border-top-right-radius: 0;
+}
+
+/* -----
+ * Top-menu new
+ * ----- */
+
+.top-menu {
+	background-color: #004dea;
+}
+
+.top-menu a {
+	color: white;
+}
+
+.top-menu .nav>li>a:focus, .top-menu .nav>li>a:hover {
+	background-color: #5e8deb;
+}
+
+.top-menu .navbar-nav li>span {
+	color: white;
+	position: relative;
+	display: block;
+	padding: 15px;
+	background-color: #5e8deb;
+}
+
+.top-menu .navbar-toggle .icon-bar {
+	background-color: #5e8deb;
+}
+
+
+.top-menu .nav .open>a, .top-menu .nav .open>a:focus, .top-menu .nav .open>a:hover {
+  background-color: #5e8deb;
+}
+
+/* -----
+   jQuery
+   -----*/
+.ui-datepicker {
+	z-index:100!important;
+}
+
+#dateSelector {
+	font-weight: bold;
+	text-align: center;
+	display: inline-block;
+}
+
+.ui-datepicker-inline {
+	padding: 0;
+}
+
+.monthSelector .ui-datepicker-calendar {
+	display: none;
+}
+
+/*-------
+  general 
+  -------*/
+body {
+	font-family: verdana, arial, sans-serif;
+	font-size: 14px;
+	margin:0px 0px;
+	padding: 0px;
+}
+
+.edit_error_class {
+	padding-left: 5px;
+	color: red;
+	font-weight: bold;
+}
+
+.button-row {
+	padding: 5px;
+	margin: 10px 0;
+}
+
+input[type="text"] {
+	font-family: monospace;
+}
+
+.messages {
+	font-weight: bold;
+}
+
+.messages #lift__noticesContainer___error {
+	color: red;
+}
+
+.messages #lift__noticesContainer___notice {
+	color: green;
+}
+
+.DayText {
+	width: 70px;
+	font-weight: bold;
+	display: inline-block;
+	text-align: center;
+}
+
+.DefaultUserWarning {
+	font-weight: bold; 
+	color: red; 
+	font-size: 18px;
+	text-align: center;
+	padding-bottom: 25px;
+	padding-top: 10px;
+}
+
+.logo {
+    padding: 5px;
+}
+
+/* LoginBox, and user bar */
+.login-error {
+	text-align: center;
+	color: red;
+	padding-top: 5px;
+	font-weight: bold;
+}
+
+.login-error ul {
+	list-style-type: none;
+	margin: 0;
+	padding: 0;
+}
+
+.OfftimeOffsetInput {
+	width: 50px;
+	margin-left: 10px;
+}
+
+.day-pager-holder {
+	margin-top: 10px;
+}
+
+/*------
+  Client
+  ------*/
+
+/*Summary*/
+.summary .frag .offTimeBar {
+	border: 1px solid black;
+	background-color: white!important;
+}
+
+.summary .name {
+	font-weight: bold;
+}
+
+.summary .frag {
+	border-left: 1px solid darkGray;
+	height: 40px;
+	margin-left: 19.5%;
+	padding-left: 0.5%;
+	padding-bottom: 3px;
+	padding-top: 3px;
+}
+
+.summary .frag .fragBar {
+	height: 100%;
+	width: 100%;
+}
+
+.summary .frag .fragBar {
+	width: 0%;
+}
+
+.summary .frag .fragBar {
+	width: 100% !important;
+}
+
+.summary .frag .fragBar:hover {
+	box-shadow: 0 0 10px #000000;
+	opacity: 0.7;
+}
+
+.summary .fragLegend {
+	float: left;
+	padding-top: 6px;
+	width: 20%;
+}
+
+.summary .fragLegend .data {
+	white-space: nowrap;
+	width: 95%;
+	text-overflow: ellipsis;
+	display: inline-block;
+	overflow: hidden;
+}
+
+#tiePopupModeChange {
+	position: absolute;
+	right: 0;
+	top: 50px;
+}
+
+#taskItemEditorPopup {
+	width: 232px;
+}
+
+/*TaskItemGraph*/
+.frag .Duration {
+	white-space: nowrap;
+}
+
+.frag:hover .fragBarHover {
+	border: 1px solid black;
+	display: block;
+	left: -18px;
+	opacity: 0.9;
+	padding: 10px;
+	position: absolute;
+	top: -5px;
+	width: 300px;
+	z-index: 1000;
+	height: 80px;
+	cursor: pointer;
+}
+
+.fragBarHover {
+	height: 20px;
+	left: 0;
+	opacity: 0.4;
+	overflow: hidden;
+	position: absolute;
+	top: 5px;
+	width: 0;
+	z-index: 100;
+	box-shadow: 0px 5px 5px #aaa;
+}
+
+.hiddenTask {
+	display:none;
+}
+
+.TaskFilter {
+	width: 500px;
+	height: 25px;
+	margin-bottom: 10px;
+	margin-left: 10px;
+	margin-right: 10px;
+}
+
+.taskName:hover {
+	background-color:#dddddd;
+}
+
+.newTaskItemInput {
+	display: inline;
+	width:50px;
+}
+
+.tasksPage #editorPopup {
+	width: 80%;
+}
+
+.tasksHeader {
+	float: left;
+	margin-top: 0px;
+	margin-right: 12px;
+	width: 350px;
+	text-decoration: underline;
+	padding: 3px 10px 3px 10px;
+}
+
+.tasksSearch {
+	float: left;
+	margin-right: 10px;
+	white-space: nowrap;
+}
+
+#taskItemAppenderMainHolder {
+	position: relative;
+}
+
+.tasks {
+	clear: both;
+}
+
+.timeLine {
+	height: 70px;
+	margin-bottom: 10px;
+	margin-left: auto;
+	margin-right: auto;
+	position: relative;
+	width: 99%;
+	position: relative;
+	top: 10px;
+}
+
+.timeLine .frag {
+	float: left;
+	height: 10px;
+	height: 44px;
+	position: relative;
+}
+
+.timeLine .frag:hover {
+	box-shadow: 0px 5px 5px #aaa;
+}
+
+#taskItemLogMainHolder {
+	position: relative;
+	top: 10px;
+	width: 99%;
+	margin-left: auto;
+	margin-right: auto;
+	margin-bottom: 10px;
+	min-height: 70px;
+}
+
+#tieselecttaskid {
+	width: 190px;
+}
+
+#toggleDiagramTypeButton {
+	position: absolute;
+	right: 0px;
+	top: -29px;
+	width: 70px;
+	height: 20px;
+	padding: 0;
+}
+
+form.button {
+	display: inline;
+}
+
+.statusbar-button-row {
+	float: left; 
+	padding-left: 5px; 
+	padding-top: 5px;
+}
+
+.timeLine .fragBar {
+	width: 100%;
+	height: 55px;
+	border: 1px solid black;
+	overflow: hidden;
+	padding-top: 5px;
+}
+
+.timeLine .fragText {
+	position: relative;
+	left: -11px;
+	font-size: 11px;
+	width: 30px;
+	font-family: monospace;
+}
+
+.timeLine .fragBar.fragBarContinued {
+	border-right: 3px dotted black !important;
+}
+
+.timeLine .fragBar.noborder {
+	border: 0;
+	border-left: 1px solid black;
+	box-shadow: 0;
+	background: transparent!important;
+}
+
+.AddHelpContainer {
+	float: right;
+	position:relative;
+	clear:both;
+	height: 0px;
+}
+
+.summaryMetrics td:first-child {
+	font-weight: bold;
+	padding-right: 23px;
+}
+
+.summaryMetrics {
+	padding-top: 40px;
+	font-family: monospace;
+	position: relative;
+}
+
+.chartContainer {
+	height: 60px;
+}
+
+.InlineCommandsForm.Pause {
+	padding:0 42px 0 0;
+}
+
+.InlineCommandsForm {
+	display:inline-block;
+	padding:0px 15px;
+	vertical-align:top;
+}
+
+.content .mainContent {
+	padding: 10px 10px;
+}
+
+.content .task .taskColorIndicator{color:transparent;cursor:pointer;
+	font-family: monospace;
+	margin-right: 4px;
+	margin-left: 15px;
+	font-size: 10px;
+	vertical-align: top;
+	margin-top: 2px;
+	display: inline-block;
+}
+
+.content .task .tasksTaskName {
+	font-style: italic;
+}
+
+.content .task:first-child {
+	border-top: none;
+}
+
+.content .task.taskNoButtons form {
+	display: none;
+}
+
+.content .task .taskName {
+	font-weight: bold;
+}
+
+.content .tasks .task .taskName{
+	padding: 10px 0px 15px 0px;
+}
+
+.content .task .taskDetails {
+	font-style: italic;
+}
+
+.taskName_info{
+	cursor: pointer;
+	display: inline-block;
+}
+
+.tasksTaskDescription {
+	display: block;
+	font-size: 10px;
+	font-weight: normal;
+}
+
+.selectedDay {
+	margin-left: 30px;
+	font-weight: bold;
+	font-style: italic;
+}
+
+.content .statusBar {
+	background: lightgray;
+	padding-bottom: 10px;
+	padding-left: 5px;
+	padding-top: 10px;
+	margin-bottom: 10px;
+	min-height: 63px;
+}
+
+.content .statusBar .statusBarCurrentTask {
+	margin-right: 5px;
+}
+
+.content .statusBar .statusBarCurrentTask .actualTaskName {
+	font-weight: bold;
+}
+
+.content .statusBar .statusBarCurrentTask .actualDescription {
+	font-size: 80%;
+	font-style: italic;
+}
+
+/*-------------
+  Popup general 
+  -------------*/
+.popup {
+	max-height: 80%;
+	overflow-y: auto;
+}
+
+.backgroundPopup.openedBackgroundPopup {
+	display: block;
+	opacity: 0.8;
+}
+
+.backgroundPopup {
+	display: none;
+	position: fixed;
+	height: 100%;
+	width: 100%;
+	top: 0;
+	left: 0;
+	background: #000000;
+	border: 1px solid #cecece;
+	z-index: 1000;
+	opacity: 0;
+}
+
+.popup.openedPopup {
+	opacity: 1;
+	display: block;
+}
+
+.popup {
+	display: none;
+	position: fixed;
+	height: auto;
+	width: auto;
+	z-index: 1001;
+	font-size: 13px;
+	background-color: white;
+	box-shadow: 0 0 70px #AAAAAA;
+	padding: 20px;
+	opacity: 0;
+}
+
+.popupClose {
+	font-size: 14px;
+	line-height: 14px;
+	right: 6px;
+	top: 4px;
+	position: absolute;
+	color: #AAAAAA;
+	font-weight: 700;
+	display: block;
+	cursor: pointer;
+}
+
+/*-----
+  Admin
+  -----*/
+.usersPage .userName {
+	font-weight: bold;
+}
+
+.usersPage #editor input, .usersPage #editor select {
+	display: block;
+	margin-bottom: 10px;
+	width: 225px;
+}
+
+.usersPage #editor input[type='submit'] {
+	width: 50px;
+}
+
+.usersPage #editor input[type='checkbox'] {
+	width: 15px;
+}
+
+.usersPage .userTable {
+	width: 100%;
+}
+
+/*Projects*/
+.projectsPage .dropdown-menu li a {
+	color: black;
+	font-style: normal;
+}
+.projectsPage .project,.projectsPage .task {
+	margin-left: 20px;
+	border: none !important;
+}
+
+.projectsPage .projectName {
+	background: url("/images/project_icon.png") no-repeat scroll 0 0
+		transparent;
+	font-weight: bold;
+	padding-left: 20px;
+}
+
+.projectsPage .projectName a {
+	color: darkRed;
+	text-decoration: none;
+}
+.projectsPage .project.selected, .projectsPage .task.selected {
+	background: #5e8deb;
+	border-radius: 5px;
+}
+
+.projectsPage .addSubProject {
+	font-weight: normal;
+	font-style: italic;
+}
+
+.projectsPage a.addSubProject {
+	color: black;
+}
+
+.projectsPage .taskName {
+	background: url("/images/task_icon.png") no-repeat scroll 0 0
+		transparent;
+	color: darkBlue;
+	padding-left: 20px;
+	font-weight: normal !important;
+}
+
+.projectsPage .taskName a {
+	color: darkBlue;
+	text-decoration: none;
+}
+
+.projectsPage .inactive .name {
+	font-style: italic;
+	opacity: 0.5;
+}
+
+.projectsPage a {
+	cursor: pointer;
+}
+
+/*
+ *	TaskSheet
+ */
+.sheetholder{
+	font-size: 0.8em;
+	overflow-x: auto;
+}
+
+.tasksheetTable {
+	width: 100%;
+	min-width: 1185px;
+	border: 1px solid darkGray;
+	border-collapse: collapse;
+	table-layout: fixed;
+	text-align:center;
+	font-family: monospace;
+}
+
+.timesheetTable {
+	margin: 10px auto;
+	font-size: 150%;
+	width: 80%
+}
+
+.diagramholder > div {
+	width: 95%;
+	text-align: center;
+	margin: auto;
+}
+
+.diagramholder {
+	text-align: center;
+}
+
+.tasksheetTable th {
+	text-align: center;
+}
+
+.tasksheetTable th.taskname{
+	width:160px;
+}
+
+.tasksheetTable td.taskFullName{
+	font-style:italic;
+	overflow:hidden;
+	text-align:left;
+	text-overflow: ellipsis;
+}
+
+.tasksheetTable td {
+	padding: 5px;
+	border: 1px solid darkGray;
+}
+
+.tasksheetTable .colWeekend {
+	background: #DADADA;
+}
+
+.tasksheetTable .colSum, .tasksheetTable .rowSum, .tasksheetTable .taskSum {
+	background: rgb(250,250,210);
+}
+
+.tasksheetTable tr td:last-child {
+	border-left: 2px solid black;
+}
+
+.tasksheetTable .rowSum {
+	border-top: 2px solid black;
+}
+
+/*
+	Timesheet
+*/
+.timesheetTable {
+	border: 1px solid darkGray;
+	border-collapse: collapse;
+	table-layout: fixed;
+	font-family: monospace;
+}
+
+.timesheetTable td {
+	padding: 5px;
+	border: 1px solid darkGray;
+}
+
+.timesheetTable th {
+	padding: 5px;
+	border-bottom: 2px solid black;
+}
+
+/*
+	Felhasznaloi beallitasok
+*/
+
+
+.userPreferences .PreferenceGroup {
+	font-weight: bold;
+	padding-top: 50px;
+	border-bottom: 1px solid black;
+	padding-bottom: 9px;
+	font-size: 15px;
+	border: 0px;
+}
+
+.userPreferences > form > table > tbody > tr:first-child > td {
+	padding-top: 5px;
+}
+
+.userPreferences .buttons {
+	padding-top: 40px;
+}
+
+.userPreferences table {
+	border-collapse: collapse;
+}
+
+.userPreferences td {
+	border-collapse: collapse;
+	border: 1px solid #add8e6;
+	padding: 5px;
+}

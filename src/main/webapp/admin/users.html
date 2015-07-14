@@ -1,0 +1,31 @@
+<lift:surround with="client" at="content">
+	<div class="usersPage thin-page">
+		<span class="lift:usersSnippet.actions"></span>
+		<div class="users">
+			<form method="post" class="lift:usersSnippet.listUsers">
+				<h1><lift:loc>page.users</lift:loc></h1>
+				<table class="userTable table table-striped">
+					<thead>
+						<tr>
+							<td></td>
+							<td class="header">Role name here</td>
+						</tr>
+					</thead>
+					<tbody>
+						<tr class="user-row">
+							<td>
+								<a class="userName"></a>
+							</td>
+							<td class="userRole">
+								<input type="checkbox"></input>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+				<div class="button-row">
+					<input type="submit" value="button.save" class="btn btn-primary lift:L10n.value" />
+				</div>
+			</form>
+		</div>
+	</div>
+</lift:surround>

@@ -1,0 +1,2 @@
+# Comment the line below to use default development database in e2e tests.
+db.url = jdbc:h2:mem:test_mem

@@ -1,0 +1,99 @@
+@CHARSET "UTF-8";
+
+*[data-hint-top-right], *[data-hint-top-left] {
+	position:relative;
+}
+
+*[data-hint]:hover {
+	text-decoration: none;
+}
+
+*[data-hint]:hover:after, *[data-hint-top-right]:hover:after, *[data-hint-top-left]:hover:after {
+	position:absolute;
+	background: #383838;
+	color: white;
+	text-shadow: 0 -1px 0px black;
+	padding: 8px 10px;
+	font-size: 12px;
+	line-height: 12px;
+	box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.3);
+	z-index: 999;
+	line-height: 20px;
+	text-align: justify;
+	font-weight:bold;
+	opacity: 0.9;
+	white-space: nowrap;
+
+}
+
+*[data-hint-top-right]:hover:after {
+	content: "▼ " attr(data-hint-top-right);
+	top: -45px;
+	left: 5px;
+}
+
+*[data-hint-top-left]:hover:after {
+	content: attr(data-hint-top-left) " ▼";
+	top: -45px;
+	right: 5px;
+}
+
+*[data-hint]:hover:after {
+	content: "◀ " attr(data-hint);
+	white-space: inherit;
+}
+
+.QuickHelp {
+	background: #5e8deb;
+	border-radius: 32px;
+	font-size: 25px;
+	padding: 8px 15px;
+	font-weight: bold;
+	color: white;
+	line-height: 100%;
+}
+
+.QuickHelp:hover {
+	text-decoration: none;
+	color: white;
+}
+
+.QuickHelp[data-hint]:hover:after {
+	white-space: normal;
+	content: attr(data-hint);
+}
+
+#taskItemAppenderMainHolder .taskModeHelp [data-hint]:hover::after {
+	left: -500px;
+}
+
+.AddHelpContainer *[data-hint]:hover:after {
+	left:-500px;
+}
+.summaryMetrics [data-hint]:hover::after {
+	left: -500px;
+}
+
+.summaryMetrics .QuickHelp {
+	position: absolute;
+	right: 0;
+	top: 0;
+}
+.userPreferences .PreferenceGroup .QuickHelp {
+	font-size: 20px;
+	padding: 3px 9px;
+}
+
+.tasksSearch .QuickHelp {
+	background: #5e8deb;
+	font-size: 18px;
+	padding: 0px 6px;
+	border: 0;
+	color: white;
+}
+
+#taskItemAppenderMainHolder .taskModeHelp {
+	position: absolute;
+	right: 10px;
+	top: 2px;
+}

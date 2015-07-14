@@ -1,0 +1,20 @@
+<lift:surround with="default" at="content">
+	<div id="login-screen" class="root">
+		<div class="content loginScreen">
+			<div class="mainContent">
+				<div class="lift:usersSnippet.checkAndWarnDefaultUser DefaultUserWarning">
+					<lift:loc>default_user_warning</lift:loc>
+				</div>
+				<div>
+					<div class="lift:usersSnippet.loginBox">
+						<span>Hello <span class="UserName"></span>!</span>
+					</div>
+				</div>
+				<lift:Msgs>
+					<lift:error_class>login-error</lift:error_class>
+				</lift:Msgs>
+			</div>
+		</div>
+	</div>
+</lift:surround>
+

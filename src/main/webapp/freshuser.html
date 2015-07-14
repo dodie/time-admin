@@ -1,0 +1,19 @@
+<lift:surround with="default" at="content">
+	<div class="root">
+		<div class="content loginScreen">
+			<div class="mainContent">
+				<div class="messages">
+					<lift:msgs/>
+				</div>
+				<p class="freshUserWarning">
+					<lift:loc>fresh_user_warning</lift:loc>
+				</p>
+			</div>
+			<div class="mainMenu">
+				<lift:Menu.builder/>
+				<div style="clear:both;"></div>
+			</div>
+		</div>
+	</div>
+</lift:surround>
+

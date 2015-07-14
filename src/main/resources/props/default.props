@@ -1,0 +1,23 @@
+# -------------------------------------------------
+#
+# Time-admin default configuration
+# For development, use additional {$USERNAME}.props
+#
+# -------------------------------------------------
+
+# DATABASE
+# --------
+# | Without database properties Timeadmin will use a file based embedded DB.
+# | See below for an example configuration for PSQL.
+
+#db.driver = org.postgresql.Driver
+#db.url = jdbc:postgresql://127.0.0.1:5432/timeadmin
+#db.user = postgres
+#db.password = 1234
+
+
+# Timesheet Excel export template
+export.excel.timesheet_template = docs/exceltemplate/timesheet_template.xls
+
+# Optional - Mantis bug view URL.
+#mantis.bugs.view.url = http://<host_of_mantis>/view.php?id=

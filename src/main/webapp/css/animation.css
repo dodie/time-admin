@@ -1,0 +1,22 @@
+@CHARSET "UTF-8";
+
+.popup .summary .fragBar {
+    -webkit-transition: all 0.5s ease-out;
+	-moz-transition: all 0.5s ease-out;
+	-o-transition: all 0.5s ease-out;
+	-transition: all 0.5s ease-out;
+}
+
+.fragBar, .openedPopup.popup .summary .frag .fragBar:hover, .projectsPage .taskName.taskNameInactive {
+    -webkit-transition: all 0.4s ease-out;
+	-moz-transition: all 0.4s ease-out;
+	-o-transition: all 0.4s ease-out;
+	-transition: all 0.4s ease-out;
+}
+
+.fragBarHover, .timeLine .frag, .content .mainMenu li, .newTaskItemInput, #taskfilter {
+    -webkit-transition: all 0.3s ease-out;
+	-moz-transition: all 0.3s ease-out;
+	-o-transition: all 0.3s ease-out;
+	-transition: all 0.3s ease-out;
+}

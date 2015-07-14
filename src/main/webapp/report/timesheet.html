@@ -1,0 +1,44 @@
+<lift:surround with="client" at="content">
+	<script src="../js/Chart.min.js"></script>
+	<script src="../js/client/timesheet.js"></script>
+	<div>
+		<div class="statusBar">
+			<div class="statusbar-button-row">
+				<a class="btn btn-primary lift:timesheetSnippet.timesheetExportLink"><lift:loc>download</lift:loc></a>
+			</div>
+			<div style="text-align: right; padding-right: 10px;">
+				<div>
+					<span class="lift:timesheetSnippet.selectedMonth"></span>
+				</div>
+			</div>
+		</div>
+		<h1>
+			<lift:loc>timesheet.title</lift:loc> - <span class="lift:timesheetSnippet.currentYear"></span> <span class="lift:timesheetSnippet.currentMonth"></span>
+			<span class="lift:help.quickHelp">help.timesheet</span>
+		</h1>
+		<div class="lift:timesheetSnippet.timesheet">
+			<div class="row" style="width:95%">
+				<div class="col-md-6 sheetholder" id="timesheet-holder">
+					<table class="timesheetTable table table-striped">
+						<tr>
+							<th><lift:loc>timesheet.date</lift:loc></th>
+							<th><lift:loc>timesheet.arrival</lift:loc></th>
+							<th><lift:loc>timesheet.leave</lift:loc></th>
+							<th><lift:loc>timesheet.time_sum_hour</lift:loc></th>
+						</tr>
+						<tr class="item">
+							<td class="day"></td>
+							<td class="from"></td>
+							<td class="to"></td>
+							<td class="sum"></td>
+						</tr>
+					</table>
+				</div>
+
+				<div class="col-md-6 diagramholder" id="time-sum-hour-holder" style="display:none;">
+					<div><canvas id="time-sum-hour-canvas" height="300" width="600"></canvas></div>
+				</div>
+			</div>
+		</div>
+	</div>
+</lift:surround>

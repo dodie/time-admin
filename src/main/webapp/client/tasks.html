@@ -1,0 +1,184 @@
+<lift:surround with="client" at="content">
+	<span class="lift:userPreferencesSnippet.actions"></span>
+	<span class="lift:taskItemSnippet.actions"></span>
+
+	<span class="lift:jsL10n.addJsLoc">tasks.split_entry</span>
+	<span class="lift:jsL10n.addJsLoc">tasks.edit_entry</span>
+	<span class="lift:jsL10n.addJsLoc">tasks.confirm_delete</span>
+	<span class="lift:jsL10n.addJsLoc">tasks.view.table</span>
+	<span class="lift:jsL10n.addJsLoc">tasks.view.timeline</span>
+
+	<div class="tasksPage">
+		<div class="statusBar">
+			<div style="float: left; padding-left: 5px;">
+				<div>
+					<span class="statusBarItem">
+						<form method="post" class="InlineCommandsForm Pause">
+							<input type="hidden" name="selecttaskid" value="-1"/>
+							<input type="submit" value="tasks.pause" class="btn btn-primary lift:L10n.value"/>
+							<input type="text" class="OfftimeOffsetInput" name="timeoffset" value="" placeholder="hh:mm" autocomplete="off" />
+						</form>
+					</span>
+					<span class="statusBarItem">
+						<a class="btn btn-primary lift:L10n.data-hint" href="/report/dailysummary.html" data-hint="page.dailysummary">&#x3a3;</a>
+					</span>
+				</div>
+				<div class="statusBarCurrentTask">
+					<span class="lift:taskItemSnippet.actualTask">
+						<span><lift:loc>tasks.selected_task</lift:loc></span>
+						<span class="actualTaskName"></span>
+						<span class="actualDescription"></span>
+					</span>
+				</div>
+			</div>
+			<div style="text-align: right; padding-right: 10px;">
+				<div>
+					<span class="lift:taskItemSnippet.selectedDay"></span>
+				</div>
+				<div class="day-pager-holder">
+					<span class="statusBarItem lift:L10n.data-hint-top-left" data-hint-top-left="button.previous_day">
+						<a class="btn btn-primary lift:taskItemSnippet.pagingPrev" paging:url="">&#9664;</a>
+					</span>
+					<span class="statusBarItem lift:L10n.data-hint-top-left" data-hint-top-left="button.current_day">
+						<a paging:url="" class="btn btn-primary lift:taskItemSnippet.pagingCurrent">&#9650;</a>
+					</span>
+					<span class="statusBarItem lift:L10n.data-hint-top-left" data-hint-top-left="button.next_day">
+						<a class="btn btn-primary lift:taskItemSnippet.pagingNext" paging:url="">&#9654;</a>
+					</span>
+				</div>
+			</div>
+		</div>
+		<h1 style="margin-bottom: 0px;"><lift:loc>page.tasks</lift:loc></h1>
+		<table style="width:100%; position: relative;">
+			<tr>
+				<td style="width:99%;">
+					<div class="timeLine" id="timeLine">
+						<div class="lift:taskItemSnippet.lineChart">
+							<div class="frag lift:L10n.data-hint-top-right" data-hint-top-right="tasks.click_to_edit">
+								<div  class="fragBar">
+									<div class="ProjectName"></div>
+									<div class="TaskName"></div>
+								</div>
+								<div class="fragBarHover" onclick="var form = this.getElementsByTagName('form')[0]; setTaskItemEditorPopup(form.taskitemid.value, form.time.value, form.taskid.value); loadPopup('taskItemEditorPopup');">
+									<div class="ProjectName"></div>
+									<div class="TaskName"></div>
+									<div class="Duration"></div>
+
+									<form>
+										<input type="hidden" name="taskitemid" value=""/>
+										<input type="hidden" name="taskid" value=""/>
+										<input type="hidden" name="time" value=""/>
+									</form>
+								</div>
+								<div class="fragText"></div>
+							</div>
+						</div>
+						<div style="clear: both;"></div>
+					</div>
+
+					<div id="taskItemLogMainHolder" style="display:none;">
+						<div>
+							<table class="lift:taskItemSnippet.dataTable table table-striped task-list-table">
+								<tr>
+									<th><lift:loc>tasks.table.start</lift:loc></th>
+									<th><lift:loc>tasks.table.project</lift:loc></th>
+									<th><lift:loc>tasks.table.task</lift:loc></th>
+									<th></th>
+								</tr>
+								<tr class="item">
+									<td class="date"></td>
+									<td class="project"></td>
+									<td class="task"></td>
+									<td class="edit">
+										<form method="post" style="display:inline;">
+											<input type="hidden" name="taskitemid" value=""/>
+											<input type="hidden" name="taskid" value=""/>
+											<input type="hidden" name="time" value=""/>
+
+											<input
+											  type="button"
+											  class="btn btn-primary"
+											  value="..."
+											  onclick="setTaskItemEditorPopup(this.form.taskitemid.value, this.form.time.value, this.form.taskid.value); loadPopup('taskItemEditorPopup');"/>
+										</form>
+									</td>
+								</tr>
+							</table>
+						</div>
+						<br/><br/>
+					</div>
+				</td>
+				<td style="width:1%;">
+					<input type="button" value="tasks.view.table" class="btn btn-primary lift:L10n.value" id="toggleDiagramTypeButton" onclick="toggleDiagram();"/>
+				</td>
+			</tr>
+		</table>
+
+		<div id="taskItemAppenderMainHolder">
+			<div class="AddHelpContainer">
+				<lift-hidden class="lift:taskItemSnippet.renderByDate">
+					<today>
+						<span class="lift:help.quickHelp">help.tasks.add.today</span>
+					</today>
+					<past>
+						<span class="lift:help.quickHelp">help.tasks.add.past</span>
+					</past>
+				</lift-hidden>
+			</div>
+
+			<div id="holder" class="tasksSearch">
+				<span class="lift:help.quickHelp">help.tasks.filter</span>
+			    <input
+			    	id="taskSearchInput"
+			    	type="text"
+			    	class="TaskFilter lift:L10n.placeholder"
+			    	placeholder="tasks.type_to_filter">
+			    <a style="color: #004dea; font-size: 26px; vertical-align: middle;" class="lift:L10n.data-hint" data-hint="tasks.type_to_filter">⌨</a>
+			</div>
+
+			<div id="taskList">
+				<div class="lift:taskItemSnippet.selectableTasks tasks">
+					<div task:taskstyleclass="" task:rowid="">
+						<div class="taskName">
+							<div class="taskColorIndicator" task:colorindicator="" task:onrowclick="">-&gt;</div>
+							<form task:formid="" method="post" class="InlineCommandsForm"><input type="hidden" name="selecttaskid" task:taskid=""/><input class="newTaskItemInput" type="text" name="timeoffset" task:placeholder="" value="" autocomplete="off" onfocus="this.value='';" onclick="arguments[0].stopPropagation();"/></form>
+							<div class="taskName_info" task:onrowclick=""><span class="tasksProjectName"><task:projectname/></span>-<span class="tasksTaskName"><task:taskname/></span> <span class="tasksTaskDescription"><task:taskdescription/></span></div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="popup" id="taskItemEditorPopup">
+			<a class="popupClose" id="popupClose">x</a>
+			<div>
+				<div id="tiefields">
+					<form method="post">
+						<h2 id="tiePopupTitle"><lift:loc>tasks.changetask.title</lift:loc></h2> 
+						<input class="btn btn-primary" onclick="changeTieMode();" type="button" id="tiePopupModeChange" value="+"/>
+
+						<input type="hidden" id="tiemode" name="mode" value="taskitemedit"/>
+						<input type="hidden" name="taskitemid" id="tietaskitemid"/>
+						<input type="hidden" name="sticky" id="tiesticky"/>
+
+						<lift:loc>tasks.changetask.start</lift:loc><br/>
+						<input type="text" value="08:15" name="timeoffset" id="tietimeoffset"/> 
+						<br/><br/>
+
+						<lift:loc>tasks.changetask.task</lift:loc><br/>
+						<select name="selecttaskid" id="tieselecttaskid">
+							<option value="-1"><lift:loc>tasks.changetask.pause</lift:loc></option>
+						</select>
+						<br/><br/>
+						<input type="submit" value="button.change" class="btn btn-primary lift:L10n.value"/>
+						<input type="submit" value="button.delete" class="btn btn-primary lift:L10n.value" onclick="return tieDeleteMode();"/>
+					</form>
+				</div>
+				<div id="tieerror">
+					<lift:loc>tasks.error.task_from_different_day</lift:loc>
+				</div>
+			</div>
+		</div>
+	</div>
+	<script src="/js/client/tasks.js" type="text/javascript"></script>
+</lift:surround>
