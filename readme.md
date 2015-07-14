@@ -52,3 +52,4 @@ Page base templates and common templates, localization files.
 
 Authorization rules are defined at page and URL level granularity,
 services and snippets does not check for further permissions.
+
