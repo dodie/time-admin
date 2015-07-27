@@ -1,16 +1,15 @@
-package code.snippet
+package code.test.utils
 
 import code.model._
 import net.liftweb.common._
 import net.liftweb.db.StandardDBVendor
 import net.liftweb.http.LiftRules
 import net.liftweb.mapper
-import net.liftweb.mapper.{ DB, Schemifier }
-import org.specs2.mutable.Specification
-import org.specs2.specification.{ Fragments, Step }
+import net.liftweb.mapper.{DB, Schemifier}
+import org.specs2.mutable.BeforeAfter
 
-trait DbSpec extends Specification {
-  def startDb: Unit = {
+trait DbSpec extends BeforeAfter {
+  override def before: Unit = {
     import bootstrap.liftweb._
     val boot = new Boot
     boot.boot()
@@ -33,7 +32,7 @@ trait DbSpec extends Specification {
     Schemifier.schemify(true, Schemifier.infoF _, ExtSession)
   }
 
-  def cleanDb: Unit = {
+  override def after: Unit = {
     User.bulkDelete_!!(mapper.DefaultConnectionIdentifier)
     Project.bulkDelete_!!(mapper.DefaultConnectionIdentifier)
     Role.bulkDelete_!!(mapper.DefaultConnectionIdentifier)
@@ -43,6 +42,4 @@ trait DbSpec extends Specification {
     UserRoles.bulkDelete_!!(mapper.DefaultConnectionIdentifier)
     ExtSession.bulkDelete_!!(mapper.DefaultConnectionIdentifier)
   }
-
-  override def map(fs: => Fragments) = Step(startDb) ^ fs ^ Step(cleanDb)
 }

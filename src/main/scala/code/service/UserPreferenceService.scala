@@ -17,7 +17,7 @@ object UserPreferenceService {
 
   def getType(key: String): Option[UserPreferenceType] = getType(UserPreferenceNames.withName(key))
 
-  def getType(key: UserPreferenceNames.Value): Option[UserPreferenceType] = userPreferenceTypes.filter(_.key == key).headOption
+  def getType(key: UserPreferenceNames.Value): Option[UserPreferenceType] = userPreferenceTypes.find(_.key == key)
 
   def getUserPreference(key: UserPreferenceNames.Value): String = {
     getUserPreference(key.toString)
@@ -41,7 +41,7 @@ object UserPreferenceService {
 
   def getUserPreference(preference: UserPreferenceType): String = getUserPreference(preference.key)
 
-  def setUserPreference(key: UserPreferenceNames.Value, value: String) = {
+  def setUserPreference(key: UserPreferenceNames.Value, value: String): Boolean = {
     val preference = UserPreference.find(By(UserPreference.user, User.currentUser.get), By(UserPreference.key, key.toString))
     if (preference.isEmpty) {
       UserPreference.create.key(key.toString).value(value).user(User.currentUser.get).save
