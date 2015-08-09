@@ -45,8 +45,10 @@ object UserPreferenceService {
     val currentUser = User.currentUser.openOrThrowException("Only logged in users can edit their preferences!")
     val preference = UserPreference.find(By(UserPreference.user, currentUser), By(UserPreference.key, k.toString))
 
-    lazy val default = UserPreference.create.key(k.toString).value(v).user(currentUser).save()
-    preference.map(_.value(v).save()).getOrElse(default)
+    def overridePreference(p: UserPreference) = p.value(v).save()
+    def createPreference = UserPreference.create.key(k.toString).value(v).user(currentUser).save()
+
+    preference.map(overridePreference).getOrElse(createPreference)
   }
 
 }
