@@ -2,6 +2,7 @@ package code
 package service
 
 import code.model._
+import net.liftweb.common.Box
 import net.liftweb.mapper.By
 
 /**
@@ -23,22 +24,13 @@ object UserPreferenceService {
     getUserPreference(key.toString)
   }
 
-  def getUserPreference(key: String): String = {
-    if (User.currentUser.isEmpty) {
-      getType(key).get.defaultValue
-    } else {
-      val pref = UserPreference.find(
-        By(UserPreference.user, User.currentUser.get),
-        By(UserPreference.key, key))
+  def getUserPreference(k: String): String = {
+    def preference(u: User.TheUserType): Box[UserPreference] = UserPreference.find(By(UserPreference.user, u), By(UserPreference.key, k))
+    def defaultPreference: String = getType(k).get.defaultValue
 
-      if (pref.isEmpty) {
-        getType(key).get.defaultValue
-      } else {
-        pref.get.value.get
-      }
-    }
+    User.currentUser.flatMap(preference).map(_.value.get).getOrElse(defaultPreference)
   }
-
+  
   def getUserPreference(preference: UserPreferenceType): String = getUserPreference(preference.key)
 
   def setUserPreference(k: UserPreferenceNames.Value, v: String): Boolean = {
