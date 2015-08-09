@@ -2,6 +2,7 @@ package code
 package service
 
 import code.model._
+import net.liftweb.common.Box
 import net.liftweb.mapper.By
 
 /**
@@ -17,37 +18,29 @@ object UserPreferenceService {
 
   def getType(key: String): Option[UserPreferenceType] = getType(UserPreferenceNames.withName(key))
 
-  def getType(key: UserPreferenceNames.Value): Option[UserPreferenceType] = userPreferenceTypes.filter(_.key == key).headOption
+  def getType(key: UserPreferenceNames.Value): Option[UserPreferenceType] = userPreferenceTypes.find(_.key == key)
 
   def getUserPreference(key: UserPreferenceNames.Value): String = {
     getUserPreference(key.toString)
   }
 
-  def getUserPreference(key: String): String = {
-    if (User.currentUser.isEmpty) {
-      getType(key).get.defaultValue
-    } else {
-      val pref = UserPreference.find(
-        By(UserPreference.user, User.currentUser.get),
-        By(UserPreference.key, key))
+  def getUserPreference(k: String): String = {
+    def preference(u: User.TheUserType): Box[UserPreference] = UserPreference.find(By(UserPreference.user, u), By(UserPreference.key, k))
+    def defaultPreference: String = getType(k).get.defaultValue
 
-      if (pref.isEmpty) {
-        getType(key).get.defaultValue
-      } else {
-        pref.get.value.get
-      }
-    }
+    User.currentUser.flatMap(preference).map(_.value.get).getOrElse(defaultPreference)
   }
-
+  
   def getUserPreference(preference: UserPreferenceType): String = getUserPreference(preference.key)
 
-  def setUserPreference(key: UserPreferenceNames.Value, value: String) = {
-    val preference = UserPreference.find(By(UserPreference.user, User.currentUser.get), By(UserPreference.key, key.toString))
-    if (preference.isEmpty) {
-      UserPreference.create.key(key.toString).value(value).user(User.currentUser.get).save
-    } else {
-      preference.get.value(value).save
-    }
+  def setUserPreference(k: UserPreferenceNames.Value, v: String): Boolean = {
+    val currentUser = User.currentUser.openOrThrowException("Only logged in users can edit their preferences!")
+    val preference = UserPreference.find(By(UserPreference.user, currentUser), By(UserPreference.key, k.toString))
+
+    def overridePreference(p: UserPreference) = p.value(v).save()
+    def createPreference = UserPreference.create.key(k.toString).value(v).user(currentUser).save()
+
+    preference.map(overridePreference).getOrElse(createPreference)
   }
 
 }
