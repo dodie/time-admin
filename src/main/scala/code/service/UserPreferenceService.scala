@@ -42,11 +42,12 @@ object UserPreferenceService {
   def getUserPreference(preference: UserPreferenceType): String = getUserPreference(preference.key)
 
   def setUserPreference(key: UserPreferenceNames.Value, value: String): Boolean = {
-    val preference = UserPreference.find(By(UserPreference.user, User.currentUser.get), By(UserPreference.key, key.toString))
+    val currentUser = User.currentUser.openOrThrowException("Only logged in users can edit their preferences!")
+    val preference = UserPreference.find(By(UserPreference.user, currentUser), By(UserPreference.key, key.toString))
     if (preference.isEmpty) {
-      UserPreference.create.key(key.toString).value(value).user(User.currentUser.get).save
+      UserPreference.create.key(key.toString).value(value).user(currentUser).save()
     } else {
-      preference.get.value(value).save
+      preference.get.value(value).save()
     }
   }
 

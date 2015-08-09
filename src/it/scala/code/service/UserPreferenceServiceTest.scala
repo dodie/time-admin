@@ -2,6 +2,7 @@ package code.service
 
 import code.test.utils.{DefaultUser, DbSpec}
 import net.liftweb.mockweb.WebSpec
+import org.scalatest.Matchers
 
 class UserPreferenceServiceTest extends WebSpec with DbSpec {
   val anyUrl = "http://foo.com/test/settings"
@@ -31,5 +32,13 @@ class UserPreferenceServiceTest extends WebSpec with DbSpec {
     UserPreferenceService.getUserPreference(UserPreferenceNames.timesheetLeaveAdditionalTime) must_== "45"
   }
 
-  //TODO: write tests for the case when no logged in user
+  "Set user preference with no logged in user " withSFor anyUrl in {
+    var errorMessage = ""
+    try {
+      UserPreferenceService.setUserPreference(UserPreferenceNames.timesheetLeaveAdditionalTime, "30")
+    } catch {
+      case e: NullPointerException => errorMessage = e.getMessage
+    }
+    errorMessage must contain("Only logged in users can edit their preferences!")
+  }
 }
