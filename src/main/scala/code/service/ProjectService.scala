@@ -4,17 +4,16 @@ package service
 import code.model.Project
 import code.model.Task
 import net.liftweb.mapper.By
-import net.liftweb.common.Empty
+import net.liftweb.common.{Box, Full, Empty}
 
 object ProjectService {
 
   def getDisplayName(project: Project): String = {
-    val parentProject = Project.findByKey(project.parent.get)
-    if (parentProject.isEmpty) {
-      project.name.get
-    } else {
-      getDisplayName(parentProject.get) + "-" + project.name
+    def loop(z: List[Project], box: Box[Project]): List[Project] = box match {
+      case Full(p) => loop(p :: z, Project.findByKey(p.parent.get))
+      case _ => z
     }
+    loop(Nil, Full(project)).map(_.name).mkString("-")
   }
 
   def move(what: Project, newParent: Project) = what.parent(newParent).save
