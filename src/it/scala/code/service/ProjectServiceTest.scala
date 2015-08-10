@@ -25,6 +25,22 @@ class ProjectServiceTest extends FunSuite with DbSpec {
     assert(ProjectService.getDisplayName(project("bottom")) == "top-middle-bottom")
   }
 
+  test("Move bottom project to any parent project") {
+    givenSomeProjectData()
+
+    ProjectService.move(project("bottom"), project("any project"))
+
+    assert(ProjectService.getDisplayName(project("bottom")) == "top-any project-bottom")
+  }
+
+  test("Move bottom project to root") {
+    givenSomeProjectData()
+
+    ProjectService.moveToRoot(project("bottom"))
+
+    assert(ProjectService.getDisplayName(project("bottom")) == "bottom")
+  }
+
   def givenSomeProjectData(): Unit = {
     Project.create.name("top").save()
     lazy val top = Project.find(By(Project.name, "top"))
