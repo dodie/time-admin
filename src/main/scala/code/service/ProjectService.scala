@@ -20,14 +20,10 @@ object ProjectService {
 
   def moveToRoot(p: Project) = p.parent(Empty).save()
 
-  def isEmpty(project: Project) = Task.findAll(By(Task.parent, project)).isEmpty && Project.findAll(By(Project.parent, project)).isEmpty
+  def isEmpty(p: Project) = Task.findAll(By(Task.parent, p)).isEmpty && Project.findAll(By(Project.parent, p)).isEmpty
 
-  def delete(project: Project) = {
-    if (isEmpty(project)) {
-      project.delete_!
-    } else {
-      throw new IllegalArgumentException("Projects with Tasks or Subprojects can not be deleted.");
-    }
-  }
+  def delete(p: Project) =
+    if (isEmpty(p)) p.delete_!
+    else throw new IllegalArgumentException("Projects with tasks or subprojects can not be deleted.")
 
 }

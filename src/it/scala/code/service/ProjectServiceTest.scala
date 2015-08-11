@@ -2,6 +2,7 @@ package code.service
 
 import code.model.Project
 import code.test.utils.DbSpec
+import net.liftweb.common.Box
 import net.liftweb.mapper.By
 import org.scalatest.{FunSuite, FunSpec}
 
@@ -41,6 +42,30 @@ class ProjectServiceTest extends FunSuite with DbSpec {
     assert(ProjectService.getDisplayName(project("bottom")) == "bottom")
   }
 
+  test("The top level project is not empty") {
+    givenSomeProjectData()
+
+    assert(!ProjectService.isEmpty(project("top")))
+  }
+
+  test("The bottom level project is empty") {
+    givenSomeProjectData()
+
+    assert(ProjectService.isEmpty(project("bottom")))
+  }
+
+  test("Delete a bottom level project") {
+    givenSomeProjectData()
+
+    assert(ProjectService.delete(project("bottom")))
+  }
+
+  test("Try to delete a top level project") {
+    intercept[IllegalArgumentException] {
+      ProjectService.delete(project("top"))
+    }
+  }
+
   def givenSomeProjectData(): Unit = {
     Project.create.name("top").save()
     lazy val top = Project.find(By(Project.name, "top"))
@@ -51,4 +76,5 @@ class ProjectServiceTest extends FunSuite with DbSpec {
   }
   
   def project(n: String): Project = Project.find(By(Project.name, n)).openOrThrowException("Test entity must be presented!")
+
 }
