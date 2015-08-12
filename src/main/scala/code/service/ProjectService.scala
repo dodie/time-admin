@@ -8,22 +8,21 @@ import net.liftweb.common.{Box, Full, Empty}
 
 object ProjectService {
 
-  def getDisplayName(p: Project): String = {
-    def path(z: List[Project], box: Box[Project]): List[Project] = box match {
-      case Full(pr) => path(pr :: z, Project.findByKey(pr.parent.get))
-      case _ => z
-    }
-    path(Nil, Full(p)).map(_.name).mkString("-")
+  def getDisplayName(project: Project): String = projectPath(Nil, Full(project)).map(_.name).mkString("-")
+  
+  private def projectPath(z: List[Project], project: Box[Project]): List[Project] = project match {
+    case Full(p) => projectPath(p :: z, Project.findByKey(p.parent.get))
+    case _ => z
   }
 
-  def move(p: Project, pp: Project) = p.parent(pp).save()
+  def move(project: Project, parent: Project) = project.parent(parent).save()
 
-  def moveToRoot(p: Project) = p.parent(Empty).save()
+  def moveToRoot(project: Project) = project.parent(Empty).save()
 
-  def isEmpty(p: Project) = Task.findAll(By(Task.parent, p)).isEmpty && Project.findAll(By(Project.parent, p)).isEmpty
+  def isEmpty(project: Project) = Task.findAll(By(Task.parent, project)).isEmpty && Project.findAll(By(Project.parent, project)).isEmpty
 
-  def delete(p: Project) =
-    if (isEmpty(p)) p.delete_!
+  def delete(project: Project) =
+    if (isEmpty(project)) project.delete_!
     else throw new IllegalArgumentException("Projects with tasks or subprojects can not be deleted.")
 
 }
