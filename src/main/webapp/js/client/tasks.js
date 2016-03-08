@@ -1,29 +1,3 @@
-function sendForm(formId, isToday) {
-	var form = document.getElementById(formId);
-	if (isToday) {
-		form.submit();
-	} else {
-		var input = form.timeoffset;
-		if (input.value.indexOf(':') == -1) {
-			input.focus();
-		} else {
-			form.submit();
-		}
-	}
-}
-
-function changeTieMode() {
-	if (document.getElementById('tiemode').value == 'taskitemedit') {
-		document.getElementById('tiePopupTitle').innerHTML = loc.get('tasks.split_entry');
-		document.getElementById('tiePopupModeChange').value = '...';
-		document.getElementById('tiemode').value = 'taskitemsplit';
-	} else if (document.getElementById('tiemode').value == 'taskitemsplit') {
-		document.getElementById('tiePopupTitle').innerHTML = loc.get('tasks.edit_entry');
-		document.getElementById('tiePopupModeChange').value = '+';
-		document.getElementById('tiemode').value = 'taskitemedit';
-	}
-}
-
 function tieDeleteMode() {
 	if (confirm(loc.get("tasks.confirm_delete"))) {
 		document.getElementById('tiemode').value = "taskitemdelete";
@@ -60,13 +34,13 @@ function setTaskItemEditorPopup(taskItemId, timeOffset, selectedTaskId) {
 		}
 	});
 
-	if (taskItemId == '-1') {
-		document.getElementById('tiefields').style.display="none";
-		document.getElementById('tieerror').style.display="block";
-	} else {
-		document.getElementById('tiefields').style.display="block";
-		document.getElementById('tieerror').style.display="none";
-	}
+	//if (taskItemId == '-1') {
+		//document.getElementById('tiefields').style.display="none";
+		//document.getElementById('tieerror').style.display="block";
+	//} else {
+		//document.getElementById('tiefields').style.display="block";
+		//document.getElementById('tieerror').style.display="none";
+	//}
 
 	if (selectedTaskId == 0) {
 		selectedTaskId = -1;
@@ -76,8 +50,8 @@ function setTaskItemEditorPopup(taskItemId, timeOffset, selectedTaskId) {
 	document.getElementById('tietimeoffset').value = timeOffset;
 	document.getElementById('tieselecttaskid').value = selectedTaskId;
 
-	document.getElementById('tiePopupTitle').innerHTML = loc.get('tasks.edit_entry');
-	document.getElementById('tiePopupModeChange').value = '+';
+	//document.getElementById('tiePopupTitle').innerHTML = loc.get('tasks.edit_entry');
+	//document.getElementById('tiePopupModeChange').value = '+';
 	document.getElementById('tiemode').value = 'taskitemedit';
 }
 
@@ -122,7 +96,9 @@ $(document).ready(function(){
 
 	doChangeTaskFilterSearchSize();
 	b.onkeyup();
-	});
+
+	if (localStorage.getItem("ta_diagram_table") === "true") { toggleDiagram(); }
+});
 
 var fullTaskList = new Array();
 

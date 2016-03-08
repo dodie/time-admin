@@ -37,13 +37,13 @@
 				</div>
 				<div class="day-pager-holder">
 					<span class="statusBarItem lift:L10n.data-hint-top-left" data-hint-top-left="button.previous_day">
-						<a class="btn btn-primary lift:taskItemSnippet.pagingPrev" paging:url="">&#9664;</a>
+						<a class="btn btn-default lift:taskItemSnippet.pagingPrev" paging:url="">&#9664;</a>
 					</span>
 					<span class="statusBarItem lift:L10n.data-hint-top-left" data-hint-top-left="button.current_day">
-						<a paging:url="" class="btn btn-primary lift:taskItemSnippet.pagingCurrent">&#9650;</a>
+						<a paging:url="" class="btn btn-default lift:taskItemSnippet.pagingCurrent">&#9650;</a>
 					</span>
 					<span class="statusBarItem lift:L10n.data-hint-top-left" data-hint-top-left="button.next_day">
-						<a class="btn btn-primary lift:taskItemSnippet.pagingNext" paging:url="">&#9654;</a>
+						<a class="btn btn-default lift:taskItemSnippet.pagingNext" paging:url="">&#9654;</a>
 					</span>
 				</div>
 			</div>
@@ -59,7 +59,7 @@
 									<div class="ProjectName"></div>
 									<div class="TaskName"></div>
 								</div>
-								<div class="fragBarHover" onclick="var form = this.getElementsByTagName('form')[0]; setTaskItemEditorPopup(form.taskitemid.value, form.time.value, form.taskid.value); loadPopup('taskItemEditorPopup');">
+								<div class="fragBarHover" onclick="var form = this.getElementsByTagName('form')[0]; setTaskItemEditorPopup(form.taskitemid.value, form.time.value, form.taskid.value); $('.modal').modal();">
 									<div class="ProjectName"></div>
 									<div class="TaskName"></div>
 									<div class="Duration"></div>
@@ -99,7 +99,7 @@
 											  type="button"
 											  class="btn btn-primary"
 											  value="..."
-											  onclick="setTaskItemEditorPopup(this.form.taskitemid.value, this.form.time.value, this.form.taskid.value); loadPopup('taskItemEditorPopup');"/>
+											  onclick="setTaskItemEditorPopup(this.form.taskitemid.value, this.form.time.value, this.form.taskid.value); $('.modal').modal();"/>
 										</form>
 									</td>
 								</tr>
@@ -149,33 +149,33 @@
 			</div>
 		</div>
 
-		<div class="popup" id="taskItemEditorPopup">
-			<a class="popupClose" id="popupClose">x</a>
-			<div>
-				<div id="tiefields">
+		<div class="modal fade" tabindex="-1" role="dialog">
+			<div class="modal-dialog">
+				<div class="modal-content">
+					<div class="modal-header">
+						<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+						<h4 class="modal-title"><lift:loc>tasks.changetask.title</lift:loc></h4>
+					</div>
 					<form method="post">
-						<h2 id="tiePopupTitle"><lift:loc>tasks.changetask.title</lift:loc></h2> 
-						<input class="btn btn-primary" onclick="changeTieMode();" type="button" id="tiePopupModeChange" value="+"/>
+						<div class="modal-body">
+							<input type="hidden" id="tiemode" name="mode" value="taskitemedit"/>
+							<input type="hidden" name="taskitemid" id="tietaskitemid"/>
+							<input type="hidden" name="sticky" id="tiesticky"/>
 
-						<input type="hidden" id="tiemode" name="mode" value="taskitemedit"/>
-						<input type="hidden" name="taskitemid" id="tietaskitemid"/>
-						<input type="hidden" name="sticky" id="tiesticky"/>
+							<lift:loc>tasks.changetask.start</lift:loc><br/>
+							<input type="text" value="08:15" name="timeoffset" id="tietimeoffset"/> 
+							<br/><br/>
 
-						<lift:loc>tasks.changetask.start</lift:loc><br/>
-						<input type="text" value="08:15" name="timeoffset" id="tietimeoffset"/> 
-						<br/><br/>
-
-						<lift:loc>tasks.changetask.task</lift:loc><br/>
-						<select name="selecttaskid" id="tieselecttaskid">
-							<option value="-1"><lift:loc>tasks.changetask.pause</lift:loc></option>
-						</select>
-						<br/><br/>
-						<input type="submit" value="button.change" class="btn btn-primary lift:L10n.value"/>
-						<input type="submit" value="button.delete" class="btn btn-primary lift:L10n.value" onclick="return tieDeleteMode();"/>
+							<lift:loc>tasks.changetask.task</lift:loc><br/>
+							<select name="selecttaskid" id="tieselecttaskid">
+								<option value="-1"><lift:loc>tasks.changetask.pause</lift:loc></option>
+							</select>
+						</div>
+						<div class="modal-footer">
+							<input type="submit" value="button.change" class="btn btn-success lift:L10n.value"/>
+							<input type="submit" value="button.delete" class="btn btn-danger lift:L10n.value" onclick="return tieDeleteMode();"/>
+						</div>
 					</form>
-				</div>
-				<div id="tieerror">
-					<lift:loc>tasks.error.task_from_different_day</lift:loc>
 				</div>
 			</div>
 		</div>
