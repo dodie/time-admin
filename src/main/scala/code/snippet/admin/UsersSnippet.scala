@@ -113,7 +113,7 @@ class UsersSnippet {
   }
 
   /**
-   * Renders an user editor.
+   * Renders a user editor.
    */
   def userEditor(in: NodeSeq): NodeSeq = {
     val userIdBox = S.param("edit")
