@@ -72,6 +72,10 @@
 	border-top-right-radius: 0;
 }
 
+.form-signin input[type="submit"] {
+	margin-bottom: 10px;
+}
+
 /* -----
  * Top-menu new
  * ----- */

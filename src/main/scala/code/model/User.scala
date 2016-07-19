@@ -188,6 +188,9 @@ object User extends User with MetaMegaProtoUser[User] with ManyToMany {
           </label>
         </div>
         <button class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
+        <div class="to-registration">
+          <a href="/user_mgt/sign_up">{S.?("page.registration")}</a>
+        </div>
         <div class="lost-password">
           <a href={lostPasswordPath.mkString("/", "/", "")}>{S.?("recover.password")}</a>
         </div>
