@@ -1,3 +1,7 @@
+function sendForm(id) {
+    $("#" + id).submit();
+}
+
 function tieDeleteMode() {
 	if (confirm(loc.get("tasks.confirm_delete"))) {
 		document.getElementById('tiemode').value = "taskitemdelete";
