@@ -155,7 +155,7 @@ class Boot {
             Box(RedirectResponse("/"))
           } else {
             for {
-              stream <- tryo(ExcelExport.exportTimesheet(User.currentUser.get.id.get, offset.toInt))
+              stream <- tryo(ExcelExport.exportTimesheet(User.currentUser.get, offset.toInt))
               if null ne stream
             } yield StreamingResponse(stream, () => stream.close,
               stream.available, List("Content-Type" -> "application/vnd.ms-excel", "Content-Disposition" -> ("attachment; filename=\"timesheet_" + TimeUtils.currentYear(offset.toInt) + "-" + (TimeUtils.currentMonth(offset.toInt) + 1) + ".xls\"")), Nil, 200)

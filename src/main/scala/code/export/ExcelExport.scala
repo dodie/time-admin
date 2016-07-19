@@ -28,20 +28,21 @@ import java.util.Date
  */
 object ExcelExport {
 
+  val templatePath = Props.get("export.excel.timesheet_template").openOrThrowException("No Excel template defined for Timesheets!")
+
   /**
    * Timesheet Excel export.
    */
-  def exportTimesheet(userId: Long, offset: Int) = {
+  def exportTimesheet(user: User, offset: Int) = {
     var fos: ByteArrayOutputStream = null;
     var array: Array[Byte] = null
     try {
+
       // template
-      val templatePath = Props.get("export.excel.timesheet_template").get
       val fs = new POIFSFileSystem(new FileInputStream(templatePath))
       val workbook = new HSSFWorkbook(fs, true)
 
       // parameters
-      val user = User.findByKey(userId).get
       val userName = user.lastName + " " + user.firstName
       val monthText = TimeUtils.currentYear(offset) + " " + TimeUtils.monthNumberToText(TimeUtils.currentMonth(offset))
       val dates = ReportService.getTimesheetData(offset)
