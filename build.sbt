@@ -35,7 +35,7 @@ libraryDependencies ++= {
     "ch.qos.logback"              % "logback-classic"           % "1.0.6",
     "org.specs2"                  %% "specs2"                   % "2.3.12"              % "test,it,e2e",
     "org.scalatest"               % "scalatest_2.11"            % "2.2.4"               % "test,it,e2e",
-    "org.seleniumhq.selenium"     % "selenium-firefox-driver"   % "2.52.0"              % "test,it,e2e",
+    "org.seleniumhq.selenium"     % "selenium-firefox-driver"   % "2.53.1"              % "test,it,e2e",
     "info.cukes"                  % "cucumber-scala_2.11"       % "1.2.2"               % "e2e",
     "info.cukes"                  % "cucumber-junit"            % "1.2.2"               % "e2e",
     "info.cukes"                  % "cucumber-picocontainer"    % "1.2.2"               % "e2e",
