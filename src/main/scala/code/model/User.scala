@@ -23,11 +23,12 @@ object User extends User with MetaMegaProtoUser[User] with ManyToMany {
       field <- computeFieldFromPointer(user, pointer).toList
       if field.show_? && (!ignorePassword || !pointer.isPasswordField_?)
       form <- field.toForm.toList
+      fieldId <- field.uniqueFieldId
     } yield {
       <div class="form-group">
-        <label for={field.uniqueFieldId.get}>{field.displayName}</label>
+        <label for={fieldId}>{field.displayName}</label>
         {form.map(_.asInstanceOf[Elem]% ("class" -> "form-control"))}
-        <span><lift:Msg id={field.uniqueFieldId.get} errorClass="edit_error_class"></lift:Msg></span>
+        <span><lift:Msg id={fieldId} errorClass="edit_error_class"></lift:Msg></span>
       </div>
       }
     }
