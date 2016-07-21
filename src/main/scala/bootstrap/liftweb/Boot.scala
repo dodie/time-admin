@@ -72,11 +72,19 @@ class Boot {
     }
 
     def anonymousUser = User.currentUser.isEmpty
-    def notAnonymousUser = !anonymousUser
-    def adminUser = notAnonymousUser && !UserRoles.findAll(By(UserRoles.role, adminRole), By(UserRoles.user, User.currentUser.get)).isEmpty
-    def clientUser = notAnonymousUser && !UserRoles.findAll(By(UserRoles.role, clientRole), By(UserRoles.user, User.currentUser.get)).isEmpty
-    def freshUser = notAnonymousUser && !adminUser && !clientUser
-    def falsyUser = false
+
+    def hasRole(role: Role) = {
+      (for (user <- User.currentUser) yield UserRoles.findAll(By(UserRoles.role, role), By(UserRoles.user, user))) match {
+        case Full(roleList) => !roleList.isEmpty
+        case _ => false
+      }
+    }
+
+    def adminUser = hasRole(adminRole)
+
+    def clientUser = hasRole(clientRole)
+
+    def freshUser = !anonymousUser && !adminUser && !clientUser
 
     // Build SiteMap.
     def sitemap = SiteMap(
@@ -101,7 +109,7 @@ class Boot {
       //Menu(S ? "page.stats") / "admin" / "usertasks" >> If(adminUser _, S ? "no_permission"), // admin statistics page - refactor needed
 
       // user pages
-      Menu(S ? "page.settings") / "client" / "settings" >> If(notAnonymousUser _, S ? "not_logged_in") >> Hidden,
+      Menu(S ? "page.settings") / "client" / "settings" >> If((!anonymousUser) _, S ? "not_logged_in") >> Hidden,
       Menu(S ? "page.userspages") / "userpages" >> Hidden >> User.AddUserMenusUnder
     )
 
@@ -152,28 +160,38 @@ class Boot {
         () => {
           // access control
           if (!clientUser) {
-            Box(RedirectResponse("/"))
+            Full(RedirectResponse("/"))
           } else {
             for {
-              stream <- tryo(ExcelExport.exportTimesheet(User.currentUser.get, offset.toInt))
-              if null ne stream
-            } yield StreamingResponse(stream, () => stream.close,
-              stream.available, List("Content-Type" -> "application/vnd.ms-excel", "Content-Disposition" -> ("attachment; filename=\"timesheet_" + TimeUtils.currentYear(offset.toInt) + "-" + (TimeUtils.currentMonth(offset.toInt) + 1) + ".xls\"")), Nil, 200)
+              (contentStream, fileName) <- tryo(ExcelExport.exportTimesheet(User.currentUser.openOrThrowException("No user found!"), offset.toInt))
+              if null ne contentStream
+            } yield StreamingResponse(contentStream, () =>
+              contentStream.close,
+              contentStream.available,
+              List(
+                "Content-Type" -> "application/vnd.ms-excel",
+                "Content-Disposition" -> ("attachment; filename=\"" + fileName + "\"")
+                ), Nil, 200)
           }
         }
+
 
         // blank tasksheet export
         case Req("export" :: "tasksheet" :: "blank" :: offset :: Nil, "", GetRequest) =>
         () => {
           // access control
           if (!adminUser) {
-            Box(RedirectResponse("/"))
+            Full(RedirectResponse("/"))
           } else {
             for {
-              stream <- tryo(ExcelExport.exportTasksheet(true, offset.toInt))
-              if null ne stream
-            } yield StreamingResponse(stream, () => stream.close,
-              stream.available, List("Content-Type" -> "application/vnd.ms-excel", "Content-Disposition" -> ("attachment; filename=\"tasksheet_" + TimeUtils.currentYear(offset.toInt) + "-" + (TimeUtils.currentMonth(offset.toInt) + 1) + "_" + User.currentUser.get.firstName.get.toLowerCase + User.currentUser.get.lastName.get.toLowerCase + ".xls\"")), Nil, 200)
+              (contentStream, fileName) <- tryo(ExcelExport.exportTasksheet(true, User.currentUser.openOrThrowException("No user found!"), offset.toInt))
+              if null ne contentStream
+            } yield StreamingResponse(contentStream, () =>
+              contentStream.close,
+              contentStream.available,
+              List(
+                "Content-Type" -> "application/vnd.ms-excel",
+                "Content-Disposition" -> ("attachment; filename=\"" + fileName + ".xls\"")), Nil, 200)
           }
         }
         // personal tasksheet export
@@ -181,13 +199,17 @@ class Boot {
         () => {
           // access control
           if (!clientUser) {
-            Box(RedirectResponse("/"))
+            Full(RedirectResponse("/"))
           } else {
             for {
-              stream <- tryo(ExcelExport.exportTasksheet(false, offset.toInt))
-              if null ne stream
-            } yield StreamingResponse(stream, () => stream.close,
-              stream.available, List("Content-Type" -> "application/vnd.ms-excel", "Content-Disposition" -> ("attachment; filename=\"tasksheet_" + TimeUtils.currentYear(offset.toInt) + "-" + (TimeUtils.currentMonth(offset.toInt) + 1) + "_" + User.currentUser.get.firstName.get.toLowerCase + User.currentUser.get.lastName.get.toLowerCase + ".xls\"")), Nil, 200)
+              (contentStream, fileName) <- tryo(ExcelExport.exportTasksheet(false, User.currentUser.openOrThrowException("No user found!"), offset.toInt))
+              if null ne contentStream
+            } yield StreamingResponse(contentStream, () =>
+              contentStream.close,
+              contentStream.available,
+              List(
+                "Content-Type" -> "application/vnd.ms-excel",
+                "Content-Disposition" -> ("attachment; filename=\"" + fileName + ".xls\"")), Nil, 200)
           }
         }
     }

@@ -95,13 +95,16 @@ object ExcelExport {
       }
     }
 
-    new ByteArrayInputStream(array)
+    val contentStream = new ByteArrayInputStream(array)
+    val name = "timesheet_" + TimeUtils.currentYear(offset.toInt) + "-" + (TimeUtils.currentMonth(offset.toInt) + 1) + ".xls";
+
+    (contentStream, name)
   }
 
   /**
    * Tasksheet Excel export.
    */
-  def exportTasksheet(blank: Boolean, offset: Int) = {
+  def exportTasksheet(blank: Boolean, user: User, offset: Int) = {
     var fos: ByteArrayOutputStream = null
     var array: Array[Byte] = null
     try {
@@ -251,6 +254,10 @@ object ExcelExport {
         }
       }
     }
-    new ByteArrayInputStream(array)
+
+    val contentStream = new ByteArrayInputStream(array)
+    val fileName = "tasksheet_" + TimeUtils.currentYear(offset.toInt) + "-" + (TimeUtils.currentMonth(offset.toInt) + 1) + "_" + user.firstName.get.toLowerCase + user.lastName.get.toLowerCase + ".xls"
+
+    (contentStream, fileName)
   }
 }
