@@ -7,6 +7,7 @@ import java.text.DecimalFormat
 
 import scala.collection.mutable.ListBuffer
 import scala.util.Sorting
+import net.liftweb.common._
 
 import org.joda.time.DateTime
 
@@ -156,10 +157,20 @@ object ReportService {
       }
 
       val task = TaskService.getTask(aggregated._2.head.taskItem.task.get)
-      val project = if (!task.isEmpty) Project.findByKey(task.get.parent.get) else null
+      val taskName: String = task match {
+        case Full(t) => t.name.get
+        case _ => S.?("task.pause")
+      }
 
-      val taskName: String = if (!task.isEmpty) task.get.name.get else S.?("tasks.pause")
-      val projectName: String = if (project != null && !project.isEmpty) ProjectService.getDisplayName(project.get) else ""
+      val project = task match {
+        case Full(t) => Project.findByKey(t.parent.get)
+        case _ => Empty
+      }
+
+      val projectName: String = project match {
+        case Full(p) => ProjectService.getDisplayName(p)
+        case _ => ""
+      }
 
       aggregatedDatas.append(AggregatedTaskItemData(aggregated._1, dur, projectName, taskName, task.isEmpty))
     }
