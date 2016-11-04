@@ -45,7 +45,7 @@ object TaskItemService {
    * Returns a sequence with the task item entries on the given day.
    * The ordering is determined by the item's start time.
    */
-  def getTaskItemsForDay(offset: Int) = {
+  def getTaskItemsForDay(offset: Int, user: User = User.currentUser.get) = {
     /**
      * Takes a list of consecutive TaskItems and converts them to a TaskItemWithDuration.
      * The function calculates the durations of the task items.
@@ -71,7 +71,7 @@ object TaskItemService {
     // task items for the given day
     var list = taskItemsToTaskItemDtos(
       TaskItem.findAll(OrderBy(TaskItem.start, Ascending),
-        By(TaskItem.user, User.currentUser.get),
+        By(TaskItem.user, user),
         By_<(TaskItem.start, TimeUtils.currentDayEndInMs(offset)),
         By_>=(TaskItem.start, TimeUtils.currentDayStartInMs(offset))))
 
@@ -81,13 +81,13 @@ object TaskItemService {
       val lastItem = taskItemsToTaskItemDtos(
         TaskItem.findAll(OrderBy(TaskItem.start, Descending),
           MaxRows(1),
-          By(TaskItem.user, User.currentUser.get),
+          By(TaskItem.user, user),
           By_<(TaskItem.start, TimeUtils.currentDayStartInMs(offset))))
       // if the lastItem is not Pause, then it will be truncated to the given day, and will count in the result 
       if (!lastItem.isEmpty && lastItem.head.taskItem.id != 0) {
         val dto = TaskItemWithDuration(
           TaskItem.create
-            .user(User.currentUser.get)
+            .user(user)
             .task(lastItem.head.taskItem.task.get)
             .start(TimeUtils.currentDayStartInMs(offset)),
           {
@@ -104,7 +104,7 @@ object TaskItemService {
 
     if (list.isEmpty) {
       // if the result is empty, then return a list that contains only a Pause item
-      List(TaskItemWithDuration(TaskItem.create.user(User.currentUser.get).start(TimeUtils.currentDayStartInMs(offset) + 1), 0))
+      List(TaskItemWithDuration(TaskItem.create.user(user).start(TimeUtils.currentDayStartInMs(offset) + 1), 0))
     } else {
       // if the given day is not today, and the last task item is not Pause,
       // then it will be truncated to the given day, and will count in the result
@@ -112,7 +112,7 @@ object TaskItemService {
       if (offset != 0 && list.last.taskItem.task.get != 0) {
         list.last.duration = TimeUtils.currentDayEndInMs(offset) - 1 - list.last.taskItem.start.get
         list = list ::: List(TaskItemWithDuration(
-          TaskItem.create.user(User.currentUser.get).start(TimeUtils.currentDayEndInMs(offset) - 1),
+          TaskItem.create.user(user).start(TimeUtils.currentDayEndInMs(offset) - 1),
           0))
       }
       list.toSeq

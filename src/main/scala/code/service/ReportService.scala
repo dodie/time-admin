@@ -8,15 +8,14 @@ import java.text.DecimalFormat
 import scala.collection.mutable.ListBuffer
 import scala.util.Sorting
 import net.liftweb.common._
-
-import org.joda.time.DateTime
-
+import org.joda.time.{Duration, _}
 import code.commons.TimeUtils
-import net.liftweb.common.Box.box2Option
-import net.liftweb.mapper.MappedField.mapToType
 import net.liftweb.http.S
-
-import code.model.Project
+import code.model.{Project, User}
+import code.service.TaskItemService.getTaskItemsForDay
+import org.joda.time.Days.daysBetween
+import org.joda.time.LocalDate.now
+import com.github.nscala_time.time.Imports._
 
 /**
  * Reponsible for creating report data.
@@ -58,7 +57,7 @@ object ReportService {
 
     // for all days, get all taskitems and produce data touples
     (for (offset <- monthStartOffset until monthEndOffset + 1) yield {
-      val taskItemsForDay = TaskItemService.getTaskItemsForDay(offset)
+      val taskItemsForDay = getTaskItemsForDay(offset)
 
       val offtimeToRemoveFromLeaveTime = {
         val aggregatedArray = createAggregatedDatas(taskItemsForDay)
@@ -126,7 +125,7 @@ object ReportService {
     for (currentOffset <- offsetMonthStart to offsetMonthEnd; if currentOffset <= 0) {
       val innerMatrix = new scala.collection.mutable.HashMap[Long, Long]
 
-      TaskItemService.getTaskItemsForDay(currentOffset).foreach(tiwd => {
+      getTaskItemsForDay(currentOffset).foreach(tiwd => {
         val key = tiwd.taskItem.task.get
 
         if (!innerMatrix.contains(key))
@@ -139,6 +138,12 @@ object ReportService {
     }
     outerMatrix.toMap[Int, Map[Long, Long]]
   }
+
+  def taskSheetData[D <: ReadablePartial](u: User, i: Interval, f: LocalDate => D): Set[(D, Duration)] =
+    days(i).map(d => (d, getTaskItemsForDay(daysBetween(now(), d).getDays, u).map(_.duration).sum))
+        .groupBy(p => f(p._1)).mapValues(ds => new Duration(ds.map(_._2).sum)).toSet
+
+  def days(i: Interval): Seq[LocalDate] = for (d <- 0 to i.toPeriod(PeriodType.days).getDays) yield i.start.toLocalDate.plusDays(d)
 
   /**
    * Aggregates the given TaskItem DTOs.

@@ -43,6 +43,7 @@ libraryDependencies ++= {
     "com.novocode"                % "junit-interface"           % "0.10"                % "e2e",
     "com.h2database"              % "h2"                        % "1.3.167",
     "org.apache.poi"              % "poi"                       % "3.9",
-    "postgresql"                  % "postgresql"                % "8.4-701.jdbc4"
+    "postgresql"                  % "postgresql"                % "8.4-701.jdbc4",
+    "com.github.nscala-time"      %% "nscala-time"              % "2.14.0"
   )
 }
