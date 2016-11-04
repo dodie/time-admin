@@ -182,7 +182,7 @@ object User extends User with MetaMegaProtoUser[User] with ManyToMany {
         <label for="inputEmail" class="sr-only">Email address</label>
         <input name="username" class="email form-control" type="email" id="inputEmail" placeholder={userNameFieldString} required="" autofocus=""/>
         <label for="inputPassword" class="sr-only">Password</label>
-        <input name="password" type="password" id="inputPassword" class="password form-control" placeholder={{S.?("password")}} required=""/>
+        <input name="password" type="password" id="inputPassword" class="password form-control" placeholder={S.?("password")} required=""/>
         <div class="checkbox">
           <label>
             <input type="checkbox" value="remember-me"/> Remember me
