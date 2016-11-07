@@ -17,6 +17,10 @@ import org.joda.time.Days.daysBetween
 import org.joda.time.LocalDate.now
 import com.github.nscala_time.time.Imports._
 
+import scala.collection.immutable.Seq
+
+import code.util.ListToFoldedMap._
+
 /**
  * Reponsible for creating report data.
  *
@@ -139,12 +143,13 @@ object ReportService {
     outerMatrix.toMap[Int, Map[Long, Long]]
   }
 
-  def taskSheetData[RP <: ReadablePartial](u: User, i: Interval, f: LocalDate => RP): Map[RP, Map[TaskSheetItem, Duration]] =
-    days(i).map(d => (f(d), getTaskItemsForDay(daysBetween(now(), d).getDays, u))).toMap.mapValues {
-      _.map(t => (new TaskSheetItem(t), t.duration)).groupBy(_._1).mapValues(_.map(_._2).foldLeft(Duration.ZERO)(_ + _))
-    }
+  def taskSheetData[RP <: ReadablePartial](u: User, i: Interval, f: LocalDate => RP): Map[RP, Map[TaskSheetItem,Duration]] =
+    days(i).map(d => (f(d), getTaskItemsForDay(daysBetween(now(), d).getDays, u).map(t => (new TaskSheetItem(t), new Duration(t.duration)))))
+      .foldedMap(Nil: List[(TaskSheetItem,Duration)])(_ ::: _)
+      .mapValues(_.foldedMap(Duration.ZERO)(_ + _))
 
-  def days(i: Interval): Seq[LocalDate] = for (d <- 0 to i.toPeriod(PeriodType.days).getDays) yield i.start.toLocalDate.plusDays(d)
+  def days(i: Interval): List[LocalDate] =
+    (0 to i.toPeriod(PeriodType.days).getDays) map (i.start.toLocalDate.plusDays(_)) toList
 
   case class TaskSheetItem(id: Long, name: String) {
     def this(t: TaskItemWithDuration) = this(t.taskItem.task.get, t.taskItem.task.name)

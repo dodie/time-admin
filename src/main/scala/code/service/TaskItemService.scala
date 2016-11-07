@@ -45,7 +45,7 @@ object TaskItemService {
    * Returns a sequence with the task item entries on the given day.
    * The ordering is determined by the item's start time.
    */
-  def getTaskItemsForDay(offset: Int, user: User = User.currentUser.get) = {
+  def getTaskItemsForDay(offset: Int, user: User = User.currentUser.get): List[TaskItemWithDuration] = {
     /**
      * Takes a list of consecutive TaskItems and converts them to a TaskItemWithDuration.
      * The function calculates the durations of the task items.
@@ -115,7 +115,7 @@ object TaskItemService {
           TaskItem.create.user(user).start(TimeUtils.currentDayEndInMs(offset) - 1),
           0))
       }
-      list.toSeq
+      list
     }
   }
 
