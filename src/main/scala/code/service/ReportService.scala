@@ -139,11 +139,16 @@ object ReportService {
     outerMatrix.toMap[Int, Map[Long, Long]]
   }
 
-  def taskSheetData[D <: ReadablePartial](u: User, i: Interval, f: LocalDate => D): Set[(D, Duration)] =
-    days(i).map(d => (d, getTaskItemsForDay(daysBetween(now(), d).getDays, u).map(_.duration).sum))
-        .groupBy(p => f(p._1)).mapValues(ds => new Duration(ds.map(_._2).sum)).toSet
+  def taskSheetData[RP <: ReadablePartial](u: User, i: Interval, f: LocalDate => RP): Map[RP, Map[TaskSheetItem, Duration]] =
+    days(i).map(d => (f(d), getTaskItemsForDay(daysBetween(now(), d).getDays, u))).toMap.mapValues {
+      _.map(t => (new TaskSheetItem(t), t.duration)).groupBy(_._1).mapValues(_.map(_._2).foldLeft(Duration.ZERO)(_ + _))
+    }
 
   def days(i: Interval): Seq[LocalDate] = for (d <- 0 to i.toPeriod(PeriodType.days).getDays) yield i.start.toLocalDate.plusDays(d)
+
+  case class TaskSheetItem(id: Long, name: String) {
+    def this(t: TaskItemWithDuration) = this(t.taskItem.task.get, t.taskItem.task.name)
+  }
 
   /**
    * Aggregates the given TaskItem DTOs.
