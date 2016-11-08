@@ -143,13 +143,18 @@ object ReportService {
     outerMatrix.toMap[Int, Map[Long, Long]]
   }
 
+  def days(i: Interval): List[LocalDate] =
+    (0 to i.toPeriod(PeriodType.days).getDays) map (i.start.toLocalDate.plusDays(_)) toList
+
   def taskSheetData[RP <: ReadablePartial](u: User, i: Interval, f: LocalDate => RP): Map[RP, Map[TaskSheetItem,Duration]] =
-    days(i).map(d => (f(d), getTaskItemsForDay(daysBetween(now(), d).getDays, u).map(t => (new TaskSheetItem(t), new Duration(t.duration)))))
+    days(i).map(d => (f(d), taskItemForDay(d, u) map taskSheetItemWithDuration))
       .foldedMap(Nil: List[(TaskSheetItem,Duration)])(_ ::: _)
       .mapValues(_.foldedMap(Duration.ZERO)(_ + _))
 
-  def days(i: Interval): List[LocalDate] =
-    (0 to i.toPeriod(PeriodType.days).getDays) map (i.start.toLocalDate.plusDays(_)) toList
+  def taskItemForDay(d: LocalDate, u: User): List[TaskItemWithDuration] =
+    getTaskItemsForDay(daysBetween(now(), d).getDays, u)
+
+  def taskSheetItemWithDuration(t: TaskItemWithDuration): (TaskSheetItem, Duration) = (new TaskSheetItem(t), new Duration(t.duration))
 
   case class TaskSheetItem(id: Long, name: String) {
     def this(t: TaskItemWithDuration) = this(t.taskItem.task.get, t.taskItem.task.name)
