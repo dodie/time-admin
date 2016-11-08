@@ -23,7 +23,8 @@ For IDE support, you can generate Eclipse project files with *eclipse*.
 To start an interactive Scala shell, enter *console*. In this console
 you can import Lift modules and your own code to experiment with.
 Booting the Lift application is required if you’re using core Lift
-infrastructures such as Mapper or accessing property files:
+infrastructures such as Mapper or accessing property files
+in the console session:
 ```
 scala> new bootstrap.liftweb.Boot().boot
 ```
