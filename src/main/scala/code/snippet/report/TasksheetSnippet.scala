@@ -1,12 +1,15 @@
 package code.snippet
 
 import scala.xml.NodeSeq
-import code.commons.TimeUtils
+import code.model.User
 import code.service.ReportService
+import code.service.ReportService.TaskSheetItem
 import code.snippet.mixin.DateFunctions
 import net.liftweb.util.BindHelpers.strToCssBindPromoter
-import code.service.TaskService
 import net.liftweb.http.S
+import com.github.nscala_time.time.Imports._
+import code.util.ListToFoldedMap._
+import org.joda.time.ReadablePartial
 
 /**
  * Tasksheet displaying component.
@@ -36,78 +39,38 @@ class TasksheetSnippet extends DateFunctions {
    * Taskshet display.
    */
   def tasksheet(in: NodeSeq): NodeSeq = {
-    val taskList = TaskService.getTaskArray(activeOnly = false)
-    val monthStartOffset = TimeUtils.currentMonthStartInOffset(offsetInDays) + offsetInDays
-    val monthEndOffset = TimeUtils.currentMonthEndInOffset(offsetInDays) + offsetInDays
+    val taskSheet = ReportService.taskSheetData(
+      User.currentUser.get,
+      new YearMonth(S.param("date").map(s => DateTime.parse(s)).getOrElse(DateTime.now())).toInterval,
+      d => new MonthDay(d)
+    )
 
-    val data = ReportService.getTasksheetData(offsetInDays)
-
-    val totalTimesPerDay = for (dayNum <- 1 to (math.abs(monthStartOffset - monthEndOffset) + 1)) yield {
-      if (data.contains(dayNum)) {
-        data(dayNum).filterKeys(_ != 0).values.foldLeft(0L) { (total, n) =>
-          val minute = (n / 60000).toInt
-          total + minute
-        }.toInt
-      } else {
-        0
-      }
-    }
-
-    val totalSum = totalTimesPerDay.sum
-
-    if (!taskList.isEmpty) {
-      val colClassNames = for (dayNum <- 1 to (math.abs(monthStartOffset - monthEndOffset) + 1)) yield {
-        if (TimeUtils.isWeekend(monthStartOffset + dayNum - 1)) {
-          "colWeekend"
-        } else {
-          "colWeekday"
-        }
-      }
-
-      val dayHeaders = { for (dayNum <- 1 until (math.abs(monthStartOffset - monthEndOffset) + 2)) yield dayNum }
-      (
-        ".colDays" #> colClassNames.map(item => ".colDays [class]" #> item) &
-        ".dayHeader" #> dayHeaders.map(item => ".dayHeader *" #> item) &
-        ".TaskRow" #> taskList.toList.map(task => {
-          var sum = 0
-          val taskActivityForMonth = {
-            for (dayNum <- 1 to math.abs(monthStartOffset - monthEndOffset) + 1) yield {
-              val dayData = if (data.contains(dayNum) && data(dayNum).contains(task.task.id.get)) {
-                val minute = (data(dayNum)(task.task.id.get) / 60000).toInt
-                sum = sum + minute
-                if (minute > 0) {
-                  minute.toString
-                } else {
-                  ""
-                }
-              } else {
-                ""
-              }
-
-              val dayType = if (TimeUtils.isWeekend(monthStartOffset + dayNum - 1)) {
-                "colWeekend"
-              } else {
-                "colWeekday"
-              }
-
-              (dayData, dayType)
-            }
-          }
-
-          ".taskFullName *" #> task.getFullName &
-            ".taskFullName [title]" #> task.getFullName &
-            ".dailyData" #> taskActivityForMonth.map(minute => {
-              ".dailyData *" #> minute._1 &
-                ".dailyData [class]" #> minute._2
-            }) &
-            ".taskSum *" #> sum
-        }) &
-        ".dailySum" #> totalTimesPerDay.map(minute => ".dailySum *" #> minute) &
-        ".totalSum *" #> totalSum &
-        ".totalSum [title]" #> (BigDecimal(totalSum.toDouble / 60).setScale(2, BigDecimal.RoundingMode.HALF_UP).toDouble + " " + S.?("hour"))
-      ).apply(in)
-    } else {
-      <lift:embed what="no_data"/>
-    }
+    (
+      ".dayHeader" #> dates(taskSheet).map(".dayHeader *" #> _.toString) &
+        ".TaskRow" #> tasks(taskSheet).map { t =>
+        ".taskFullName *" #> t.name & ".taskFullName [title]" #> t.name &
+        ".dailyData" #> dates(taskSheet)
+          .map(d => taskSheet.get(d).flatMap(_.get(t)).map(_.minutes.toString).getOrElse(""))
+          .map(".dailyData *" #> _) &
+        ".taskSum *" #> sumByTasks(taskSheet)(t).minutes
+      } &
+      ".dailySum" #> dates(taskSheet).map(d => ".dailySum *" #> sumByDates(taskSheet)(d).minutes) &
+      ".totalSum *" #> sum(taskSheet).minutes & ".totalSum [title]" #> sum(taskSheet).hours
+    )(in)
   }
+
+  def dates[RD <: ReadablePartial](ts: Map[RD, Map[TaskSheetItem, Duration]]): List[RD] =
+    ts.keys.toList.sorted
+
+  def sumByDates[RD <: ReadablePartial](ts: Map[RD, Map[TaskSheetItem, Duration]]): Map[RD, Duration] =
+    ts.mapValues(m => m.values.foldLeft(Duration.millis(0))(_ + _))
+
+  def tasks[RD <: ReadablePartial](ts: Map[RD, Map[TaskSheetItem, Duration]]): List[TaskSheetItem] =
+    ts.values.flatMap(_.keySet).toSet.toList.sortBy((t: TaskSheetItem) => t.name)
+
+  def sumByTasks[RD <: ReadablePartial](ts: Map[RD, Map[TaskSheetItem, Duration]]): Map[TaskSheetItem, Duration] =
+    ts.values.flatMap(_.toList).toList.foldedMap(Duration.millis(0))(_ + _)
+
+  def sum[RD <: ReadablePartial](ts: Map[RD, Map[TaskSheetItem, Duration]]): Duration =
+    sumByDates(ts).values.foldLeft(Duration.millis(0))(_ + _)
 }
