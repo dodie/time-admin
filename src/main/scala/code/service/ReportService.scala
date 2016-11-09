@@ -154,11 +154,7 @@ object ReportService {
   def taskItemsForDay(d: LocalDate, u: User): List[TaskItemWithDuration] =
     getTaskItemsForDay(daysBetween(now(), d).getDays, u).filter(_.project.exists(_.active.get))
 
-  def taskSheetItemWithDuration(t: TaskItemWithDuration): (TaskSheetItem, Duration) = (new TaskSheetItem(t), new Duration(t.duration))
-
-  case class TaskSheetItem(id: Long, name: String) {
-    def this(t: TaskItemWithDuration) = this(t.taskItem.id, t.taskName.getOrElse(""))
-  }
+  def taskSheetItemWithDuration(t: TaskItemWithDuration): (TaskSheetItem, Duration) = (TaskSheetItem(t), new Duration(t.duration))
 
   /**
    * Aggregates the given TaskItem DTOs.

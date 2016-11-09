@@ -2,8 +2,7 @@ package code.snippet
 
 import scala.xml.NodeSeq
 import code.model.User
-import code.service.ReportService
-import code.service.ReportService.TaskSheetItem
+import code.service.{ReportService, TaskSheetItem}
 import code.snippet.mixin.DateFunctions
 import net.liftweb.util.BindHelpers.strToCssBindPromoter
 import net.liftweb.http.S
