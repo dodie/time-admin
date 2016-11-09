@@ -39,7 +39,10 @@ class TasksheetSnippet extends DateFunctions {
    * Taskshet display.
    */
   def tasksheet(in: NodeSeq): NodeSeq = {
-    val interval = new YearMonth(S.param("date").map(s => DateTime.parse(s)).getOrElse(DateTime.now())).toInterval
+    val date = S.param("date").or(S.getSessionAttribute("date").map(s => DateTime.parse(s)))
+    date.foreach(d => S.setSessionAttribute("date", d.toString))
+
+    val interval = new YearMonth(date.getOrElse(DateTime.now())).toInterval
     val taskSheet = ReportService.taskSheetData(
       User.currentUser.get,
       interval,
