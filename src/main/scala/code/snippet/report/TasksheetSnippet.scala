@@ -45,7 +45,7 @@ class TasksheetSnippet extends DateFunctions {
     )
 
     (
-      ".dayHeader" #> dates(taskSheet).map(".dayHeader *" #> _.toString) &
+      ".dayHeader" #> dates(taskSheet).map(d => ".dayHeader *" #> d.get(d.getFieldTypes.last)) &
         ".TaskRow" #> tasks(taskSheet).map { t =>
         ".taskFullName *" #> t.name & ".taskFullName [title]" #> t.name &
         ".dailyData" #> dates(taskSheet)
