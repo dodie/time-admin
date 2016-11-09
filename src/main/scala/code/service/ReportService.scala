@@ -144,7 +144,7 @@ object ReportService {
   }
 
   def days(i: Interval): List[LocalDate] =
-    (0 to i.toPeriod(PeriodType.days).getDays) map (i.start.toLocalDate.plusDays(_)) toList
+    (0 until i.toPeriod(PeriodType.days).getDays) map (i.start.toLocalDate.plusDays(_)) toList
 
   def taskSheetData[RP <: ReadablePartial](u: User, i: Interval, f: LocalDate => RP): Map[RP, Map[TaskSheetItem,Duration]] =
     days(i).map(d => (f(d), taskItemsForDay(d, u) map taskSheetItemWithDuration))
