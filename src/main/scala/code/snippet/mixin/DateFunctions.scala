@@ -129,6 +129,42 @@ trait DateFunctions {
     ).toString
   }
 
+  def selectedMonthInterval(in: NodeSeq): NodeSeq = {
+    <form style="display:inline;" class="monthSelector">
+      <input type="hidden" id="intervalStart" name="intervalStart" value=""/>
+      <input type="hidden" id="intervalEnd" name="intervalEnd" value=""/>
+      <div autocomplete="off" type="text" value="" id="intervalStartSelector" onchange="$(this).closest('form').submit();"></div>
+      <div autocomplete="off" type="text" value="" id="intervalEndSelector" onchange="$(this).closest('form').submit();"></div>
+      <script>
+        $('#intervalStartSelector').datepicker({ monthIntervalSelectorConfiguration("intervalStartSelector", "intervalStart") });
+        $('#intervalEndSelector').datepicker({ monthIntervalSelectorConfiguration("intervalEndSelector", "intervalEnd") });
+      </script>
+    </form>
+  }
+
+  private def monthIntervalSelectorConfiguration(name: String, valueName: String) = {
+    JsObj(
+      "dateFormat" -> "yy-mm-dd",
+      "maxDate" -> 0,
+      "firstDay" -> 1,
+      "monthNames" -> JsArray(TimeUtils.monthNames.map(x => Str(x))),
+      "monthNamesShort" -> JsArray(TimeUtils.monthNamesShort.map(x => Str(x))),
+      "nextText" -> S.?("button.next"),
+      "prevText" -> S.?("button.previous"),
+      "changeMonth" -> true,
+      "changeYear" -> true,
+      "onChangeMonthYear" -> JsRaw(s"""
+				function(year, month, inst) {
+					if(month < 10) {
+						month = "0" + month
+					}
+					document.getElementById('$valueName').value = year + "-" + month + "-01";
+					$$(document.getElementById('$name')).closest('form').submit();
+				}
+        """)
+    ).toString
+  }
+
   /**
    * Current date as text.
    */
