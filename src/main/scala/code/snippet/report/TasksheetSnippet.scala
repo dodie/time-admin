@@ -2,6 +2,7 @@ package code.snippet
 
 import scala.xml.NodeSeq
 import code.model.User
+import code.service.ReportService.TaskSheet
 import code.service.{ReportService, TaskSheetItem}
 import code.snippet.mixin.DateFunctions
 import net.liftweb.util.BindHelpers.strToCssBindPromoter
@@ -46,7 +47,7 @@ class TasksheetSnippet extends DateFunctions {
     val taskSheet = ReportService.taskSheetData(
       User.currentUser.get,
       interval,
-      d => new MonthDay(d)
+      d => d
     )
 
     (
@@ -62,25 +63,25 @@ class TasksheetSnippet extends DateFunctions {
     )(in)
   }
 
-  def formattedDurationInMinutes[RD <: ReadablePartial](ts: Map[RD, Map[TaskSheetItem, Duration]], d: RD, t: TaskSheetItem): String =
+  def formattedDurationInMinutes[D <: ReadablePartial](ts: TaskSheet[D], d: D, t: TaskSheetItem): String =
     ts.get(d).flatMap(_.get(t)).map(_.minutes.toString).getOrElse("")
 
-  def dates[RD <: ReadablePartial](ts: Map[RD, Map[TaskSheetItem, Duration]]): List[RD] =
+  def dates[D <: ReadablePartial](ts: TaskSheet[D]): List[D] =
     ts.keys.toList.sorted
 
-  def sumByDates[RD <: ReadablePartial](ts: Map[RD, Map[TaskSheetItem, Duration]]): Map[RD, Duration] =
+  def sumByDates[D <: ReadablePartial](ts: TaskSheet[D]): Map[D, Duration] =
     ts.mapValues(m => m.values.foldLeft(Duration.millis(0))(_ + _))
 
-  def tasks[RD <: ReadablePartial](ts: Map[RD, Map[TaskSheetItem, Duration]]): List[TaskSheetItem] =
+  def tasks[D <: ReadablePartial](ts: TaskSheet[D]): List[TaskSheetItem] =
     ts.values.flatMap(_.keySet).toSet.toList.sortBy((t: TaskSheetItem) => t.name)
 
-  def sumByTasks[RD <: ReadablePartial](ts: Map[RD, Map[TaskSheetItem, Duration]]): Map[TaskSheetItem, Duration] =
+  def sumByTasks[D <: ReadablePartial](ts: TaskSheet[D]): Map[TaskSheetItem, Duration] =
     ts.values.flatMap(_.toList).toList.foldedMap(Duration.millis(0))(_ + _)
 
-  def sum[RD <: ReadablePartial](ts: Map[RD, Map[TaskSheetItem, Duration]]): Duration =
+  def sum[D <: ReadablePartial](ts: TaskSheet[D]): Duration =
     sumByDates(ts).values.foldLeft(Duration.millis(0))(_ + _)
 
-  def formatData[RD <: ReadablePartial](i: Interval, d: RD): CssSel =
+  def formatData[D <: ReadablePartial](i: Interval, d: D): CssSel =
     ".dailyData [class]" #> Some(d)
       .filter(hasDayFieldType)
       .flatMap(d => mapToDateTime(i, d))
@@ -88,7 +89,7 @@ class TasksheetSnippet extends DateFunctions {
       .map(_ => "colWeekend")
       .getOrElse("colWeekday")
 
-  def mapToDateTime[RD <: ReadablePartial](i: Interval, d: RD): Option[DateTime] =
+  def mapToDateTime[D <: ReadablePartial](i: Interval, d: D): Option[DateTime] =
     List(d.toDateTime(i.start), d.toDateTime(i.end)).find(i.contains(_))
 
   def isWeekend(d: DateTime): Boolean =
