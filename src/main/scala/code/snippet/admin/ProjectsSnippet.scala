@@ -36,6 +36,8 @@ import code.model.mixin.HierarchicalItem
  */
 class ProjectsSnippet {
 
+  private var template: NodeSeq = null
+
   private var projectTemplate: NodeSeq = null
 
   private var taskTemplate: NodeSeq = null
@@ -53,7 +55,7 @@ class ProjectsSnippet {
     "type=submit [value]" #> (if (showInactiveProjectsAndTasks.get) S.?("projects.hide_inactive") else S.?("projects.show_inactive")) &
       "type=submit" #> SHtml.onSubmitUnit(() => {
         showInactiveProjectsAndTasks.set(!showInactiveProjectsAndTasks.get)
-        reloadPage
+        net.liftweb.http.js.JsCmds.Reload
       })
   }
 
@@ -68,7 +70,7 @@ class ProjectsSnippet {
         ProjectService.moveToRoot(selectedProject.get)
         selectedProject.set(null)
       }
-      net.liftweb.http.js.JsCmds.Reload
+      rerenderProjectTree
     }
 
     "a [onclick]" #> SHtml.ajaxInvoke(moveProjectToRoot _).toJsCmd
@@ -78,6 +80,7 @@ class ProjectsSnippet {
     // TODO: change snippet-based recursion
     projectTemplate = <div class="lift:projectsSnippet.projectList">{ (in \ "div").head }</div>
     taskTemplate = <div class="lift:projectsSnippet.taskList">{ (in \ "div").tail.head }</div>
+    template = in
 
     projectTemplate
   }
@@ -190,9 +193,9 @@ class ProjectsSnippet {
   }
 
   private def editor(hierarchicalItem: HierarchicalItem[_]): JsCmd = {
-    object name extends RequestVar(hierarchicalItem.name.get)
-    object description extends RequestVar(hierarchicalItem.description.get)
-    object active extends RequestVar(hierarchicalItem.active.get)
+    object name extends TransientRequestVar(hierarchicalItem.name.get)
+    object description extends TransientRequestVar(hierarchicalItem.description.get)
+    object active extends TransientRequestVar(hierarchicalItem.active.get)
 
     def submit: JsCmd = {
       hierarchicalItem match {
@@ -211,7 +214,8 @@ class ProjectsSnippet {
             .save
         }
       }
-      net.liftweb.http.js.JsCmds.Reload
+      rerenderProjectTree &
+      closeDialog
     }
 
     SetHtml("inject",
@@ -234,8 +238,8 @@ class ProjectsSnippet {
   }
 
   private def addRootEditor: JsCmd = {
-    object name extends RequestVar("")
-    object description extends RequestVar("")
+    object name extends TransientRequestVar("")
+    object description extends TransientRequestVar("")
 
     def submit: JsCmd = {
       Project.create
@@ -243,7 +247,9 @@ class ProjectsSnippet {
         .description(description.get)
         .active(true)
         .save
-      net.liftweb.http.js.JsCmds.Reload
+
+      rerenderProjectTree &
+      closeDialog
     }
 
     SetHtml("inject",
@@ -262,8 +268,8 @@ class ProjectsSnippet {
   }
 
   private def addChild(parent: Project, isProject: Boolean): JsCmd = {
-    object name extends RequestVar("")
-    object description extends RequestVar("")
+    object name extends TransientRequestVar("")
+    object description extends TransientRequestVar("")
 
     def submit: JsCmd = {
       if (isProject)
@@ -280,7 +286,9 @@ class ProjectsSnippet {
           .description(description.get)
           .active(true)
           .save
-      net.liftweb.http.js.JsCmds.Reload
+
+      rerenderProjectTree &
+      closeDialog
     }
 
     SetHtml("inject",
@@ -305,7 +313,7 @@ class ProjectsSnippet {
     } else {
       selectedProject.set(project)
     }
-    net.liftweb.http.js.JsCmds.Reload
+    rerenderProjectTree
   }
 
   private def moveToProject(project: Project): JsCmd = {
@@ -316,7 +324,7 @@ class ProjectsSnippet {
       TaskService.move(selectedTask.get, project)
       selectedTask.set(null)
     }
-    net.liftweb.http.js.JsCmds.Reload
+    rerenderProjectTree
   }
 
   private def selectTask(task: Task): JsCmd = {
@@ -326,14 +334,15 @@ class ProjectsSnippet {
     } else {
       selectedTask.set(task)
     }
-    net.liftweb.http.js.JsCmds.Reload
+    rerenderProjectTree
   }
 
   private def deleteProject(project: Project): JsCmd = {
     def submit: JsCmd = {
       try {
         ProjectService.delete(project)
-        net.liftweb.http.js.JsCmds.Reload
+        rerenderProjectTree &
+        closeDialog
       } catch {
         case e: Exception => net.liftweb.http.js.JsCmds.Alert(e.getMessage)
       }
@@ -358,7 +367,8 @@ class ProjectsSnippet {
     def submit: JsCmd = {
       try {
         TaskService.delete(task)
-        net.liftweb.http.js.JsCmds.Reload
+        rerenderProjectTree &
+        closeDialog
       } catch {
         case e: Exception => net.liftweb.http.js.JsCmds.Alert(e.getMessage)
       }
@@ -379,15 +389,13 @@ class ProjectsSnippet {
     openDialog
   }
 
-  def reloadPage = S.redirectTo(S.uri)
-
-
-
   val editorTemplate: NodeSeq = Templates("templates-hidden/editor_fragment" :: Nil).get
 
   val editorPropertyTemplate: NodeSeq = Templates("templates-hidden/editor_property_fragment" :: Nil).get
 
-  def closeDialog: JsCmd = net.liftweb.http.js.JsCmds.Reload
+  def closeDialog: JsCmd = JsRaw("$('.modal').modal('hide')").cmd
 
   def openDialog: JsCmd = JsRaw("$('.modal').modal()").cmd
+
+  def rerenderProjectTree: JsCmd = SetHtml("project-tree", projects(template))
 }
