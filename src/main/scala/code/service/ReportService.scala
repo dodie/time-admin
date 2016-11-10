@@ -148,12 +148,12 @@ object ReportService {
 
   type TaskSheet[D <: ReadablePartial] = Map[D, Map[TaskSheetItem,Duration]]
 
-  def taskSheetData[D <: ReadablePartial](u: User, i: Interval, f: LocalDate => D): TaskSheet[D] =
+  def taskSheetData[D <: ReadablePartial](u: Box[User], i: Interval, f: LocalDate => D): TaskSheet[D] =
     days(i).map(d => (f(d), taskItemsForDay(d, u) map taskSheetItemWithDuration))
       .foldedMap(Nil: List[(TaskSheetItem,Duration)])(_ ::: _)
       .mapValues(_.foldedMap(Duration.ZERO)(_ + _))
 
-  def taskItemsForDay(d: LocalDate, u: User): List[TaskItemWithDuration] =
+  def taskItemsForDay(d: LocalDate, u: Box[User]): List[TaskItemWithDuration] =
     getTaskItemsForDay(daysBetween(now(), d).getDays, u).filter(_.project.exists(_.active.get))
 
   def taskSheetItemWithDuration(t: TaskItemWithDuration): (TaskSheetItem, Duration) = (TaskSheetItem(t), new Duration(t.duration))
