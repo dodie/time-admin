@@ -27,12 +27,12 @@
 
 			<div id="content">
 				<ul id="tabs" class="nav nav-tabs" data-tabs="tabs">
-					<li class="active"><a href="#linechart" data-toggle="tab">Line chart</a></li>
-					<li><a href="#table" data-toggle="tab">Table</a></li>
-					<li><a href="#piechart" data-toggle="tab">Pie</a></li>
+					<li class="active"><a href="#timeline" data-toggle="tab"><lift:loc>tasks.view.timeline</lift:loc></a></li>
+					<li><a href="#table" data-toggle="tab"><lift:loc>tasks.view.table</lift:loc></a></li>
+					<li><a href="#distribution" data-toggle="tab"><lift:loc>tasks.view.distribution</lift:loc></a></li>
 				</ul>
 				<div id="my-tab-content" class="tab-content">
-					<div class="tab-pane active" id="linechart">
+					<div class="tab-pane active" id="timeline">
 						<div class="timeLine" id="timeLine">
 							<div class="lift:taskItemSnippet.lineChart">
 								<div class="frag lift:L10n.data-hint-top-right" data-hint-top-right="tasks.click_to_edit">
@@ -89,7 +89,7 @@
 							<br/><br/>
 						</div>
 					</div>
-					<div class="tab-pane" id="piechart">
+					<div class="tab-pane" id="distribution">
 						<div class="tasksPage">
 							<div class="summary">
 								<div class="lift:dailySummarySnippet.summaryForToday">
@@ -148,7 +148,6 @@
 												</tr>
 											</tbody>
 										</table>
-
 										<div class="statusBarCurrentTask">
 											<span class="lift:taskItemSnippet.actualTask">
 												<span><lift:loc>tasks.selected_task</lift:loc></span>
@@ -156,7 +155,6 @@
 												<span class="actualDescription"></span>
 											</span>
 										</div>
-										<span class="lift:help.quickHelp">help.tasks.summary</span>
 									</div>
 								</div>
 							</div>
@@ -171,15 +169,16 @@
 			    <input
 			    	id="taskSearchInput"
 			    	type="text"
-			    	class="TaskFilter lift:L10n.placeholder"
+			    	class="TaskFilter input-sm lift:L10n.placeholder"
 			    	placeholder="tasks.type_to_filter">
 			</div>
 
 			<div id="taskList">
 				<form method="post" class="InlineCommandsForm Pause">
 					<input type="hidden" name="selecttaskid" value="-1"/>
-					<input type="submit" value="tasks.pause" class="btn btn-primary lift:L10n.value"/>
+					<span class="glyphicon glyphicon-pause" aria-hidden="true"></span>
 					<input type="text" class="OfftimeOffsetInput" name="timeoffset" value="" placeholder="hh:mm" autocomplete="off" />
+					<input type="submit" value="tasks.pause" class="btn btn-primary lift:L10n.value"/>
 				</form>
 				<div class="lift:taskItemSnippet.selectableTasks tasks">
 					<div task:taskstyleclass="" task:rowid="">

@@ -228,6 +228,11 @@ input[type="text"] {
 	background-color: white!important;
 }
 
+.summary *[data-hint]:hover:after {
+	width: 500px;
+	white-space: inherit;
+}
+
 .summary .name {
 	font-weight: bold;
 }
@@ -478,6 +483,18 @@ form.button {
 
 .InlineCommandsForm.Pause {
 	padding:0 42px 0 0;
+}
+
+.InlineCommandsForm.Pause .glyphicon {
+	margin-left: 13px;
+	margin-right: 4px;
+	margin-bottom: 23px;
+	font-size: 19px;
+}
+
+
+.InlineCommandsForm.Pause .btn {
+	margin-left: 14px;
 }
 
 .InlineCommandsForm {
