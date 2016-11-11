@@ -130,7 +130,7 @@ trait DateFunctions {
   }
 
   def selectedMonthInterval(in: NodeSeq): NodeSeq = {
-    <form style="display:inline;" class="monthSelector">
+    <div style="display:inline;" class="monthSelector">
       <input type="hidden" id="intervalStart" name="intervalStart" value={S.param("intervalStart").getOrElse(TimeUtils.format(ISO_DATE_FORMAT, TimeUtils.currentMonthStartInMs(0)))}/>
       <input type="hidden" id="intervalEnd" name="intervalEnd" value={S.param("intervalEnd").getOrElse(TimeUtils.format(ISO_DATE_FORMAT, TimeUtils.currentMonthStartInMs(0)))}/>
       <div autocomplete="off" type="text" value={S.param("intervalStart").getOrElse(TimeUtils.format(ISO_DATE_FORMAT, TimeUtils.currentMonthStartInMs(0)))} id="intervalStartSelector" onchange="$(this).closest('form').submit();"></div>
@@ -140,7 +140,7 @@ trait DateFunctions {
         $('#intervalStartSelector').datepicker({ monthIntervalSelectorConfiguration("intervalStartSelector", "intervalStart") });
         $('#intervalEndSelector').datepicker({ monthIntervalSelectorConfiguration("intervalEndSelector", "intervalEnd") });
       </script>
-    </form>
+    </div>
   }
 
   private def monthIntervalSelectorConfiguration(name: String, valueName: String) = {

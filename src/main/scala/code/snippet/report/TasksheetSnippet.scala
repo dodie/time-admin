@@ -64,7 +64,10 @@ class TasksheetSnippet extends DateFunctions {
         )
     }
 
-    renderTaskSheet(interval, d => new YearMonth(d), Empty)(in)
+    val userId = S.param("user").getOrElse("-1").toLong
+    val user = User.findByKey(userId)
+
+    renderTaskSheet(interval, d => new YearMonth(d), user)(in)
   }
 
   def tryParseDate(s: String): Box[DateTime] = Try(DateTime.parse(s)).map(d => Full(d)).getOrElse(Empty)

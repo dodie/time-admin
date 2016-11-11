@@ -84,6 +84,21 @@ class UsersSnippet {
     }
   }
 
+  def selectUser(in: NodeSeq): NodeSeq = {
+    val users = User.findAll.sortWith((a, b) => a.niceName.compareTo(b.niceName) < 0)
+    (
+      "option" #> users.map(user => {
+        if (S.param("user").getOrElse("-1").toLong == user.id.get)
+          "option *" #> user.niceName &
+          "option [value]" #> user.id.get &
+          "option [selected]" #> "true"
+        else
+          "option *" #> user.niceName &
+          "option [value]" #> user.id.get
+      })
+    ).apply(in)
+  }
+
   /**
    * Renders a list of the users and permissions.
    */
