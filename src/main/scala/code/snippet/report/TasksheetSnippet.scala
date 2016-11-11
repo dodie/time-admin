@@ -48,13 +48,10 @@ class TasksheetSnippet extends DateFunctions {
     renderTaskSheet(interval, d => d, User.currentUser)(in)
   }
 
-  def adminTasksheet(in: NodeSeq): NodeSeq = {
+  def tasksheetSummary(in: NodeSeq): NodeSeq = {
     val interval = try {
-      val intervalStart = S.param("intervalStart").or(S.getSessionAttribute("intervalStart").flatMap(tryParseDate))
-      intervalStart.foreach(d => S.setSessionAttribute("intervalStart", d.toString))
-
-      val intervalEnd = S.param("intervalEnd").or(S.getSessionAttribute("intervalEnd").flatMap(tryParseDate))
-      intervalEnd.foreach(d => S.setSessionAttribute("intervalEnd", d.toString))
+      val intervalStart = S.param("intervalStart").flatMap(tryParseDate)
+      val intervalEnd = S.param("intervalEnd").flatMap(tryParseDate)
 
       new Interval(
         new YearMonth(intervalStart.getOrElse(DateTime.now())).toInterval.start,
