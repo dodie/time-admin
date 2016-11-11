@@ -741,7 +741,7 @@ form.button {
 	background: #DADADA;
 }
 
-.tasksheetTable .colSum, .tasksheetTable .rowSum, .tasksheetTable .taskSum {
+.tasksheetTable .taskSum {
 	background: rgb(250,250,210);
 }
 
