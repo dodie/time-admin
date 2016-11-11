@@ -49,16 +49,23 @@ class TasksheetSnippet extends DateFunctions {
   }
 
   def adminTasksheet(in: NodeSeq): NodeSeq = {
-    val intervalStart = S.param("intervalStart").or(S.getSessionAttribute("intervalStart").flatMap(tryParseDate))
-    intervalStart.foreach(d => S.setSessionAttribute("intervalStart", d.toString))
+    val interval = try {
+      val intervalStart = S.param("intervalStart").or(S.getSessionAttribute("intervalStart").flatMap(tryParseDate))
+      intervalStart.foreach(d => S.setSessionAttribute("intervalStart", d.toString))
 
-    val intervalEnd = S.param("intervalEnd").or(S.getSessionAttribute("intervalEnd").flatMap(tryParseDate))
-    intervalEnd.foreach(d => S.setSessionAttribute("intervalEnd", d.toString))
+      val intervalEnd = S.param("intervalEnd").or(S.getSessionAttribute("intervalEnd").flatMap(tryParseDate))
+      intervalEnd.foreach(d => S.setSessionAttribute("intervalEnd", d.toString))
 
-    val interval = new Interval(
-      new YearMonth(intervalStart.getOrElse(DateTime.now())).toInterval.start,
-      new YearMonth(intervalEnd.getOrElse(DateTime.now())).toInterval.end
-    )
+      new Interval(
+        new YearMonth(intervalStart.getOrElse(DateTime.now())).toInterval.start,
+        new YearMonth(intervalEnd.getOrElse(DateTime.now())).toInterval.end
+      )
+    } catch {
+      case e: Exception => new Interval(
+          new YearMonth(DateTime.now()).toInterval.start,
+          new YearMonth(DateTime.now()).toInterval.end
+        )
+    }
 
     renderTaskSheet(interval, d => new YearMonth(d), Empty)(in)
   }
