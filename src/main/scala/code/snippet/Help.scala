@@ -7,6 +7,7 @@ import net.liftweb.http.S
 /**
  * Help, description and tutorial displaying component.
  * @author David Csakvari
+ * @deprecated Too oldschool, try to build easy to use UI-s instead.
  */
 class Help {
 

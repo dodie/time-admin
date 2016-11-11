@@ -59,22 +59,22 @@ function setTaskItemEditorPopup(taskItemId, timeOffset, selectedTaskId) {
 	document.getElementById('tiemode').value = 'taskitemedit';
 }
 
-function toggleDiagram() {
-	var timelineStyle = document.getElementById('timeLine').style;
-	var logStyle = document.getElementById('taskItemLogMainHolder').style;
-	var toggleDiagramTypeButton = document.getElementById('toggleDiagramTypeButton');
-	if (timelineStyle.display == "none") {
-		timelineStyle.display = "block";
-		logStyle.display = "none";
-		toggleDiagramTypeButton.value = loc.get('tasks.view.table');
-		localStorage.setItem("ta_diagram_table", "false");
-	} else {
-		timelineStyle.display = "none";
-		logStyle.display = "block";
-		toggleDiagramTypeButton.value = loc.get('tasks.view.timeline');;
-		localStorage.setItem("ta_diagram_table", "true");
-	} 
-}
+//function toggleDiagram() {
+	//var timelineStyle = document.getElementById('timeLine').style;
+	//var logStyle = document.getElementById('taskItemLogMainHolder').style;
+	//var toggleDiagramTypeButton = document.getElementById('toggleDiagramTypeButton');
+	//if (timelineStyle.display == "none") {
+		//timelineStyle.display = "block";
+		//logStyle.display = "none";
+		//toggleDiagramTypeButton.value = loc.get('tasks.view.table');
+		//localStorage.setItem("ta_diagram_table", "false");
+	//} else {
+		//timelineStyle.display = "none";
+		//logStyle.display = "block";
+		//toggleDiagramTypeButton.value = loc.get('tasks.view.timeline');;
+		//localStorage.setItem("ta_diagram_table", "true");
+	//} 
+//}
 
 function doChangeTaskFilterSearchSize() {
 	var elem = document.getElementById('taskSearchInput');

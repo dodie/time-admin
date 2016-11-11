@@ -60,7 +60,7 @@ trait DateFunctions {
    */
   def selectedDay(in: NodeSeq): NodeSeq = {
     <form style="display:inline;">
-      <input autocomplete="off" style="display:inline;" type="text" value={ TimeUtils.format(ISO_DATE_FORMAT, TimeUtils.currentDayStartInMs(offsetInDays)) } name={ PARAM_DATE } id="dateSelector" onchange="this.form.submit();"/>
+      <input class="input-sm" autocomplete="off" style="display:inline;" type="text" value={ TimeUtils.format(ISO_DATE_FORMAT, TimeUtils.currentDayStartInMs(offsetInDays)) } name={ PARAM_DATE } id="dateSelector" onchange="this.form.submit();"/>
       <script>
         $('#dateSelector').datepicker({ daySelectorConfiguration }
         );
