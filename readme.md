@@ -20,7 +20,14 @@ Before the start of the application, the dependency lookup and the compilation o
 To trigger the compilation manually, issue the *compile* command.
 
 For IDE support, you can generate Eclipse project files with *eclipse*.
-To start an interactive Scala shell, enter *console*.
+To start an interactive Scala shell, enter *console*. In this console
+you can import Lift modules and your own code to experiment with.
+Booting the Lift application is required if you’re using core Lift
+infrastructures such as Mapper or accessing property files
+in the console session:
+```
+scala> new bootstrap.liftweb.Boot().boot
+```
 
 Timeadmin has a multitude of automated tests.
 Unit tests check functions and independent classes or small clusters of classes.
