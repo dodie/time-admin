@@ -356,6 +356,7 @@ input[type="text"] {
 	padding: 15px 25px;
 	border: 1px solid #ddd;
 	border-top: 0;
+	min-height: 105px;
 }
 
 .t0asksHeader {
@@ -380,17 +381,6 @@ input[type="text"] {
 	clear: both;
 }
 
-.timeLine {
-	height: 70px;
-	margin-bottom: 10px;
-	margin-left: auto;
-	margin-right: auto;
-	position: relative;
-	width: 99%;
-	position: relative;
-	top: 10px;
-}
-
 .timeLine .frag {
 	float: left;
 	height: 10px;
@@ -398,14 +388,8 @@ input[type="text"] {
 	position: relative;
 }
 
-#taskItemLogMainHolder {
-	position: relative;
-	top: 10px;
-	width: 99%;
-	margin-left: auto;
-	margin-right: auto;
-	margin-bottom: 10px;
-	min-height: 70px;
+#taskItemLogMainHolder th {
+	border: 0;
 }
 
 #tieselecttaskid {
@@ -429,6 +413,10 @@ form.button {
 	float: left; 
 	padding-left: 5px; 
 	padding-top: 5px;
+}
+
+.timeLine {
+	margin: 5px;
 }
 
 .timeLine .fragBar {

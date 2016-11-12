@@ -1,8 +1,11 @@
 $(document).ready(function() {
-	if ($(".day").length > 1) {
+	var labels = $(".day").map(function(){return this.innerHTML + ".";});
+	var data = $(".sum").map(function(){return this.innerHTML.replace(",", ".");}).filter(function(n,v) {return !isNaN(v);});
+
+	if (data.length > 1) {
 		$("#time-sum-hour-holder").show();
 		var lineChartData = {
-			labels : $(".day").map(function(){return this.innerHTML + ".";}),
+			labels : labels,
 			datasets : [
 				{
 					label: "8-hour workday",
@@ -12,7 +15,7 @@ $(document).ready(function() {
 					pointStrokeColor : "#fff",
 					pointHighlightFill : "#fff",
 					pointHighlightStroke : "rgba(220,220,220,1)",
-					data : $(".sum").map(function(){return 8;})
+					data : data.map(function(){return 8;})
 				},
 				{
 					label: "Hours",
@@ -22,7 +25,7 @@ $(document).ready(function() {
 					pointStrokeColor : "#fff",
 					pointHighlightFill : "#fff",
 					pointHighlightStroke : "rgba(220,220,220,1)",
-					data : $(".sum").map(function(){return this.innerHTML.replace(",", ".");})
+					data : data
 				}
 			]
 		}
