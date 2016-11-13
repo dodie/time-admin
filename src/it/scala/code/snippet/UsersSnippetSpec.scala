@@ -31,6 +31,7 @@ class UsersSnippetSpec extends FlatSpec with Matchers {
   "Users snippet" must "render current user nice name" in {
     val xml = <div class="lift:usersSnippet.loginBox">
                 Hi
+                <span class="ActualUserName"></span>
                 <span class="ActualUserEmail"></span>
                 !
               </div>
@@ -38,7 +39,7 @@ class UsersSnippetSpec extends FlatSpec with Matchers {
     val snippet = new UsersSnippet()
     val output = snippet.currentUser(xml)
 
-    val actualUserNode = output \ "span" filter (n => (n \ "@class").text == "ActualUserEmail")
+    val actualUserNode = output \ "span" filter (n => (n \ "@class").text == "ActualUserName")
     actualUserNode.text should include(testUserName)
   }
 
