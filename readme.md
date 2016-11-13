@@ -1,6 +1,6 @@
 *Timeadmin* is a simple web based tool for time tracking to measure the time spent
 on various tasks by collaborators working on small or large projects.
-From the collected data the tool can generate various reports to the user, such as
+From the collected data the tool can generate reports, such as
 timeline of activities in a given day, or monthly summaries.
 
 Generate monthly timesheets from the collected data, that can be personalized with
@@ -8,6 +8,8 @@ an Excel template.
 
 
 ## Getting started with development
+
+![Build status](https://codeship.com/projects/4f07ee90-0c8c-0133-c466-26254b7e5948/status?branch=master "Build status")
 
 Timeadmin based on the [Lift web framework](http://liftweb.net/) and the [Simple Build Tool (SBT)](http://www.scala-sbt.org/).
 Various build tasks can be issued from the SBT shell (./sbt or sbt.bat in the project root directory).
