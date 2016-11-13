@@ -2,17 +2,15 @@
 	<script src="../js/Chart.min.js"></script>
 	<script src="../js/client/timesheet.js"></script>
 	<div>
-		<div class="statusBar">
-			<div class="statusbar-button-row">
-				<a class="btn btn-primary lift:timesheetSnippet.timesheetExportLink"><lift:loc>download</lift:loc></a>
-			</div>
-			<div style="text-align: right; padding-right: 10px;">
-				<div>
-					<span class="lift:timesheetSnippet.selectedMonth"></span>
-				</div>
+		<div style="text-align: right; padding-right: 10px;">
+			<div>
+				<span class="lift:timesheetSnippet.selectedMonth"></span>
 			</div>
 		</div>
 		<h1>
+			<a class="btn btn-primary lift:timesheetSnippet.timesheetExportLink">
+				<span class="glyphicon glyphicon-download-alt" aria-hidden="true"></span>
+			</a>
 			<lift:loc>timesheet.title</lift:loc> - <span class="lift:timesheetSnippet.currentYear"></span> <span class="lift:timesheetSnippet.currentMonth"></span>
 			<span class="lift:help.quickHelp">help.timesheet</span>
 		</h1>

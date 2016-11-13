@@ -1,15 +1,13 @@
 <lift:surround with="client" at="content">
 	<div>
-		<div class="statusBar">
-			<div style="text-align: right; padding-right: 10px;">
-				<form>
-					<select class="form-control" style="display:inline;width:auto;" onchange="$(this).closest('form').submit();" name="user">
-						<option value="-1">Mindenki</option>
-						<option value="id" class="lift:usersSnippet.selectUser">user name</option>
-					</select>
-					<span class="lift:tasksheetSnippet.selectedMonthInterval"></span>
-				</form>
-			</div>
+		<div style="text-align: right; padding-right: 10px;">
+			<form>
+				<select class="form-control" style="display:inline;width:auto;" onchange="$(this).closest('form').submit();" name="user">
+					<option value="-1">Mindenki</option>
+					<option value="id" class="lift:usersSnippet.selectUser">user name</option>
+				</select>
+				<span class="lift:tasksheetSnippet.selectedMonthInterval"></span>
+			</form>
 		</div>
 		<h1><lift:loc>tasksheetsummary.title</lift:loc></h1>
 		<div class="sheetholder">

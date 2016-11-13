@@ -89,7 +89,8 @@
  * ----- */
 
 .top-menu {
-	background-color: #004dea;
+	background: #2fa4e7;
+	background: linear-gradient(#54b4eb, #2fa4e7 60%, #1d9ce5);
 }
 
 .top-menu a {
@@ -102,7 +103,7 @@
 }
 
 .top-menu .nav>li>a:focus, .top-menu .nav>li>a:hover {
-	background-color: #5e8deb;
+	background-color: #178ACC;
 }
 
 .top-menu .navbar-nav li>span {
@@ -110,16 +111,19 @@
 	position: relative;
 	display: block;
 	padding: 15px;
-	background-color: #5e8deb;
+	background-color: #178ACC;
 }
 
 .top-menu .navbar-toggle .icon-bar {
-	background-color: #5e8deb;
+	background-color: white;
 }
 
+.top-menu .navbar-toggle {
+	border: 1px solid #178ACC;
+}
 
 .top-menu .nav .open>a, .top-menu .nav .open>a:focus, .top-menu .nav .open>a:hover {
-  background-color: #5e8deb;
+  background-color: #178ACC;
 }
 
 /* -----
@@ -700,7 +704,7 @@ form.button {
 	text-decoration: none;
 }
 .projectsPage .project.selected, .projectsPage .task.selected {
-	background: #5e8deb;
+	background: #178ACC;
 	border-radius: 5px;
 }
 

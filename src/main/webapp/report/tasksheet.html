@@ -1,16 +1,15 @@
 <lift:surround with="client" at="content">
 	<div>
-		<div class="statusBar">
-			<div class="statusbar-button-row">
-				<a class="btn btn-primary lift:tasksheetSnippet.tasksheetExportLink"><lift:loc>download</lift:loc></a>
-			</div>
-			<div style="text-align: right; padding-right: 10px;">
-				<div>
-					<span class="lift:tasksheetSnippet.selectedMonth"></span>
-				</div>
+		<div style="text-align: right; padding-right: 10px;">
+			<div>
+				<span class="lift:tasksheetSnippet.selectedMonth"></span>
 			</div>
 		</div>
-		<h1><lift:loc>tasksheet.title</lift:loc> - <span class="lift:tasksheetSnippet.currentYear"></span> <span class="lift:tasksheetSnippet.currentMonth"></span></h1>
+		<h1>
+			<a class="btn btn-primary lift:tasksheetSnippet.tasksheetExportLink">
+				<span class="glyphicon glyphicon-download-alt" aria-hidden="true"></span>
+			</a>
+			<lift:loc>tasksheet.title</lift:loc> - <span class="lift:tasksheetSnippet.currentYear"></span> <span class="lift:tasksheetSnippet.currentMonth"></span></h1>
 		<div class="sheetholder">
 			<table class="lift:tasksheetSnippet.tasksheet tasksheetTable table table-striped">
 				<colgroup>
