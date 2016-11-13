@@ -742,10 +742,6 @@ form.button {
 /*
  *	TaskSheet
  */
-.sheetholder{
-	font-size: 0.8em;
-	overflow-x: auto;
-}
 
 .tasksheetTable {
 	width: 100%;
@@ -759,8 +755,26 @@ form.button {
 
 .timesheetTable {
 	margin: 10px auto;
-	font-size: 150%;
-	width: 80%
+}
+
+.timesheetTable .QuickHelp {
+	background: transparent;
+	color: #219EE6;
+	font-size: 13px;
+	padding: 0;
+}
+
+.timesheetTable .QuickHelp[data-hint]:hover:after {
+	width: 200px;
+}
+
+.timesheetTable th {
+	white-space: nowrap;
+}
+
+.timesheetTable .table-footer{
+	border-top: 2px solid black;
+	font-weight: bold;
 }
 
 .diagramholder > div {

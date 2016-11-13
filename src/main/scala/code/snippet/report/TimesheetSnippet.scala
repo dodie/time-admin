@@ -35,7 +35,8 @@ class TimesheetSnippet extends DateFunctions {
               ".to *" #> row._3 &
               ".sum *" #> row._4
           }
-        )
+        ) &
+        ".sumtotal *" #> timesheetData.map(row => row._4.toDouble).sum
       ).apply(in)
     } else {
       <lift:embed what="no_data"/>
