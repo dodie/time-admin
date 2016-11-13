@@ -52,19 +52,19 @@ class Step extends ScalaDsl with EN with Matchers {
   }
 
   Then("""^I can not see the Client pages$""") { () =>
-    mainMenu should contain noneOf ("Tasks", "Daily summary", "Tasksheet", "Timesheet")
+    mainMenu should contain noneOf ("Tasks", "Timesheet", "Tasksheet")
   }
 
   Then("""^I can see the Client pages$""") { () =>
-    mainMenu should contain allOf ("Tasks", "Daily summary", "Tasksheet", "Timesheet")
+    mainMenu should contain allOf ("Tasks", "Timesheet", "Tasksheet")
   }
 
   Then("""^I can not see the Admin pages$""") { () =>
-    mainMenu should contain noneOf ("Projects", "Users")
+    mainMenu should contain noneOf ("Projects", "Users", "Tasksheet summary")
   }
 
   Then("""^I can see the Admin pages$""") { () =>
-    mainMenu should contain allOf ("Projects", "Users")
+    mainMenu should contain allOf ("Projects", "Users", "Tasksheet summary")
   }
 
   Then("""^I can not see the User pages$""") { () =>
@@ -172,7 +172,7 @@ class Step extends ScalaDsl with EN with Matchers {
   }
 
   Then("""^my first and last name should be updated$""") { () =>
-    val displayedName = driver.findElement(By.cssSelector(".ActualUserEmail")).getAttribute("innerHTML")
+    val displayedName = driver.findElement(By.cssSelector(".ActualUserName")).getAttribute("innerHTML")
     displayedName should include(newFirstName + " " + newLastName)
   }
 
@@ -280,7 +280,7 @@ class Step extends ScalaDsl with EN with Matchers {
 
   Then("""^the user can see the Client pages$""") { () =>
     login(someNewUser.email.get, "abc123")
-    mainMenu should contain allOf ("Tasks", "Daily summary", "Tasksheet", "Timesheet")
+    mainMenu should contain allOf ("Tasks", "Tasksheet", "Timesheet")
   }
 
   When("""^I add Admin role to the User$""") { () =>
@@ -290,7 +290,7 @@ class Step extends ScalaDsl with EN with Matchers {
 
   Then("""^the user can see the Admin pages$""") { () =>
     login(someNewUser.email.get, "abc123")
-    mainMenu should contain allOf ("Projects", "Users")
+    mainMenu should contain allOf ("Projects", "Users", "Tasksheet summary")
   }
 
   Given("""^there is a Client user$""") { () =>
@@ -305,7 +305,7 @@ class Step extends ScalaDsl with EN with Matchers {
 
   Then("""^the user can not see the Client pages$""") { () =>
     login(someNewUser.email.get, "abc123")
-    mainMenu should contain noneOf ("Tasks", "Daily summary", "Tasksheet", "Timesheet")
+    mainMenu should contain noneOf ("Tasks", "Tasksheet", "Timesheet")
   }
 
   Given("""^there is an Admin user$""") { () =>
@@ -320,7 +320,7 @@ class Step extends ScalaDsl with EN with Matchers {
 
   Then("""^the user can not see the Admin pages$""") { () =>
     login(someNewUser.email.get, "abc123")
-    mainMenu should contain noneOf ("Projects", "Users")
+    mainMenu should contain noneOf ("Projects", "Users", "Tasksheet summary")
   }
 
   def randomUser = {

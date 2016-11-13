@@ -27,7 +27,8 @@ class UsersSnippet {
   def currentUser(in: NodeSeq): NodeSeq = {
     if (!User.currentUser.isEmpty) {
       (
-        ".ActualUserEmail *" #> User.currentUser.get.niceName
+        ".ActualUserEmail *" #> User.currentUser.get.email &
+        ".ActualUserName *" #> (User.currentUser.get.firstName + " " + User.currentUser.get.lastName)
       ).apply(in)
     } else {
       NodeSeq.Empty

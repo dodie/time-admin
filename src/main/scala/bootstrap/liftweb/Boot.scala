@@ -96,18 +96,14 @@ class Boot {
 
       // client pages
       Menu(S ? "page.tasks") / "client" / "tasks" >> If(clientUser _, S ? "no_permission"),
-
-      // report pages
-      Menu(S ? "page.dailysummary") / "report" / "dailysummary" >> If(clientUser _, S ? "no_permission"),
-      Menu(S ? "page.tasksheet") / "report" / "tasksheet" >> If(clientUser _, S ? "no_permission"),
-      Menu(S ? "page.tasksheet.summary") / "report" / "tasksheetsummary" >> If(adminUser _, S ? "no_permission"),
       Menu(S ? "page.timesheet") / "report" / "timesheet" >> If(clientUser _, S ? "no_permission"),
+      Menu(S ? "page.tasksheet") / "report" / "tasksheet" >> If(clientUser _, S ? "no_permission"),
 
       // admin pages
+      Menu(S ? "page.tasksheet.summary") / "report" / "tasksheetsummary" >> If(adminUser _, S ? "no_permission"),
       Menu(S ? "page.projects") / "admin" / "projects" >> If(adminUser _, S ? "no_permission"),
       Menu(S ? "page.users") / "admin" / "users" >> If(adminUser _, S ? "no_permission"),
       Menu(S ? "page.edituser") / "admin" / "user" >> If(adminUser _, S ? "no_permission") >> Hidden,
-      //Menu(S ? "page.stats") / "admin" / "usertasks" >> If(adminUser _, S ? "no_permission"), // admin statistics page - refactor needed
 
       // user pages
       Menu(S ? "page.settings") / "client" / "settings" >> If((!anonymousUser) _, S ? "not_logged_in") >> Hidden,

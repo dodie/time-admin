@@ -1,3 +1,23 @@
+$(function(){
+	var hash = window.location.hash;
+	hash && $('ul.nav a[href="' + hash + '"]').tab('show');
+
+	$('.nav-tabs a').click(function (e) {
+		$(this).tab('show');
+		var scrollmem = $('body').scrollTop() || $('html').scrollTop();
+		window.location.hash = this.hash;
+		$('html,body').scrollTop(scrollmem);
+	});
+
+	$("*[data-tab-aware]").each(function() {
+		$(this).click(function() {
+			this.href = this.href + window.location.hash;
+		});
+	});
+
+	$("#content").show();
+});
+
 function sendForm(id) {
     $("#" + id).submit();
 }
@@ -59,22 +79,22 @@ function setTaskItemEditorPopup(taskItemId, timeOffset, selectedTaskId) {
 	document.getElementById('tiemode').value = 'taskitemedit';
 }
 
-function toggleDiagram() {
-	var timelineStyle = document.getElementById('timeLine').style;
-	var logStyle = document.getElementById('taskItemLogMainHolder').style;
-	var toggleDiagramTypeButton = document.getElementById('toggleDiagramTypeButton');
-	if (timelineStyle.display == "none") {
-		timelineStyle.display = "block";
-		logStyle.display = "none";
-		toggleDiagramTypeButton.value = loc.get('tasks.view.table');
-		localStorage.setItem("ta_diagram_table", "false");
-	} else {
-		timelineStyle.display = "none";
-		logStyle.display = "block";
-		toggleDiagramTypeButton.value = loc.get('tasks.view.timeline');;
-		localStorage.setItem("ta_diagram_table", "true");
-	} 
-}
+//function toggleDiagram() {
+	//var timelineStyle = document.getElementById('timeLine').style;
+	//var logStyle = document.getElementById('taskItemLogMainHolder').style;
+	//var toggleDiagramTypeButton = document.getElementById('toggleDiagramTypeButton');
+	//if (timelineStyle.display == "none") {
+		//timelineStyle.display = "block";
+		//logStyle.display = "none";
+		//toggleDiagramTypeButton.value = loc.get('tasks.view.table');
+		//localStorage.setItem("ta_diagram_table", "false");
+	//} else {
+		//timelineStyle.display = "none";
+		//logStyle.display = "block";
+		//toggleDiagramTypeButton.value = loc.get('tasks.view.timeline');;
+		//localStorage.setItem("ta_diagram_table", "true");
+	//} 
+//}
 
 function doChangeTaskFilterSearchSize() {
 	var elem = document.getElementById('taskSearchInput');
