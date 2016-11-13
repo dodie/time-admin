@@ -100,6 +100,7 @@ class Boot {
       // report pages
       Menu(S ? "page.dailysummary") / "report" / "dailysummary" >> If(clientUser _, S ? "no_permission"),
       Menu(S ? "page.tasksheet") / "report" / "tasksheet" >> If(clientUser _, S ? "no_permission"),
+      Menu(S ? "page.tasksheet.summary") / "report" / "tasksheetsummary" >> If(adminUser _, S ? "no_permission"),
       Menu(S ? "page.timesheet") / "report" / "timesheet" >> If(clientUser _, S ? "no_permission"),
 
       // admin pages

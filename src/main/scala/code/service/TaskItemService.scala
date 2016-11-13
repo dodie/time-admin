@@ -5,26 +5,15 @@ import java.util.Date
 
 import scala.collection.mutable.ListBuffer
 import scala.util.Sorting
-
 import org.joda.time.DateTime
-
 import code.commons.TimeUtils
 import code.model.TaskItem
 import code.model.User
 import code.model.Project
 import net.liftweb.common.Box.box2Option
-import net.liftweb.common.Full
+import net.liftweb.common.{Box, Full}
 import net.liftweb.mapper.MappedField.mapToType
-import net.liftweb.mapper.Ascending
-import net.liftweb.mapper.By
-import net.liftweb.mapper.{ By_< => By_< }
-import net.liftweb.mapper.{ By_<= => By_<= }
-import net.liftweb.mapper.{ By_> => By_> }
-import net.liftweb.mapper.{ By_>= => By_>= }
-import net.liftweb.mapper.Descending
-import net.liftweb.mapper.MaxRows
-import net.liftweb.mapper.NotBy
-import net.liftweb.mapper.OrderBy
+import net.liftweb.mapper._
 
 /**
  * TaskItem data handling and conversion service.
@@ -41,11 +30,13 @@ object TaskItemService {
     getTaskItemsForDay(offset).lastOption
   }
 
+  def alwaysTrue[T <: Mapper[T]]: QueryParam[T] = BySql[T]("1=1", IHaveValidatedThisSQL("suliatis", "2016-11-10"))
+
   /**
    * Returns a sequence with the task item entries on the given day.
    * The ordering is determined by the item's start time.
    */
-  def getTaskItemsForDay(offset: Int) = {
+  def getTaskItemsForDay(offset: Int, user: Box[User] = User.currentUser): List[TaskItemWithDuration] = {
     /**
      * Takes a list of consecutive TaskItems and converts them to a TaskItemWithDuration.
      * The function calculates the durations of the task items.
@@ -71,7 +62,7 @@ object TaskItemService {
     // task items for the given day
     var list = taskItemsToTaskItemDtos(
       TaskItem.findAll(OrderBy(TaskItem.start, Ascending),
-        By(TaskItem.user, User.currentUser.get),
+        user.map(u => By(TaskItem.user, u)).getOrElse(alwaysTrue),
         By_<(TaskItem.start, TimeUtils.currentDayEndInMs(offset)),
         By_>=(TaskItem.start, TimeUtils.currentDayStartInMs(offset))))
 
@@ -81,15 +72,13 @@ object TaskItemService {
       val lastItem = taskItemsToTaskItemDtos(
         TaskItem.findAll(OrderBy(TaskItem.start, Descending),
           MaxRows(1),
-          By(TaskItem.user, User.currentUser.get),
+          user.map(u => By(TaskItem.user, u)).getOrElse(alwaysTrue),
           By_<(TaskItem.start, TimeUtils.currentDayStartInMs(offset))))
       // if the lastItem is not Pause, then it will be truncated to the given day, and will count in the result 
       if (!lastItem.isEmpty && lastItem.head.taskItem.id != 0) {
         val dto = TaskItemWithDuration(
-          TaskItem.create
-            .user(User.currentUser.get)
-            .task(lastItem.head.taskItem.task.get)
-            .start(TimeUtils.currentDayStartInMs(offset)),
+          user.map(u => TaskItem.create.user(u).task(lastItem.head.taskItem.task.get).start(TimeUtils.currentDayStartInMs(offset)))
+              .getOrElse(TaskItem.create.task(lastItem.head.taskItem.task.get).start(TimeUtils.currentDayStartInMs(offset))),
           {
             if (list.isEmpty) (TimeUtils.currentTime - (TimeUtils.currentDayStartInMs(offset) + 1))
             else (list.head.taskItem.start.get - (TimeUtils.currentDayStartInMs(offset) + 1))
@@ -104,7 +93,7 @@ object TaskItemService {
 
     if (list.isEmpty) {
       // if the result is empty, then return a list that contains only a Pause item
-      List(TaskItemWithDuration(TaskItem.create.user(User.currentUser.get).start(TimeUtils.currentDayStartInMs(offset) + 1), 0))
+      List(TaskItemWithDuration(TaskItem.create.user(user).start(TimeUtils.currentDayStartInMs(offset) + 1), 0))
     } else {
       // if the given day is not today, and the last task item is not Pause,
       // then it will be truncated to the given day, and will count in the result
@@ -112,10 +101,11 @@ object TaskItemService {
       if (offset != 0 && list.last.taskItem.task.get != 0) {
         list.last.duration = TimeUtils.currentDayEndInMs(offset) - 1 - list.last.taskItem.start.get
         list = list ::: List(TaskItemWithDuration(
-          TaskItem.create.user(User.currentUser.get).start(TimeUtils.currentDayEndInMs(offset) - 1),
+          user.map(u => TaskItem.create.user(u).start(TimeUtils.currentDayEndInMs(offset) - 1))
+              .getOrElse(TaskItem.create.start(TimeUtils.currentDayEndInMs(offset) - 1)),
           0))
       }
-      list.toSeq
+      list
     }
   }
 

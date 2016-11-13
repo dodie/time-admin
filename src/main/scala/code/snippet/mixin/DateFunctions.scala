@@ -129,6 +129,45 @@ trait DateFunctions {
     ).toString
   }
 
+  def selectedMonthInterval(in: NodeSeq): NodeSeq = {
+    <div style="display:inline;" class="monthSelector">
+      <input type="hidden" id="intervalStart" name="intervalStart" value={S.param("intervalStart").getOrElse(TimeUtils.format(ISO_DATE_FORMAT, TimeUtils.currentMonthStartInMs(0)))}/>
+      <input type="hidden" id="intervalEnd" name="intervalEnd" value={S.param("intervalEnd").getOrElse(TimeUtils.format(ISO_DATE_FORMAT, TimeUtils.currentMonthStartInMs(0)))}/>
+      <div autocomplete="off" type="text" value={S.param("intervalStart").getOrElse(TimeUtils.format(ISO_DATE_FORMAT, TimeUtils.currentMonthStartInMs(0)))} id="intervalStartSelector" onchange="$(this).closest('form').submit();"></div>
+      <span> - </span>
+      <div autocomplete="off" type="text" value={S.param("intervalEnd").getOrElse(TimeUtils.format(ISO_DATE_FORMAT, TimeUtils.currentMonthStartInMs(0)))} id="intervalEndSelector" onchange="$(this).closest('form').submit();"></div>
+      <script>
+        $('#intervalStartSelector').datepicker({ monthIntervalSelectorConfiguration("intervalStartSelector", "intervalStart") });
+        $('#intervalEndSelector').datepicker({ monthIntervalSelectorConfiguration("intervalEndSelector", "intervalEnd") });
+      </script>
+    </div>
+  }
+
+  private def monthIntervalSelectorConfiguration(name: String, valueName: String) = {
+    JsObj(
+      "dateFormat" -> "yy-mm-dd",
+      "maxDate" -> (if (valueName == "intervalStart") S.param("intervalEnd").getOrElse(TimeUtils.format(ISO_DATE_FORMAT, TimeUtils.currentMonthStartInMs(0))) else "2200-01-01").toString,
+      "minDate" -> (if (valueName == "intervalEnd") S.param("intervalStart").getOrElse(TimeUtils.format(ISO_DATE_FORMAT, TimeUtils.currentMonthStartInMs(0))) else "1900-01-01").toString,
+      "firstDay" -> 1,
+      "monthNames" -> JsArray(TimeUtils.monthNames.map(x => Str(x))),
+      "monthNamesShort" -> JsArray(TimeUtils.monthNamesShort.map(x => Str(x))),
+      "nextText" -> S.?("button.next"),
+      "prevText" -> S.?("button.previous"),
+      "changeMonth" -> true,
+      "changeYear" -> true,
+      "defaultDate" -> JsRaw("new Date('" + S.param(valueName).getOrElse(TimeUtils.format(ISO_DATE_FORMAT, TimeUtils.currentMonthStartInMs(0))) + "')"),
+      "onChangeMonthYear" -> JsRaw(s"""
+				function(year, month, inst) {
+					if(month < 10) {
+						month = "0" + month
+					}
+					document.getElementById('$valueName').value = year + "-" + month + "-01";
+					$$(document.getElementById('$name')).closest('form').submit();
+				}
+        """)
+    ).toString
+  }
+
   /**
    * Current date as text.
    */

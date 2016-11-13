@@ -126,8 +126,16 @@
 	padding: 0;
 }
 
+.ui-datepicker .ui-datepicker-prev, .ui-datepicker .ui-datepicker-next {
+	color: transparent;
+}
+
 .monthSelector .ui-datepicker-calendar {
 	display: none;
+}
+
+.monthSelector > div {
+	display: inline-block;
 }
 
 /*-------
@@ -741,7 +749,7 @@ form.button {
 	background: #DADADA;
 }
 
-.tasksheetTable .colSum, .tasksheetTable .rowSum, .tasksheetTable .taskSum {
+.tasksheetTable .taskSum {
 	background: rgb(250,250,210);
 }
 

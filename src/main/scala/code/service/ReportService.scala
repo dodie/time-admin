@@ -8,15 +8,18 @@ import java.text.DecimalFormat
 import scala.collection.mutable.ListBuffer
 import scala.util.Sorting
 import net.liftweb.common._
-
-import org.joda.time.DateTime
-
+import org.joda.time.{Duration, _}
 import code.commons.TimeUtils
-import net.liftweb.common.Box.box2Option
-import net.liftweb.mapper.MappedField.mapToType
 import net.liftweb.http.S
+import code.model.{Project, User}
+import code.service.TaskItemService.getTaskItemsForDay
+import org.joda.time.Days.daysBetween
+import org.joda.time.LocalDate.now
+import com.github.nscala_time.time.Imports._
 
-import code.model.Project
+import scala.collection.immutable.Seq
+
+import code.util.ListToFoldedMap._
 
 /**
  * Reponsible for creating report data.
@@ -58,7 +61,7 @@ object ReportService {
 
     // for all days, get all taskitems and produce data touples
     (for (offset <- monthStartOffset until monthEndOffset + 1) yield {
-      val taskItemsForDay = TaskItemService.getTaskItemsForDay(offset)
+      val taskItemsForDay = getTaskItemsForDay(offset)
 
       val offtimeToRemoveFromLeaveTime = {
         val aggregatedArray = createAggregatedDatas(taskItemsForDay)
@@ -126,7 +129,7 @@ object ReportService {
     for (currentOffset <- offsetMonthStart to offsetMonthEnd; if currentOffset <= 0) {
       val innerMatrix = new scala.collection.mutable.HashMap[Long, Long]
 
-      TaskItemService.getTaskItemsForDay(currentOffset).foreach(tiwd => {
+      getTaskItemsForDay(currentOffset).foreach(tiwd => {
         val key = tiwd.taskItem.task.get
 
         if (!innerMatrix.contains(key))
@@ -139,6 +142,21 @@ object ReportService {
     }
     outerMatrix.toMap[Int, Map[Long, Long]]
   }
+
+  def days(i: Interval): List[LocalDate] =
+    (0 until i.toPeriod(PeriodType.days).getDays) map (i.start.toLocalDate.plusDays(_)) toList
+
+  type TaskSheet[D <: ReadablePartial] = Map[D, Map[TaskSheetItem,Duration]]
+
+  def taskSheetData[D <: ReadablePartial](u: Box[User], i: Interval, f: LocalDate => D): TaskSheet[D] =
+    days(i).map(d => (f(d), taskItemsForDay(d, u) map taskSheetItemWithDuration))
+      .foldedMap(Nil: List[(TaskSheetItem,Duration)])(_ ::: _)
+      .mapValues(_.foldedMap(Duration.ZERO)(_ + _))
+
+  def taskItemsForDay(d: LocalDate, u: Box[User]): List[TaskItemWithDuration] =
+    getTaskItemsForDay(daysBetween(now(), d).getDays, u).filter(_.project.exists(_.active.get))
+
+  def taskSheetItemWithDuration(t: TaskItemWithDuration): (TaskSheetItem, Duration) = (TaskSheetItem(t), new Duration(t.duration))
 
   /**
    * Aggregates the given TaskItem DTOs.

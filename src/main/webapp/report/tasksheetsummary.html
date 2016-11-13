@@ -1,0 +1,40 @@
+<lift:surround with="client" at="content">
+	<div>
+		<div class="statusBar">
+			<div style="text-align: right; padding-right: 10px;">
+				<form>
+					<select onchange="$(this).closest('form').submit();" name="user">
+						<option value="-1"></option>
+						<option value="id" class="lift:usersSnippet.selectUser">user name</option>
+					</select>
+					<span class="lift:tasksheetSnippet.selectedMonthInterval"></span>
+				</form>
+			</div>
+		</div>
+		<h1><lift:loc>tasksheetsummary.title</lift:loc></h1>
+		<div class="sheetholder">
+			<table class="lift:tasksheetSnippet.tasksheetSummary tasksheetTable table table-striped">
+				<colgroup>
+					<col class="colTasks" />
+					<col class="colDays" />
+					<col class="colSum" />
+				</colgroup>
+				<tr>
+					<th class="taskname"><lift:loc>tasksheet.task</lift:loc></th>
+					<th class="dayHeader"></th>
+					<th> &sum; </th>
+				</tr>
+				<tr class="TaskRow">
+					<td class="taskFullName"></td>
+					<td class="dailyData"></td>
+					<td class="taskSum"></td>
+				</tr>
+				<tr class="rowSum">
+					<td>&sum;</td>
+					<td class="dailySum"></td>
+					<td class="totalSum"></td>
+				</tr>
+			</table>
+		</div>
+	</div>
+</lift:surround>
