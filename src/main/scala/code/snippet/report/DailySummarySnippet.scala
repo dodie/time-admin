@@ -57,14 +57,14 @@ class DailySummarySnippet extends DateFunctions {
             lengthInPercent = 0.5D
           }
 
-          val (red, green, blue) = TaskService.getColor(aggregatedData.taskName, aggregatedData.projectName, true)
+          val (red, green, blue, alpha) = TaskService.getColor(aggregatedData.taskName, aggregatedData.projectName, true)
           val isDarkColor = (((red * 299) + (green * 587) + (blue * 114)) / 1000) < 128
 
           Helpers.bind("taskitem", (in \\ "_" filter attributeValueEquals("fragWrapper")).head,
             AttrBindParam("taskitemwidth", Text("width:" + lengthInPercent + "%;"), "style"),
             AttrBindParam("taskitemtotaltime", Text(math.round(aggregatedData.duration / 60D / 1000) + " " + S.?("minute")), "title"),
             AttrBindParam("fullname", Text(aggregatedData.projectName + "-" + aggregatedData.taskName), "title"),
-            AttrBindParam("taskitemstyle", Text({ if (isDarkColor) "color:white; " else "color:black; " } + "background-color:" + "rgb(" + red + " , " + green + " , " + blue + ");"), "style"),
+            AttrBindParam("taskitemstyle", Text({ if (isDarkColor) "color:white; " else "color:black; " } + "background-color:" + "rgba(" + red + " , " + green + " , " + blue + " , " + alpha + ");"), "style"),
             AttrBindParam("taskitemclass", if (!aggregatedData.isPause) "fragBar fragBarContinued" else "fragBar fragBarContinued offTimeBar", "class"),
             "taskduration" -> Text(math.round(aggregatedData.duration / 60D / 1000) + " " + S.?("minute")),
             "taskname" -> aggregatedData.taskName,

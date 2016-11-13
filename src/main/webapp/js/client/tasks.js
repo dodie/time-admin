@@ -8,6 +8,13 @@ $(function(){
 		window.location.hash = this.hash;
 		$('html,body').scrollTop(scrollmem);
 	});
+
+	$("*[data-tab-aware]").each(function() {
+		$(this).click(function() {
+			this.href = this.href + window.location.hash;
+		});
+	});
+
 	$("#content").show();
 });
 

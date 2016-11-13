@@ -3,8 +3,8 @@
 		<div class="statusBar">
 			<div style="text-align: right; padding-right: 10px;">
 				<form>
-					<select onchange="$(this).closest('form').submit();" name="user">
-						<option value="-1"></option>
+					<select class="form-control" style="display:inline;width:auto;" onchange="$(this).closest('form').submit();" name="user">
+						<option value="-1">Mindenki</option>
 						<option value="id" class="lift:usersSnippet.selectUser">user name</option>
 					</select>
 					<span class="lift:tasksheetSnippet.selectedMonthInterval"></span>

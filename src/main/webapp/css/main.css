@@ -5,6 +5,10 @@
 	font-weight: normal;
 }
 
+.ActualUserName {
+	font-weight: bold;
+}
+
 .form-user {
 	max-width: 500px;
 	margin: auto;
@@ -21,6 +25,10 @@
 
 .ui-dialog-titlebar-close {
   visibility: hidden;
+}
+
+.root .ui-widget-content {
+	border: 0;
 }
 
 /* -----
@@ -86,6 +94,11 @@
 
 .top-menu a {
 	color: white;
+}
+
+.top-menu .navbar-right .dropdown-toggle {
+	padding-top: 5px;
+	padding-bottom: 5px;
 }
 
 .top-menu .nav>li>a:focus, .top-menu .nav>li>a:hover {
@@ -193,6 +206,7 @@ input[type="text"] {
 
 .logo {
     padding: 5px;
+    padding-right: 26px;
 }
 
 /* LoginBox, and user bar */
@@ -224,8 +238,8 @@ input[type="text"] {
 
 /*Summary*/
 .summary .frag .offTimeBar {
-	border: 1px solid black;
-	background-color: white!important;
+	background: linear-gradient(to bottom, rgba(255,255,255,1) 43%,rgba(219,220,226,1) 46%,rgba(184,186,198,1) 49%,rgba(221,223,227,1) 52%,rgba(255,255,255,1) 56%);
+	border-right: 1px solid rgba(184,186,198,1);
 }
 
 .summary *[data-hint]:hover:after {
@@ -263,8 +277,8 @@ input[type="text"] {
 }
 
 .summary .frag .fragBar:hover {
-	box-shadow: 0 0 10px #000000;
-	opacity: 0.7;
+	box-shadow: 0 0 5px #000000;
+	opacity: 0.9;
 }
 
 .summary .fragLegend {
@@ -319,7 +333,7 @@ input[type="text"] {
 	top: 5px;
 	width: 0;
 	z-index: 100;
-	box-shadow: 0px 5px 5px #aaa;
+	box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
 }
 
 .hiddenTask {
@@ -416,16 +430,21 @@ form.button {
 }
 
 .timeLine {
-	margin: 5px;
+	margin: 25px 5px 0px 5px;
+	height: 90px;
 }
 
 .timeLine .fragBar {
 	width: 100%;
 	height: 55px;
-	border: 1px solid black;
 	overflow: hidden;
 	padding-top: 5px;
 	padding-left: 5px;
+}
+
+.timeLine .frag:last-child .fragBar.noborder {
+	background: linear-gradient(to right, rgba(184,186,198,1) 10%,rgba(255,255,255,0) 100%)!important;
+	border-radius: 0 30px 30px 0;
 }
 
 .timeLine .fragText {
@@ -434,6 +453,7 @@ form.button {
 	font-size: 11px;
 	width: 30px;
 	font-family: monospace;
+	transform: rotate(-55deg);
 }
 
 .timeLine .fragBar.fragBarContinued {
@@ -442,9 +462,7 @@ form.button {
 
 .timeLine .fragBar.noborder {
 	border: 0;
-	border-left: 1px solid black;
-	box-shadow: 0;
-	background: transparent!important;
+	background: linear-gradient(to bottom, rgba(255,255,255,0) 43%,rgba(219,220,226,1) 46%,rgba(184,186,198,1) 49%,rgba(221,223,227,1) 52%,rgba(255,255,255,0) 56%);
 }
 
 .AddHelpContainer {
@@ -457,12 +475,14 @@ form.button {
 .summaryMetrics td:first-child {
 	font-weight: bold;
 	padding-right: 23px;
+	text-align: right;
 }
 
 .summaryMetrics {
-	padding-top: 40px;
 	font-family: monospace;
 	position: relative;
+	width: 470px;
+	margin: auto;
 }
 
 .chartContainer {
@@ -480,6 +500,9 @@ form.button {
 	font-size: 19px;
 }
 
+#taskItemLogMainHolder .glyphicon-pause {
+	margin-left: 14px;
+}
 
 .InlineCommandsForm.Pause .btn {
 	margin-left: 14px;
@@ -495,7 +518,13 @@ form.button {
 	padding: 10px 10px;
 }
 
-.content .task .taskColorIndicator{color:transparent;cursor:pointer;
+#taskList .taskColorIndicator {
+	cursor: pointer;
+}
+
+.taskColorIndicator{
+	color:transparent;
+	cursor: default;
 	font-family: monospace;
 	margin-right: 4px;
 	margin-left: 15px;
