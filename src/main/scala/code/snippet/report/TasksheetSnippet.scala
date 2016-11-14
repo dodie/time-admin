@@ -73,7 +73,7 @@ class TasksheetSnippet extends DateFunctions {
   def renderTaskSheet[D <: ReadablePartial](i: Interval, f: LocalDate => D, u: Box[User]): CssSel = {
     val taskSheet = ReportService.taskSheetData(u, i, f)
 
-    ".dayHeader" #> dates(taskSheet).map(d => ".dayHeader *" #> d.toString) &
+    ".dayHeader" #> dates(taskSheet).map(d => ".dayHeader *" #> dayOf(d).map(_.toString).getOrElse(d.toString)) &
         ".TaskRow" #> tasks(taskSheet).map { t =>
           ".taskFullName *" #> t.name & ".taskFullName [title]" #> t.name &
             ".dailyData" #> dates(taskSheet)
@@ -118,4 +118,9 @@ class TasksheetSnippet extends DateFunctions {
 
   def hasDayFieldType[RD <: ReadablePartial](d: RD): Boolean =
     d.isSupported(DateTimeFieldType.dayOfWeek()) || d.isSupported(DateTimeFieldType.dayOfMonth()) || d.isSupported(DateTimeFieldType.dayOfYear())
+
+  def dayOf[RD <: ReadablePartial](d: RD): Try[Int] =
+    Try(d.get(DateTimeFieldType.dayOfMonth()))
+      .orElse(Try(d.get(DateTimeFieldType.dayOfYear())))
+      .orElse(Try(d.get(DateTimeFieldType.dayOfWeek())))
 }
