@@ -40,7 +40,7 @@ class TasksheetSnippet extends DateFunctions {
   }
 
   def tasksheet(in: NodeSeq): NodeSeq = {
-    val date = S.param("date").or(S.getSessionAttribute("date").flatMap(tryParseDate))
+    val date = S.param("date").or(S.getSessionAttribute("date")).map(s => DateTime.parse(s))
     date.foreach(d => S.setSessionAttribute("date", d.toString))
 
     val interval = new YearMonth(date.getOrElse(DateTime.now())).toInterval
@@ -50,8 +50,8 @@ class TasksheetSnippet extends DateFunctions {
 
   def tasksheetSummary(in: NodeSeq): NodeSeq = {
     val interval = try {
-      val intervalStart = S.param("intervalStart").flatMap(tryParseDate)
-      val intervalEnd = S.param("intervalEnd").flatMap(tryParseDate)
+      val intervalStart = S.param("intervalStart").map(s => DateTime.parse(s))
+      val intervalEnd = S.param("intervalEnd").map(s => DateTime.parse(s))
 
       new Interval(
         new YearMonth(intervalStart.getOrElse(DateTime.now())).toInterval.start,
@@ -70,12 +70,10 @@ class TasksheetSnippet extends DateFunctions {
     renderTaskSheet(interval, d => new YearMonth(d), user)(in)
   }
 
-  def tryParseDate(s: String): Box[DateTime] = Try(DateTime.parse(s)).map(d => Full(d)).getOrElse(Empty)
-
   def renderTaskSheet[D <: ReadablePartial](i: Interval, f: LocalDate => D, u: Box[User]): CssSel = {
     val taskSheet = ReportService.taskSheetData(u, i, f)
 
-    ".dayHeader" #> dates(taskSheet).map(d => ".dayHeader *" #> d.toString) &
+    ".dayHeader" #> dates(taskSheet).map(d => ".dayHeader *" #> dayOf(d).map(_.toString).getOrElse(d.toString)) &
         ".TaskRow" #> tasks(taskSheet).map { t =>
           ".taskFullName *" #> t.name & ".taskFullName [title]" #> t.name &
             ".dailyData" #> dates(taskSheet)
@@ -120,4 +118,9 @@ class TasksheetSnippet extends DateFunctions {
 
   def hasDayFieldType[RD <: ReadablePartial](d: RD): Boolean =
     d.isSupported(DateTimeFieldType.dayOfWeek()) || d.isSupported(DateTimeFieldType.dayOfMonth()) || d.isSupported(DateTimeFieldType.dayOfYear())
+
+  def dayOf[RD <: ReadablePartial](d: RD): Try[Int] =
+    Try(d.get(DateTimeFieldType.dayOfMonth()))
+      .orElse(Try(d.get(DateTimeFieldType.dayOfYear())))
+      .orElse(Try(d.get(DateTimeFieldType.dayOfWeek())))
 }
