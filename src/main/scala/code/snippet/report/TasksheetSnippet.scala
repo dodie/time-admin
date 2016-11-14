@@ -40,7 +40,7 @@ class TasksheetSnippet extends DateFunctions {
   }
 
   def tasksheet(in: NodeSeq): NodeSeq = {
-    val date = S.param("date").or(S.getSessionAttribute("date").flatMap(tryParseDate))
+    val date = S.param("date").or(S.getSessionAttribute("date")).map(s => DateTime.parse(s))
     date.foreach(d => S.setSessionAttribute("date", d.toString))
 
     val interval = new YearMonth(date.getOrElse(DateTime.now())).toInterval
@@ -50,8 +50,8 @@ class TasksheetSnippet extends DateFunctions {
 
   def tasksheetSummary(in: NodeSeq): NodeSeq = {
     val interval = try {
-      val intervalStart = S.param("intervalStart").flatMap(tryParseDate)
-      val intervalEnd = S.param("intervalEnd").flatMap(tryParseDate)
+      val intervalStart = S.param("intervalStart").map(s => DateTime.parse(s))
+      val intervalEnd = S.param("intervalEnd").map(s => DateTime.parse(s))
 
       new Interval(
         new YearMonth(intervalStart.getOrElse(DateTime.now())).toInterval.start,
@@ -69,8 +69,6 @@ class TasksheetSnippet extends DateFunctions {
 
     renderTaskSheet(interval, d => new YearMonth(d), user)(in)
   }
-
-  def tryParseDate(s: String): Box[DateTime] = Try(DateTime.parse(s)).map(d => Full(d)).getOrElse(Empty)
 
   def renderTaskSheet[D <: ReadablePartial](i: Interval, f: LocalDate => D, u: Box[User]): CssSel = {
     val taskSheet = ReportService.taskSheetData(u, i, f)
