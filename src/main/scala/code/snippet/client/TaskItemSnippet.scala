@@ -203,6 +203,7 @@ class TaskItemSnippet extends DateFunctions {
 
       // operation type
       val mode = S.param("mode").getOrElse("default")
+
       if (mode == "default") {
         /*
 				 * DEFAULT (smart) mode - Append to current day or insert to given time of the selected day.

@@ -260,8 +260,7 @@ object TaskItemService {
     var prevTask: TaskItem = null
     for (taskItem <- taskItemsForDay) {
 
-      if ((prevTask == null && taskItem.task.get == 0) /* Pause found at the begining of the day */
-        || (prevTask != null && prevTask.task.get == taskItem.task.get) /* found two task item that follow one another */ ) {
+      if (prevTask != null && prevTask.task.get == taskItem.task.get) { /* found two task item that follow one another */
 
         taskItemsToDelete.append(taskItem.id.get)
       } else {
