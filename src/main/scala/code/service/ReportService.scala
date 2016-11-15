@@ -8,7 +8,7 @@ import java.text.DecimalFormat
 import scala.collection.mutable.ListBuffer
 import scala.util.Sorting
 import net.liftweb.common._
-import org.joda.time.{Duration, _}
+import org.joda.time.{Duration, DateTime, _}
 import code.commons.TimeUtils
 import net.liftweb.http.S
 import code.model.{Project, User}
@@ -144,7 +144,11 @@ object ReportService {
   }
 
   def days(i: Interval): List[LocalDate] =
-    (0 until i.toPeriod(PeriodType.days).getDays) map (i.start.toLocalDate.plusDays(_)) toList
+    {
+      if (i.contains(DateTime.now())) 0 to i.withEnd(DateTime.now()).toPeriod(PeriodType.days).getDays
+      else 0 until i.toPeriod(PeriodType.days).getDays
+
+    } map (i.start.toLocalDate.plusDays(_)) toList
 
   type TaskSheet[D <: ReadablePartial] = Map[D, Map[TaskSheetItem,Duration]]
 
