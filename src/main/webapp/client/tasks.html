@@ -11,14 +11,14 @@
 	<div class="tasksPage">
 		<div class="container">
 			<div class="date-selectors">
-				<span class="statusBarItem lift:L10n.data-hint-top-left" data-hint-top-left="button.previous_day">
+				<span class="statusBarItem">
 					<a data-tab-aware="" class="btn btn-default btn-xs lift:taskItemSnippet.pagingPrev" paging:url="">&#9664;</a>
 				</span>
 				<span class="lift:taskItemSnippet.selectedDay"></span>
-				<span class="statusBarItem lift:L10n.data-hint-top-left" data-hint-top-left="button.next_day">
+				<span class="statusBarItem">
 					<a data-tab-aware="" class="btn btn-default btn-xs lift:taskItemSnippet.pagingNext" paging:url="">&#9654;</a>
 				</span>
-				<span class="statusBarItem lift:L10n.data-hint-top-left" data-hint-top-left="button.current_day">
+				<span class="statusBarItem">
 					<a data-tab-aware="" paging:url="" class="btn btn-default btn-xs lift:taskItemSnippet.pagingCurrent">
 						<span class="glyphicon glyphicon-calendar" aria-hidden="true"></span>
 					</a>
@@ -35,21 +35,21 @@
 					<div class="tab-pane active" id="timeline">
 						<div>
 							<div id="timeLine" class="timeLine lift:taskItemSnippet.lineChart">
-								<div class="frag lift:L10n.data-hint-top-right" data-hint-top-right="tasks.click_to_edit">
-									<div  class="fragBar">
+								<div class="frag">
+									<div class="fragBar" onclick="var form = this.getElementsByTagName('form')[0]; setTaskItemEditorPopup(form.taskitemid.value, form.time.value, form.taskid.value); $('.modal').modal();">
 										<div class="ProjectName"></div>
 										<div class="TaskName"></div>
-									</div>
-									<div class="fragBarHover" onclick="var form = this.getElementsByTagName('form')[0]; setTaskItemEditorPopup(form.taskitemid.value, form.time.value, form.taskid.value); $('.modal').modal();">
-										<div class="ProjectName"></div>
-										<div class="TaskName"></div>
-										<div class="Duration"></div>
-
 										<form>
 											<input type="hidden" name="taskitemid" value=""/>
 											<input type="hidden" name="taskid" value=""/>
 											<input type="hidden" name="time" value=""/>
 										</form>
+									</div>
+									<div class="fragBarHover">
+										<span class="ProjectName"></span>
+										<span class="TaskName"></span>
+										(<span class="Duration"></span>)
+
 									</div>
 									<div class="fragText"></div>
 								</div>

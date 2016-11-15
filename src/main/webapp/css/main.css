@@ -314,30 +314,34 @@ input[type="text"] {
 	white-space: nowrap;
 }
 
+.frag:hover .fragBar {
+	cursor: pointer;
+}
+
+.frag:hover .fragBarHover:hover {
+	display: none;
+	z-index: -1000;
+}
+
 .frag:hover .fragBarHover {
-	border: 1px solid black;
-	display: block;
-	left: 5px;
 	opacity: 0.9;
-	padding: 10px;
 	position: absolute;
-	top: -5px;
-	width: 300px;
 	z-index: 1000;
-	height: 80px;
 	cursor: pointer;
 }
 
 .fragBarHover {
-	height: 20px;
-	left: 0;
-	opacity: 0.4;
-	overflow: hidden;
+	border: 1px solid black;
+	left: 10px;
+	right: 10px;
+	opacity: 0;
+	padding: 5px;
 	position: absolute;
-	top: 5px;
-	width: 0;
+	top: -80px;
 	z-index: 100;
 	box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
+	text-align: center;
+	pointer-events: none;
 }
 
 .hiddenTask {
@@ -403,7 +407,6 @@ input[type="text"] {
 	float: left;
 	height: 10px;
 	height: 44px;
-	position: relative;
 }
 
 #taskItemLogMainHolder th {
@@ -428,14 +431,15 @@ form.button {
 }
 
 .statusbar-button-row {
-	float: left; 
-	padding-left: 5px; 
+	float: left;
+	padding-left: 5px;
 	padding-top: 5px;
 }
 
 .timeLine {
-	margin: 25px 5px 0px 5px;
+	margin: 45px 5px 15px 5px;
 	height: 90px;
+	position: relative;
 }
 
 .timeLine .fragBar {
