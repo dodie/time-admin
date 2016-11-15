@@ -74,6 +74,14 @@ function setTaskItemEditorPopup(taskItemId, timeOffset, selectedTaskId) {
 	document.getElementById('tietimeoffset').value = timeOffset;
 	document.getElementById('tieselecttaskid').value = selectedTaskId;
 
+	if (taskItemId == -1) {
+		document.querySelector('.modal-footer .btn-success').disabled = true;
+		document.querySelector('.modal-footer .btn-danger').disabled = true;
+	} else {
+		document.querySelector('.modal-footer .btn-success').disabled = false;
+		document.querySelector('.modal-footer .btn-danger').disabled = false;
+	}
+
 	//document.getElementById('tiePopupTitle').innerHTML = loc.get('tasks.edit_entry');
 	//document.getElementById('tiePopupModeChange').value = '+';
 	document.getElementById('tiemode').value = 'taskitemedit';
