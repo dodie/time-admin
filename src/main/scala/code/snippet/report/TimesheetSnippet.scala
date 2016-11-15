@@ -1,10 +1,11 @@
 package code.snippet
 
 import scala.xml.NodeSeq
-
 import code.service.ReportService
 import code.snippet.mixin.DateFunctions
 import net.liftweb.util.BindHelpers.strToCssBindPromoter
+
+import scala.util.Try
 
 /**
  * Timesheet displaying component.
@@ -36,7 +37,7 @@ class TimesheetSnippet extends DateFunctions {
               ".sum *" #> row._4
           }
         ) &
-        ".sumtotal *" #> timesheetData.map(row => row._4.toDouble).sum
+        ".sumtotal *" #> timesheetData.map(row => Try(row._4.toDouble).getOrElse(0.0d)).sum
       ).apply(in)
     } else {
       <lift:embed what="no_data"/>
