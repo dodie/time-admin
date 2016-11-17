@@ -82,7 +82,7 @@ class TasksheetSnippet extends DateFunctions {
         ".dailySum" #> dates(taskSheet).map(d => ".dailySum *" #> sumByDates(taskSheet)(d).minutes) &
         ".totalSum *" #> sum(taskSheet).minutes & ".totalSum [title]" #> sum(taskSheet).hours
   }
-  
+
   def formatData[D <: ReadablePartial](i: Interval, d: D): CssSel =
     ".dailyData [class]" #> Some(d)
       .filter(hasDayFieldType)
