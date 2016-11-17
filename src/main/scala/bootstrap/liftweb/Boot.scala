@@ -173,26 +173,6 @@ class Boot {
           }
         }
 
-
-        // blank tasksheet export
-      case Req("export" :: "tasksheet" :: "blank" :: offset :: Nil, "", GetRequest) =>
-        () => {
-          // access control
-          if (!adminUser) {
-            Full(RedirectResponse("/"))
-          } else {
-            for {
-              (contentStream, fileName) <- tryo(ExcelExport.exportTasksheet(true, User.currentUser.openOrThrowException("No user found!"), offset.toInt))
-              if null ne contentStream
-            } yield StreamingResponse(contentStream, () =>
-              contentStream.close,
-              contentStream.available,
-              List(
-                "Content-Type" -> "application/vnd.ms-excel",
-                "Content-Disposition" -> ("attachment; filename=\"" + fileName + ".xls\"")), Nil, 200)
-          }
-        }
-
       case Req("export" :: "tasksheetSummary" :: Nil, "", GetRequest) =>
         () => {
           // access control
@@ -223,7 +203,7 @@ class Boot {
             Full(RedirectResponse("/"))
           } else {
             for {
-              (contentStream, fileName) <- tryo(ExcelExport.exportTasksheet(false, User.currentUser.openOrThrowException("No user found!"), offset.toInt))
+              (contentStream, fileName) <- tryo(ExcelExport.exportTasksheet(User.currentUser.openOrThrowException("No user found!"), offset.toInt))
               if null ne contentStream
             } yield StreamingResponse(contentStream, () =>
               contentStream.close,

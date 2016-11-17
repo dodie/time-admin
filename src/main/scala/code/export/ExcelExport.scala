@@ -137,7 +137,7 @@ object ExcelExport {
     (contentStream, fileName)
   }
 
-  def exportTasksheet(blank: Boolean, user: User, offset: Int): (InputStream, String) = {
+  def exportTasksheet(user: User, offset: Int): (InputStream, String) = {
     val date = new DateTime(TimeUtils.currentDayStartInMs(offset))
 
     val workbook = new HSSFWorkbook
