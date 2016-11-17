@@ -112,14 +112,16 @@ object ExcelExport {
       new YearMonth(intervalStart).toInterval.start,
       new YearMonth(intervalEnd).toInterval.end
     )
-    val date = interval.getStart
+    val start = interval.getStart
+    val end = interval.getEnd
 
     val taskSheet = ReportService.taskSheetData(user, interval, d => new YearMonth(d))
 
     val ds = dates(taskSheet)
 
     //FIXME: title text (month index)
-    renderTaskSheetTitle(workbook, sheet, date.getYear + ". " + TimeUtils.monthNumberToText(date.getMonthOfYear - 1), rowNum = 0, dates(taskSheet).length)
+    val title = start.getYear + ". " + TimeUtils.monthNumberToText(start.getMonthOfYear - 1) + " - " + end.getYear+ ". " + TimeUtils.monthNumberToText(end.getMonthOfYear - 2)
+    renderTaskSheetTitle(workbook, sheet, title, rowNum = 0, dates(taskSheet).length)
     renderTaskSheetFieldNames(workbook, sheet, ds, interval, rowNum = 1)
     val rowNum = renderContent(workbook, sheet, taskSheet, interval, 2)
     renderSummary(workbook, sheet, rowNum, ds.length + 1)
@@ -131,7 +133,7 @@ object ExcelExport {
       out.flush()
       new ByteArrayInputStream(out.toByteArray)
     }
-    val fileName = s"tasksheet_${date.getYear}-${date.getMonthOfYear}_${user.map(u => u.firstName.toLowerCase + u.lastName.toLowerCase).getOrElse("")}.xls"
+    val fileName = s"tasksheet_${start.getYear}-${start.getMonthOfYear}_${end.getYear}-${end.getMonthOfYear-1}${user.map(u => "_" + u.firstName.toLowerCase + u.lastName.toLowerCase).getOrElse("")}.xls"
     (contentStream, fileName)
   }
 
