@@ -2,16 +2,15 @@ package code.snippet
 
 import scala.xml.NodeSeq
 import code.model.User
-import code.service.ReportService.TaskSheet
-import code.service.{ReportService, TaskSheetItem}
+import code.service.ReportService
 import code.snippet.mixin.DateFunctions
 import net.liftweb.util.BindHelpers.strToCssBindPromoter
 import net.liftweb.http.S
 import com.github.nscala_time.time.Imports._
-import code.util.ListToFoldedMap._
-import net.liftweb.common.{Box, Empty, Full}
+import net.liftweb.common.Box
 import net.liftweb.util.CssSel
-import org.joda.time.{DateTimeConstants, DateTimeFieldType, ReadablePartial}
+import org.joda.time.ReadablePartial
+import code.util.TaskSheetUtils._
 
 import scala.util.Try
 
@@ -37,6 +36,10 @@ class TasksheetSnippet extends DateFunctions {
     (
       "a [href]" #> ("/export/tasksheet/" + offsetInDays)
     ).apply(in)
+  }
+
+  def tasksheetSummaryExportLink(in: NodeSeq): NodeSeq = {
+    ("a [href]" #> s"/export/tasksheetSummary?intervalStart=${S.param("intervalStart").getOrElse(LocalDate.now().toString)}&intervalEnd=${S.param("intervalEnd").getOrElse(LocalDate.now().toString)}&user=${S.param("user").getOrElse("-1").toLong}").apply(in)
   }
 
   def tasksheet(in: NodeSeq): NodeSeq = {
@@ -84,24 +87,6 @@ class TasksheetSnippet extends DateFunctions {
         ".totalSum *" #> sum(taskSheet).minutes & ".totalSum [title]" #> sum(taskSheet).hours
   }
 
-  def formattedDurationInMinutes[D <: ReadablePartial](ts: TaskSheet[D], d: D, t: TaskSheetItem): String =
-    ts.get(d).flatMap(_.get(t)).map(_.minutes.toString).getOrElse("")
-
-  def dates[D <: ReadablePartial](ts: TaskSheet[D]): List[D] =
-    ts.keys.toList.sorted
-
-  def sumByDates[D <: ReadablePartial](ts: TaskSheet[D]): Map[D, Duration] =
-    ts.mapValues(m => m.values.foldLeft(Duration.millis(0))(_ + _))
-
-  def tasks[D <: ReadablePartial](ts: TaskSheet[D]): List[TaskSheetItem] =
-    ts.values.flatMap(_.keySet).toSet.toList.sortBy((t: TaskSheetItem) => t.name)
-
-  def sumByTasks[D <: ReadablePartial](ts: TaskSheet[D]): Map[TaskSheetItem, Duration] =
-    ts.values.flatMap(_.toList).toList.foldedMap(Duration.millis(0))(_ + _)
-
-  def sum[D <: ReadablePartial](ts: TaskSheet[D]): Duration =
-    sumByDates(ts).values.foldLeft(Duration.millis(0))(_ + _)
-
   def formatData[D <: ReadablePartial](i: Interval, d: D): CssSel =
     ".dailyData [class]" #> Some(d)
       .filter(hasDayFieldType)
@@ -109,18 +94,4 @@ class TasksheetSnippet extends DateFunctions {
       .filter(isWeekend)
       .map(_ => "colWeekend")
       .getOrElse("colWeekday")
-
-  def mapToDateTime[D <: ReadablePartial](i: Interval, d: D): Option[DateTime] =
-    List(d.toDateTime(i.start), d.toDateTime(i.end)).find(i.contains(_))
-
-  def isWeekend(d: DateTime): Boolean =
-    d.getDayOfWeek == DateTimeConstants.SATURDAY || d.getDayOfWeek == DateTimeConstants.SUNDAY
-
-  def hasDayFieldType[RD <: ReadablePartial](d: RD): Boolean =
-    d.isSupported(DateTimeFieldType.dayOfWeek()) || d.isSupported(DateTimeFieldType.dayOfMonth()) || d.isSupported(DateTimeFieldType.dayOfYear())
-
-  def dayOf[RD <: ReadablePartial](d: RD): Try[Int] =
-    Try(d.get(DateTimeFieldType.dayOfMonth()))
-      .orElse(Try(d.get(DateTimeFieldType.dayOfYear())))
-      .orElse(Try(d.get(DateTimeFieldType.dayOfWeek())))
 }

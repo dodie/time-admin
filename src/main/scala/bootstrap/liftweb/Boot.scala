@@ -12,10 +12,11 @@ import mapper._
 import code.model._
 import code.export.ExcelExport
 import code.commons.TimeUtils
-
 import net.liftweb.http.provider._
 import net.liftweb.http._
 import java.util.Locale
+
+import org.joda.time.DateTime
 
 /**
  * Allows the application to modify lift's environment based on the configuration.
@@ -172,16 +173,18 @@ class Boot {
           }
         }
 
-
-        // blank tasksheet export
-        case Req("export" :: "tasksheet" :: "blank" :: offset :: Nil, "", GetRequest) =>
+      case Req("export" :: "tasksheetSummary" :: Nil, "", GetRequest) =>
         () => {
           // access control
           if (!adminUser) {
             Full(RedirectResponse("/"))
           } else {
             for {
-              (contentStream, fileName) <- tryo(ExcelExport.exportTasksheet(true, User.currentUser.openOrThrowException("No user found!"), offset.toInt))
+              (contentStream, fileName) <- tryo(ExcelExport.exportTasksheetSummary(
+                S.param("user").flatMap(id => User.findByKey(id.toLong)),
+                S.param("intervalStart").orElse(Full("")).map(s => DateTime.parse(s)).get,
+                S.param("intervalEnd").orElse(Full("")).map(s => DateTime.parse(s)).get
+              ))
               if null ne contentStream
             } yield StreamingResponse(contentStream, () =>
               contentStream.close,
@@ -191,15 +194,16 @@ class Boot {
                 "Content-Disposition" -> ("attachment; filename=\"" + fileName + ".xls\"")), Nil, 200)
           }
         }
+
         // personal tasksheet export
-        case Req("export" :: "tasksheet" :: offset :: Nil, "", GetRequest) =>
+      case Req("export" :: "tasksheet" :: offset :: Nil, "", GetRequest) =>
         () => {
           // access control
           if (!clientUser) {
             Full(RedirectResponse("/"))
           } else {
             for {
-              (contentStream, fileName) <- tryo(ExcelExport.exportTasksheet(false, User.currentUser.openOrThrowException("No user found!"), offset.toInt))
+              (contentStream, fileName) <- tryo(ExcelExport.exportTasksheet(User.currentUser.openOrThrowException("No user found!"), offset.toInt))
               if null ne contentStream
             } yield StreamingResponse(contentStream, () =>
               contentStream.close,

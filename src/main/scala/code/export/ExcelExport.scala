@@ -4,30 +4,32 @@ package export
 import java.io._
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
+
 import scala.collection.JavaConversions._
-import scala.util.Sorting
+import scala.util.Try
 import org.apache.poi.hssf.usermodel._
 import org.apache.poi.poifs.filesystem.POIFSFileSystem
 import org.apache.poi.ss.usermodel.Cell
 import org.apache.poi.ss.usermodel.IndexedColors
 import org.apache.poi.ss.util.CellReference
-import org.joda.time.DateTime
+import org.joda.time.{DateTime => _, Interval => _, _}
 import code.commons.TimeUtils
 import code.model._
-import code.service._
 import net.liftweb.util.Props
 import net.liftweb.http.S
 import org.apache.poi.ss.usermodel.CellStyle
 import org.apache.poi.ss.usermodel.Font
 import org.apache.poi.ss.util.CellRangeAddress
 import code.service.ReportService
-import java.util.Date
+import code.service.ReportService.TaskSheet
+import code.util.TaskSheetUtils._
+import com.github.nscala_time.time.Imports._
+import net.liftweb.common.Box
 
 /**
  * Excel export features.
  */
 object ExcelExport {
-
   val templatePath = Props.get("export.excel.timesheet_template").openOrThrowException("No Excel template defined for Timesheets!")
 
   /**
@@ -101,163 +103,191 @@ object ExcelExport {
     (contentStream, name)
   }
 
-  /**
-   * Tasksheet Excel export.
-   */
-  def exportTasksheet(blank: Boolean, user: User, offset: Int) = {
-    var fos: ByteArrayOutputStream = null
-    var array: Array[Byte] = null
-    try {
-      // Initialize workbook
-      val workbook = new HSSFWorkbook
-      val wsheet = workbook.createSheet("Tasksheet")
-      val cYear = TimeUtils.currentYear(offset)
-      val cMonth = TimeUtils.currentMonth(offset)
-      val monthText = cYear + ". " + TimeUtils.monthNumberToText(cMonth)
-      var dt = new DateTime(cYear, cMonth + 1, 1, 0, 0, 0, 0)
-      val monthLength = TimeUtils.getLastDayOfMonth(dt)
+  def exportTasksheetSummary(user: Box[User], intervalStart: DateTime, intervalEnd: DateTime): (InputStream, String) = {
 
-      // Initialize styles
-      val boldFont = workbook.createFont()
-      boldFont.setBoldweight(Font.BOLDWEIGHT_BOLD)
+    val workbook = new HSSFWorkbook
+    val sheet = workbook.createSheet("Tasksheet")
 
-      val weekendCellStyle = workbook.createCellStyle()
-      weekendCellStyle.setFont(boldFont)
-      weekendCellStyle.setFillPattern(CellStyle.SOLID_FOREGROUND)
-      weekendCellStyle.setFillForegroundColor(IndexedColors.LIGHT_GREEN.getIndex())
+    val interval = new Interval(
+      new YearMonth(intervalStart).toInterval.start,
+      new YearMonth(intervalEnd).toInterval.end
+    )
+    val start = interval.getStart
+    val end = interval.getEnd
 
-      val borderType = CellStyle.BORDER_THIN
+    val taskSheet = ReportService.taskSheetData(user, interval, d => new YearMonth(d))
 
-      val boldCellStyle = workbook.createCellStyle()
-      boldCellStyle.setFont(boldFont);
+    val ds = dates(taskSheet)
 
-      val weekendHeaderCellStyle = workbook.createCellStyle()
-      weekendHeaderCellStyle.cloneStyleFrom(weekendCellStyle)
-      weekendHeaderCellStyle.setBorderBottom(borderType)
+    //FIXME: title text (month index)
+    val title = start.getYear + ". " + TimeUtils.monthNumberToText(start.getMonthOfYear - 1) + " - " + end.getYear+ ". " + TimeUtils.monthNumberToText(end.getMonthOfYear - 2)
+    renderTaskSheetTitle(workbook, sheet, title, rowNum = 0, dates(taskSheet).length)
+    renderTaskSheetFieldNames(workbook, sheet, ds, interval, rowNum = 1)
+    val rowNum = renderContent(workbook, sheet, taskSheet, interval, 2)
+    renderSummary(workbook, sheet, rowNum, ds.length + 1)
 
-      val centeredBoldCellStyle = workbook.createCellStyle()
-      centeredBoldCellStyle.cloneStyleFrom(boldCellStyle)
-      centeredBoldCellStyle.setAlignment(CellStyle.ALIGN_CENTER)
+    sheet.createFreezePane(1, 2)
 
-      val footerCellStyle = workbook.createCellStyle()
-      footerCellStyle.cloneStyleFrom(boldCellStyle)
-      footerCellStyle.setBorderTop(borderType)
+    val contentStream = using(new ByteArrayOutputStream()) { out =>
+      workbook.write(out)
+      out.flush()
+      new ByteArrayInputStream(out.toByteArray)
+    }
+    val fileName = s"tasksheet_${start.getYear}-${start.getMonthOfYear}_${end.getYear}-${end.getMonthOfYear-1}${user.map(u => "_" + u.firstName.toLowerCase + u.lastName.toLowerCase).getOrElse("")}.xls"
+    (contentStream, fileName)
+  }
 
-      val headerCellStyle = workbook.createCellStyle()
-      headerCellStyle.cloneStyleFrom(boldCellStyle)
-      headerCellStyle.setBorderBottom(borderType)
+  def exportTasksheet(user: User, offset: Int): (InputStream, String) = {
+    val date = new DateTime(TimeUtils.currentDayStartInMs(offset))
 
-      // Create headers
-      var rowNum = 0
-      val firstHeaderRow = wsheet.createRow(rowNum)
-      val monthTextCell = firstHeaderRow.createCell(2)
-      monthTextCell.setCellStyle(centeredBoldCellStyle)
-      monthTextCell.setCellValue(monthText)
-      wsheet.addMergedRegion(new CellRangeAddress(0, 0, 2, monthLength + 1))
-      rowNum += 1
+    val workbook = new HSSFWorkbook
+    val sheet = workbook.createSheet("Tasksheet")
 
-      val secondHeaderRow = wsheet.createRow(rowNum)
-      val paCell = secondHeaderRow.createCell(0)
-      paCell.setCellStyle(headerCellStyle)
-      paCell.setCellValue(S.?("export.tasksheet.project_identifier"))
-      val statusCell = secondHeaderRow.createCell(1)
-      statusCell.setCellStyle(headerCellStyle)
-      statusCell.setCellValue(S.?("export.tasksheet.active"))
-      for (i <- 2 to (monthLength + 1)) {
-        val dayCell = secondHeaderRow.createCell(i)
-        dayCell.setCellValue(String.valueOf(i - 1))
-        if (TimeUtils.isWeekend(dt)) {
-          dayCell.setCellStyle(weekendHeaderCellStyle)
+    val interval = date.monthOfYear().toInterval
+    val taskSheet = ReportService.taskSheetData(User.currentUser, interval, d => d)
+
+    val ds = dates(taskSheet)
+
+    //FIXME: title text (month index)
+    renderTaskSheetTitle(workbook, sheet, date.getYear + ". " + TimeUtils.monthNumberToText(date.getMonthOfYear - 1), rowNum = 0, dates(taskSheet).length)
+    renderTaskSheetFieldNames(workbook, sheet, ds, interval, rowNum = 1)
+    val rowNum = renderContent(workbook, sheet, taskSheet, interval, 2)
+    renderSummary(workbook, sheet, rowNum, ds.length + 1)
+
+    sheet.createFreezePane(1, 2)
+
+    val contentStream = using(new ByteArrayOutputStream()) { out =>
+      workbook.write(out)
+      out.flush()
+      new ByteArrayInputStream(out.toByteArray)
+    }
+    val fileName = s"tasksheet_${date.getYear}-${date.getMonthOfYear}_${user.firstName.toLowerCase + user.lastName.toLowerCase}.xls"
+    (contentStream, fileName)
+  }
+
+  def using[A, B <: {def close(): Unit}] (closeable: B) (f: B => A): A = try { f(closeable) } finally { closeable.close() }
+
+  def renderTaskSheetTitle(workbook: HSSFWorkbook, sheet: HSSFSheet, title: String, rowNum: Int, rowLength: Int): Unit = {
+    val row = sheet.createRow(rowNum)
+    val cell = row.createCell(1)
+    cell.setCellStyle(Styles.centeredBoldCell(workbook))
+    cell.setCellValue(title)
+    sheet.addMergedRegion(new CellRangeAddress(0, 0, 1, rowLength))
+  }
+
+  def renderTaskSheetFieldNames(workbook: HSSFWorkbook, sheet: HSSFSheet, dates: List[ReadablePartial], interval: Interval, rowNum: Int): Unit = {
+    val row = sheet.createRow(rowNum)
+    val taskHeader = row.createCell(0)
+    taskHeader.setCellStyle(Styles.headerCell(workbook))
+    taskHeader.setCellValue(S.?("export.tasksheet.project_identifier"))
+
+    var lastIndex = 1
+    dates.zip(Stream.from(lastIndex)).foreach { case (d, index) =>
+      val dateHeader = row.createCell(index)
+      dateHeader.setCellValue(dayOf(d).map(_.toString).getOrElse(d.toString))
+      if (Some(d).filter(hasDayFieldType).flatMap(mapToDateTime(interval, _)).exists(isWeekend)) {
+        dateHeader.setCellStyle(Styles.weekendHeader(workbook))
+      } else {
+        dateHeader.setCellStyle(Styles.headerCell(workbook))
+      }
+      lastIndex = index
+    }
+    val sumHeader = row.createCell(lastIndex + 1)
+    sumHeader.setCellStyle(Styles.headerCell(workbook))
+    sumHeader.setCellValue(S.?("export.tasksheet.sum"))
+  }
+
+  def renderContent[D <: ReadablePartial](workbook: HSSFWorkbook, sheet: HSSFSheet, taskSheet: TaskSheet[D], interval: Interval, rowNum: Int): Int = {
+    var tmpRowNum = rowNum
+    tasks(taskSheet).foreach { t =>
+      val itemRow = sheet.createRow(tmpRowNum)
+      val taskNameCell = itemRow.createCell(0)
+      taskNameCell.setCellValue(t.name)
+
+      var lastIndex = 1
+      dates(taskSheet).zip(Stream.from(lastIndex)).foreach { case (d, index) =>
+        val dayCell = itemRow.createCell(index)
+        dayCell.setCellType(Cell.CELL_TYPE_NUMERIC)
+
+        Try(formattedDurationInMinutes(taskSheet, d, t).toDouble).foreach(dayCell.setCellValue)
+        if (Some(d).filter(hasDayFieldType).flatMap(mapToDateTime(interval, _)).exists(isWeekend)) {
+          dayCell.setCellStyle(Styles.weekendCell(workbook))
         } else {
-          dayCell.setCellStyle(headerCellStyle)
+          dayCell.setCellStyle(Styles.boldCell(workbook))
         }
-        dt = dt.plusDays(1)
+        lastIndex = index
       }
-      val headerSumTextCell = secondHeaderRow.createCell(monthLength + 2)
-      headerSumTextCell.setCellStyle(headerCellStyle)
-      headerSumTextCell.setCellValue(S.?("export.tasksheet.sum"))
-      rowNum += 1
+      val sumCell = itemRow.createCell(lastIndex + 1)
+      sumCell.setCellType(Cell.CELL_TYPE_FORMULA)
+      sumCell.setCellStyle(Styles.boldCell(workbook))
+      tmpRowNum += 1
+      sumCell.setCellFormula("SUM(" + CellReference.convertNumToColString(1) + tmpRowNum + ":" + CellReference.convertNumToColString(lastIndex) + tmpRowNum + ")")
+    }
+    tmpRowNum
+  }
 
-      // Create taskitem rows
-      val taskList = TaskService.getTaskArray(activeOnly = false)
+  def renderSummary(workbook: HSSFWorkbook, sheet: HSSFSheet, rowNum: Int, rowLength: Int): Unit = {
+    val summaryRow = sheet.createRow(rowNum)
+    val summaryTextCell = summaryRow.createCell(0)
+    summaryTextCell.setCellStyle(Styles.footerCell(workbook))
+    summaryTextCell.setCellValue(S.?("export.tasksheet.sum"))
+    sheet.addMergedRegion(new CellRangeAddress(rowNum, rowNum, 0, 0))
+    for (i <- 1 to rowLength) {
+      val sumCell = summaryRow.createCell(i)
+      sumCell.setCellStyle(Styles.footerCell(workbook))
+      sumCell.setCellType(Cell.CELL_TYPE_FORMULA)
+      val colName = CellReference.convertNumToColString(i)
+      sumCell.setCellFormula("SUM(" + colName + "3:" + colName + "" + rowNum + ")")
+    }
+  }
 
-      if (!taskList.isEmpty) {
-        val taskMatrix = ReportService.getTasksheetData(offset);
-        for (std <- taskList.toSeq) {
-          val itemRow = wsheet.createRow(rowNum)
-          val taskNameCell = itemRow.createCell(0)
-          taskNameCell.setCellValue(std.getFullName())
-          val activityCell = itemRow.createCell(1)
-          activityCell.setCellType(Cell.CELL_TYPE_NUMERIC)
-          activityCell.setCellValue(if (std.task.active.get) 1D else 0D)
-          dt = new DateTime(cYear, cMonth + 1, 1, 0, 0, 0, 0)
-          for (i <- 2 to (monthLength + 1)) {
-            val dayCell = itemRow.createCell(i)
-
-            if (!blank) {
-              val dayKey = i - 1
-              val taskKey = std.task.id.get
-
-              if (taskMatrix.containsKey(dayKey) && taskMatrix(dayKey).contains(taskKey)) {
-                val duration = taskMatrix(dayKey)(taskKey)
-                if (0 < duration) {
-                  dayCell.setCellValue(duration / 60000)
-                }
-              }
-            }
-
-            if (TimeUtils.isWeekend(dt)) {
-              dayCell.setCellStyle(weekendCellStyle)
-            }
-            dt = dt.plusDays(1)
-          }
-
-          val sumCell = itemRow.createCell(monthLength + 2)
-          sumCell.setCellType(Cell.CELL_TYPE_FORMULA)
-          sumCell.setCellStyle(boldCellStyle)
-          rowNum += 1
-          sumCell.setCellFormula("SUM(" + CellReference.convertNumToColString(2) + rowNum + ":" + CellReference.convertNumToColString(monthLength + 1) + rowNum + ")")
-        }
-      }
-
-      // Create summary row
-      val summaryRow = wsheet.createRow(rowNum)
-      val summaryTextCell = summaryRow.createCell(0)
-      summaryTextCell.setCellStyle(footerCellStyle)
-      summaryTextCell.setCellValue(S.?("export.tasksheet.sum"))
-      wsheet.addMergedRegion(new CellRangeAddress(rowNum, rowNum, 0, 1))
-      for (i <- 2 to (monthLength + 2)) {
-        val sumCell = summaryRow.createCell(i)
-        sumCell.setCellStyle(footerCellStyle)
-        sumCell.setCellType(Cell.CELL_TYPE_FORMULA)
-        val colName = CellReference.convertNumToColString(i)
-        sumCell.setCellFormula("SUM(" + colName + "3:" + colName + "" + (rowNum) + ")")
-      }
-
-      // Create sheet freeze
-      wsheet.createFreezePane(2, 2)
-
-      // write sheet
-      fos = new ByteArrayOutputStream()
-      workbook.write(fos)
-
-    } catch {
-      case e: Exception => e.printStackTrace
-    } finally {
-      if (fos != null) {
-        try {
-          fos.flush();
-          array = fos.toByteArray
-          fos.close();
-        } catch {
-          case e: IOException => e.printStackTrace
-        }
-      }
+  object Styles {
+    def boldFont(workbook: HSSFWorkbook): HSSFFont = {
+      val font = workbook.createFont()
+      font.setBoldweight(Font.BOLDWEIGHT_BOLD)
+      font
     }
 
-    val contentStream = new ByteArrayInputStream(array)
-    val fileName = "tasksheet_" + TimeUtils.currentYear(offset.toInt) + "-" + (TimeUtils.currentMonth(offset.toInt) + 1) + "_" + user.firstName.get.toLowerCase + user.lastName.get.toLowerCase + ".xls"
+    def weekendCell(workbook: HSSFWorkbook): HSSFCellStyle = {
+      val style = workbook.createCellStyle()
+      style.setFont(boldFont(workbook))
+      style.setFillPattern(CellStyle.SOLID_FOREGROUND)
+      style.setFillForegroundColor(IndexedColors.LIGHT_GREEN.getIndex())
+      style
+    }
 
-    (contentStream, fileName)
+    def boldCell(workbook: HSSFWorkbook): HSSFCellStyle = {
+      val style = workbook.createCellStyle()
+      style.setFont(boldFont(workbook));
+      style
+    }
+
+    def centeredBoldCell(workbook: HSSFWorkbook): HSSFCellStyle = {
+      val style = workbook.createCellStyle()
+      style.cloneStyleFrom(boldCell(workbook))
+      style.setAlignment(CellStyle.ALIGN_CENTER)
+      style
+    }
+
+    def weekendHeader(workbook: HSSFWorkbook): HSSFCellStyle = {
+      val style = workbook.createCellStyle()
+      style.cloneStyleFrom(weekendCell(workbook))
+      style.setBorderBottom(CellStyle.BORDER_THIN)
+      style
+    }
+
+    def footerCell(workbook: HSSFWorkbook): HSSFCellStyle = {
+      val style = workbook.createCellStyle()
+      style.cloneStyleFrom(boldCell(workbook))
+      style.setBorderTop(CellStyle.BORDER_THIN)
+      style
+    }
+
+    def headerCell(workbook: HSSFWorkbook): HSSFCellStyle = {
+      val style = workbook.createCellStyle()
+      style.cloneStyleFrom(boldCell(workbook))
+      style.setBorderBottom(CellStyle.BORDER_THIN)
+      style
+    }
   }
 }
