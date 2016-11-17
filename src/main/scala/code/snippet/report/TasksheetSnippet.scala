@@ -38,6 +38,10 @@ class TasksheetSnippet extends DateFunctions {
     ).apply(in)
   }
 
+  def tasksheetSummaryExportLink(in: NodeSeq): NodeSeq = {
+    ("a [href]" #> s"/export/tasksheetSummary?intervalStart=${S.param("intervalStart").getOrElse(LocalDate.now().toString)}&intervalEnd=${S.param("intervalEnd").getOrElse(LocalDate.now().toString)}&user=${S.param("user").getOrElse("-1").toLong}").apply(in)
+  }
+
   def tasksheet(in: NodeSeq): NodeSeq = {
     val date = S.param("date").or(S.getSessionAttribute("date")).map(s => DateTime.parse(s))
     date.foreach(d => S.setSessionAttribute("date", d.toString))

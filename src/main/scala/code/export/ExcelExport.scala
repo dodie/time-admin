@@ -12,7 +12,7 @@ import org.apache.poi.poifs.filesystem.POIFSFileSystem
 import org.apache.poi.ss.usermodel.Cell
 import org.apache.poi.ss.usermodel.IndexedColors
 import org.apache.poi.ss.util.CellReference
-import org.joda.time.{DateTime, Interval, ReadablePartial}
+import org.joda.time.{DateTime => _, Interval => _, _}
 import code.commons.TimeUtils
 import code.model._
 import net.liftweb.util.Props
@@ -23,12 +23,13 @@ import org.apache.poi.ss.util.CellRangeAddress
 import code.service.ReportService
 import code.service.ReportService.TaskSheet
 import code.util.TaskSheetUtils._
+import com.github.nscala_time.time.Imports._
+import net.liftweb.common.Box
 
 /**
  * Excel export features.
  */
 object ExcelExport {
-
   val templatePath = Props.get("export.excel.timesheet_template").openOrThrowException("No Excel template defined for Timesheets!")
 
   /**
@@ -102,6 +103,38 @@ object ExcelExport {
     (contentStream, name)
   }
 
+  def exportTasksheetSummary(user: Box[User], intervalStart: DateTime, intervalEnd: DateTime): (InputStream, String) = {
+
+    val workbook = new HSSFWorkbook
+    val sheet = workbook.createSheet("Tasksheet")
+
+    val interval = new Interval(
+      new YearMonth(intervalStart).toInterval.start,
+      new YearMonth(intervalEnd).toInterval.end
+    )
+    val date = interval.getStart
+
+    val taskSheet = ReportService.taskSheetData(user, interval, d => new YearMonth(d))
+
+    val ds = dates(taskSheet)
+
+    //FIXME: title text (month index)
+    renderTaskSheetTitle(workbook, sheet, date.getYear + ". " + TimeUtils.monthNumberToText(date.getMonthOfYear - 1), rowNum = 0, dates(taskSheet).length)
+    renderTaskSheetFieldNames(workbook, sheet, ds, interval, rowNum = 1)
+    val rowNum = renderContent(workbook, sheet, taskSheet, interval, 2)
+    renderSummary(workbook, sheet, rowNum, ds.length + 1)
+
+    sheet.createFreezePane(1, 2)
+
+    val contentStream = using(new ByteArrayOutputStream()) { out =>
+      workbook.write(out)
+      out.flush()
+      new ByteArrayInputStream(out.toByteArray)
+    }
+    val fileName = s"tasksheet_${date.getYear}-${date.getMonthOfYear}_${user.map(u => u.firstName.toLowerCase + u.lastName.toLowerCase).getOrElse("")}.xls"
+    (contentStream, fileName)
+  }
+
   def exportTasksheet(blank: Boolean, user: User, offset: Int): (InputStream, String) = {
     val date = new DateTime(TimeUtils.currentDayStartInMs(offset))
 
@@ -114,10 +147,10 @@ object ExcelExport {
     val ds = dates(taskSheet)
 
     //FIXME: title text (month index)
-    renderTaskSheetTitle(workbook, sheet, date.getYear + ". " + TimeUtils.monthNumberToText(date.getMonthOfYear - 1), rowNum = 0, dates(taskSheet).length + 1)
+    renderTaskSheetTitle(workbook, sheet, date.getYear + ". " + TimeUtils.monthNumberToText(date.getMonthOfYear - 1), rowNum = 0, dates(taskSheet).length)
     renderTaskSheetFieldNames(workbook, sheet, ds, interval, rowNum = 1)
     val rowNum = renderContent(workbook, sheet, taskSheet, interval, 2)
-    renderSummary(workbook, sheet, rowNum, ds.length)
+    renderSummary(workbook, sheet, rowNum, ds.length + 1)
 
     sheet.createFreezePane(1, 2)
 
@@ -126,7 +159,7 @@ object ExcelExport {
       out.flush()
       new ByteArrayInputStream(out.toByteArray)
     }
-    val fileName = "tasksheet_" + date.getYear + "-" + date.getMonthOfYear + "_" + user.firstName.get.toLowerCase + user.lastName.get.toLowerCase + ".xls"
+    val fileName = s"tasksheet_${date.getYear}-${date.getMonthOfYear}_${user.firstName.toLowerCase + user.lastName.toLowerCase}.xls"
     (contentStream, fileName)
   }
 
@@ -146,16 +179,18 @@ object ExcelExport {
     taskHeader.setCellStyle(Styles.headerCell(workbook))
     taskHeader.setCellValue(S.?("export.tasksheet.project_identifier"))
 
-    dates.zip(1 to dates.length).foreach { case (d, index) =>
+    var lastIndex = 1
+    dates.zip(Stream.from(lastIndex)).foreach { case (d, index) =>
       val dateHeader = row.createCell(index)
       dateHeader.setCellValue(dayOf(d).map(_.toString).getOrElse(d.toString))
-      if (mapToDateTime(interval, d).exists(isWeekend)) {
+      if (Some(d).filter(hasDayFieldType).flatMap(mapToDateTime(interval, _)).exists(isWeekend)) {
         dateHeader.setCellStyle(Styles.weekendHeader(workbook))
       } else {
         dateHeader.setCellStyle(Styles.headerCell(workbook))
       }
+      lastIndex = index
     }
-    val sumHeader = row.createCell(dates.length)
+    val sumHeader = row.createCell(lastIndex + 1)
     sumHeader.setCellStyle(Styles.headerCell(workbook))
     sumHeader.setCellValue(S.?("export.tasksheet.sum"))
   }
@@ -167,23 +202,24 @@ object ExcelExport {
       val taskNameCell = itemRow.createCell(0)
       taskNameCell.setCellValue(t.name)
 
-      val ds = dates(taskSheet)
-      ds.zip(1 to ds.length).foreach { case (d, index) =>
+      var lastIndex = 1
+      dates(taskSheet).zip(Stream.from(lastIndex)).foreach { case (d, index) =>
         val dayCell = itemRow.createCell(index)
         dayCell.setCellType(Cell.CELL_TYPE_NUMERIC)
 
         Try(formattedDurationInMinutes(taskSheet, d, t).toDouble).foreach(dayCell.setCellValue)
-        if (mapToDateTime(interval, d).exists(isWeekend)) {
+        if (Some(d).filter(hasDayFieldType).flatMap(mapToDateTime(interval, _)).exists(isWeekend)) {
           dayCell.setCellStyle(Styles.weekendCell(workbook))
         } else {
           dayCell.setCellStyle(Styles.boldCell(workbook))
         }
+        lastIndex = index
       }
-      val sumCell = itemRow.createCell(ds.length)
+      val sumCell = itemRow.createCell(lastIndex + 1)
       sumCell.setCellType(Cell.CELL_TYPE_FORMULA)
       sumCell.setCellStyle(Styles.boldCell(workbook))
       tmpRowNum += 1
-      sumCell.setCellFormula("SUM(" + CellReference.convertNumToColString(2) + tmpRowNum + ":" + CellReference.convertNumToColString(ds.length - 1) + tmpRowNum + ")")
+      sumCell.setCellFormula("SUM(" + CellReference.convertNumToColString(1) + tmpRowNum + ":" + CellReference.convertNumToColString(lastIndex) + tmpRowNum + ")")
     }
     tmpRowNum
   }
