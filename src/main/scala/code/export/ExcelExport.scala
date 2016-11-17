@@ -103,51 +103,34 @@ object ExcelExport {
   }
 
   def exportTasksheet(blank: Boolean, user: User, offset: Int): (InputStream, String) = {
-    var fos: ByteArrayOutputStream = null
-    var array: Array[Byte] = null
-
     val date = new DateTime(TimeUtils.currentDayStartInMs(offset))
 
-    try {
-      // Initialize workbook
-      val workbook = new HSSFWorkbook
-      val sheet = workbook.createSheet("Tasksheet")
+    val workbook = new HSSFWorkbook
+    val sheet = workbook.createSheet("Tasksheet")
 
-      val interval = date.monthOfYear().toInterval
-      val taskSheet = ReportService.taskSheetData(User.currentUser, interval, d => d)
+    val interval = date.monthOfYear().toInterval
+    val taskSheet = ReportService.taskSheetData(User.currentUser, interval, d => d)
 
-      val ds = dates(taskSheet)
+    val ds = dates(taskSheet)
 
-      //FIXME: title text (month index)
-      renderTaskSheetTitle(workbook, sheet, date.getYear + ". " + TimeUtils.monthNumberToText(date.getMonthOfYear - 1), rowNum = 0, dates(taskSheet).length + 1)
-      renderTaskSheetFieldNames(workbook, sheet, ds, interval, rowNum = 1)
-      val rowNum = renderContent(workbook, sheet, taskSheet, interval, 2)
-      renderSummary(workbook, sheet, rowNum, ds.length)
+    //FIXME: title text (month index)
+    renderTaskSheetTitle(workbook, sheet, date.getYear + ". " + TimeUtils.monthNumberToText(date.getMonthOfYear - 1), rowNum = 0, dates(taskSheet).length + 1)
+    renderTaskSheetFieldNames(workbook, sheet, ds, interval, rowNum = 1)
+    val rowNum = renderContent(workbook, sheet, taskSheet, interval, 2)
+    renderSummary(workbook, sheet, rowNum, ds.length)
 
-      sheet.createFreezePane(1, 2)
+    sheet.createFreezePane(1, 2)
 
-      fos = new ByteArrayOutputStream()
-      workbook.write(fos)
-
-    } catch {
-      case e: Exception => e.printStackTrace
-    } finally {
-      if (fos != null) {
-        try {
-          fos.flush();
-          array = fos.toByteArray
-          fos.close();
-        } catch {
-          case e: IOException => e.printStackTrace
-        }
-      }
+    val contentStream = using(new ByteArrayOutputStream()) { out =>
+      workbook.write(out)
+      out.flush()
+      new ByteArrayInputStream(out.toByteArray)
     }
-
-    val contentStream = new ByteArrayInputStream(array)
     val fileName = "tasksheet_" + date.getYear + "-" + date.getMonthOfYear + "_" + user.firstName.get.toLowerCase + user.lastName.get.toLowerCase + ".xls"
-
     (contentStream, fileName)
   }
+
+  def using[A, B <: {def close(): Unit}] (closeable: B) (f: B => A): A = try { f(closeable) } finally { closeable.close() }
 
   def renderTaskSheetTitle(workbook: HSSFWorkbook, sheet: HSSFSheet, title: String, rowNum: Int, rowLength: Int): Unit = {
     val row = sheet.createRow(rowNum)
