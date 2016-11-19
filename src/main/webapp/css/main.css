@@ -349,12 +349,11 @@ input[type="text"] {
 }
 
 .TaskFilter {
-	width: 500px;
+	width: 100%;
 	height: 25px;
 	margin-bottom: 10px;
 	margin-left: 10px;
 	margin-right: 10px;
-	text-align: center;
 }
 
 .taskName:hover {
@@ -364,6 +363,9 @@ input[type="text"] {
 .newTaskItemInput {
 	display: inline;
 	width:50px;
+}
+.tasksPage .tasksrow {
+	margin-top: 10px;
 }
 
 .tasksPage .date-selectors {
@@ -388,11 +390,6 @@ input[type="text"] {
 	width: 350px;
 	text-decoration: underline;
 	padding: 3px 10px 3px 10px;
-}
-
-.tasksSearch {
-	text-align: center;
-	margin-top: 10px;
 }
 
 #taskItemAppenderMainHolder {
@@ -480,17 +477,28 @@ form.button {
 	height: 0px;
 }
 
+#pieholder {
+	text-align: center;
+}
+
 .summaryMetrics td:first-child {
 	font-weight: bold;
-	padding-right: 23px;
-	text-align: right;
+	padding-right: 10px;
+	vertical-align: top;
 }
 
 .summaryMetrics {
 	font-family: monospace;
 	position: relative;
-	width: 470px;
 	margin: auto;
+}
+
+.summaryMetrics table {
+	margin: auto;
+}
+
+.summaryMetrics .RealLeave{
+	display: block;
 }
 
 .chartContainer {
@@ -878,3 +886,4 @@ form.button {
 	border: 1px solid #add8e6;
 	padding: 5px;
 }
+

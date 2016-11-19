@@ -29,7 +29,6 @@
 				<ul id="tabs" class="nav nav-tabs" data-tabs="tabs">
 					<li class="active"><a href="#timeline" data-toggle="tab"><lift:loc>tasks.view.timeline</lift:loc></a></li>
 					<li><a href="#table" data-toggle="tab"><lift:loc>tasks.view.table</lift:loc></a></li>
-					<li><a href="#distribution" data-toggle="tab"><lift:loc>tasks.view.distribution</lift:loc></a></li>
 				</ul>
 				<div id="my-tab-content" class="tab-content">
 					<div class="tab-pane active" id="timeline">
@@ -87,103 +86,108 @@
 							</div>
 						</div>
 					</div>
-					<div class="tab-pane" id="distribution">
-						<div class="tasksPage">
-							<div class="summary">
-								<div class="lift:dailySummarySnippet.summaryForToday">
-									<div class="chartContainer">
-										<div class="fragWrapper">
-											<div class="fragLegend">
-												<span taskitem:fullname class="data"><span class="name"><taskitem:projectname/></span> <span><taskitem:taskname/></span></span><br/><span><taskitem:taskduration/></span>
-											</div>
-											<div class="frag" taskitem:taskitemtotaltime="" taskitem:taskitemwidth="">
-												<div taskitem:taskitemstyle="" taskitem:taskitemclass=""></div>
-											</div>
-										</div>
-									</div>
-									<div class="summaryMetrics">
-										<table>
-											<tbody>
-												<tr>
-													<td>
-														<span><lift:loc>dailysummary.fulltime</lift:loc></span>
-													</td>
-													<td>
-														<span class="SumTime"></span>
-													</td>
-												</tr>
-												<tr>
-													<td>
-														<span><lift:loc>dailysummary.pause</lift:loc></span>
-													</td>
-													<td>
-														<span class="PauseTime"></span><span> <lift:loc>minute</lift:loc></span>
-													</td>
-												</tr>
-												<tr>
-													<td>
-														<span><lift:loc>dailysummary.number_of_interrupts</lift:loc></span>
-													</td>
-													<td>
-														<span class="FlowBreak"></span>
-													</td>
-												</tr>
-												<tr>
-													<td>
-														<span><lift:loc>dailysummary.time_of_arrival</lift:loc></span>
-													</td>
-													<td>
-														<span class="Arrival"></span>
-													</td>
-												</tr>
-												<tr>
-													<td>
-														<span><lift:loc>dailysummary.time_of_leave</lift:loc></span>
-													</td>
-													<td>
-														<span class="Leave"></span>
-													</td>
-												</tr>
-											</tbody>
-										</table>
-										<div class="statusBarCurrentTask">
-											<span class="lift:taskItemSnippet.actualTask">
-												<span><lift:loc>tasks.selected_task</lift:loc></span>
-												<span class="actualTaskName"></span>
-												<span class="actualDescription"></span>
-											</span>
-										</div>
+				</div>
+			</div>
+
+			<div class="row tasksrow">
+				<div class="col-sm-8">
+					<div id="taskItemAppenderMainHolder">
+						<div id="holder">
+						    <input
+							id="taskSearchInput"
+							type="text"
+							class="TaskFilter form-control lift:L10n.placeholder"
+							placeholder="tasks.type_to_filter">
+						</div>
+
+						<div id="taskList">
+							<form method="post" class="InlineCommandsForm Pause">
+								<input type="hidden" name="selecttaskid" value="-1"/>
+								<span class="glyphicon glyphicon-pause" aria-hidden="true"></span>
+								<input type="text" class="OfftimeOffsetInput" name="timeoffset" value="" placeholder="hh:mm" autocomplete="off" />
+								<input type="submit" value="tasks.pause" class="btn btn-primary lift:L10n.value"/>
+							</form>
+							<div class="lift:taskItemSnippet.selectableTasks tasks">
+								<div task:taskstyleclass="" task:rowid="">
+									<div class="taskName">
+										<div class="taskColorIndicator" task:colorindicator="" task:onrowclick="">-&gt;</div>
+										<form task:formid="" method="post" class="InlineCommandsForm"><input type="hidden" name="selecttaskid" task:taskid=""/><input class="newTaskItemInput" type="text" name="timeoffset" task:placeholder="" value="" autocomplete="off" onfocus="this.value='';" onclick="arguments[0].stopPropagation();"/></form>
+										<div class="taskName_info" task:onrowclick=""><span class="tasksProjectName"><task:projectname/></span>-<span class="tasksTaskName"><task:taskname/></span> <span class="tasksTaskDescription"><task:taskdescription/></span></div>
 									</div>
 								</div>
 							</div>
 						</div>
 					</div>
 				</div>
-			</div>
-		</div>
-
-		<div class="container" id="taskItemAppenderMainHolder">
-			<div id="holder" class="tasksSearch">
-			    <input
-			    	id="taskSearchInput"
-			    	type="text"
-			    	class="TaskFilter input-sm lift:L10n.placeholder"
-			    	placeholder="tasks.type_to_filter">
-			</div>
-
-			<div id="taskList">
-				<form method="post" class="InlineCommandsForm Pause">
-					<input type="hidden" name="selecttaskid" value="-1"/>
-					<span class="glyphicon glyphicon-pause" aria-hidden="true"></span>
-					<input type="text" class="OfftimeOffsetInput" name="timeoffset" value="" placeholder="hh:mm" autocomplete="off" />
-					<input type="submit" value="tasks.pause" class="btn btn-primary lift:L10n.value"/>
-				</form>
-				<div class="lift:taskItemSnippet.selectableTasks tasks">
-					<div task:taskstyleclass="" task:rowid="">
-						<div class="taskName">
-							<div class="taskColorIndicator" task:colorindicator="" task:onrowclick="">-&gt;</div>
-							<form task:formid="" method="post" class="InlineCommandsForm"><input type="hidden" name="selecttaskid" task:taskid=""/><input class="newTaskItemInput" type="text" name="timeoffset" task:placeholder="" value="" autocomplete="off" onfocus="this.value='';" onclick="arguments[0].stopPropagation();"/></form>
-							<div class="taskName_info" task:onrowclick=""><span class="tasksProjectName"><task:projectname/></span>-<span class="tasksTaskName"><task:taskname/></span> <span class="tasksTaskDescription"><task:taskdescription/></span></div>
+				<div class="col-sm-4">
+					<div class="tasksPage">
+						<div class="summary">
+							<div class="lift:dailySummarySnippet.summaryForToday">
+								<div id="pieholder">
+									<table>
+										<tbody class="chartContainer">
+											<tr class="fragWrapper">
+												<th class="color"></th>
+												<td class="minutes"></td>
+											</tr>
+										</tbody>
+									</table>
+								</div>
+								<div class="summaryMetrics">
+									<table>
+										<tbody>
+											<tr>
+												<td>
+													<span><lift:loc>dailysummary.fulltime</lift:loc></span>
+												</td>
+												<td>
+													<span class="SumTime"></span>
+												</td>
+											</tr>
+											<tr>
+												<td>
+													<span><lift:loc>dailysummary.pause</lift:loc></span>
+												</td>
+												<td>
+													<span class="PauseTime"></span><span><lift:loc>minute.short</lift:loc></span>
+												</td>
+											</tr>
+											<tr>
+												<td>
+													<span><lift:loc>dailysummary.number_of_interrupts</lift:loc></span>
+												</td>
+												<td>
+													<span class="FlowBreak"></span>
+												</td>
+											</tr>
+											<tr>
+												<td>
+													<span><lift:loc>dailysummary.time_of_arrival</lift:loc></span>
+												</td>
+												<td>
+													<span class="Arrival"></span>
+												</td>
+											</tr>
+											<tr>
+												<td>
+													<span><lift:loc>dailysummary.time_of_leave</lift:loc></span>
+												</td>
+												<td>
+													<span class="Leave"></span>
+													<span class="RealLeave"></span>
+												</td>
+											</tr>
+										</tbody>
+									</table>
+									<div class="statusBarCurrentTask">
+										<span class="lift:taskItemSnippet.actualTask">
+											<span><lift:loc>tasks.selected_task</lift:loc></span>
+											<span class="actualTaskName"></span>
+											<span class="actualDescription"></span>
+										</span>
+									</div>
+								</div>
+							</div>
 						</div>
 					</div>
 				</div>

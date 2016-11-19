@@ -58,14 +58,6 @@ function setTaskItemEditorPopup(taskItemId, timeOffset, selectedTaskId) {
 		}
 	});
 
-	//if (taskItemId == '-1') {
-		//document.getElementById('tiefields').style.display="none";
-		//document.getElementById('tieerror').style.display="block";
-	//} else {
-		//document.getElementById('tiefields').style.display="block";
-		//document.getElementById('tieerror').style.display="none";
-	//}
-
 	if (selectedTaskId == 0) {
 		selectedTaskId = -1;
 	}
@@ -82,88 +74,110 @@ function setTaskItemEditorPopup(taskItemId, timeOffset, selectedTaskId) {
 		document.querySelector('.modal-footer .btn-danger').disabled = false;
 	}
 
-	//document.getElementById('tiePopupTitle').innerHTML = loc.get('tasks.edit_entry');
-	//document.getElementById('tiePopupModeChange').value = '+';
 	document.getElementById('tiemode').value = 'taskitemedit';
 }
 
-//function toggleDiagram() {
-	//var timelineStyle = document.getElementById('timeLine').style;
-	//var logStyle = document.getElementById('taskItemLogMainHolder').style;
-	//var toggleDiagramTypeButton = document.getElementById('toggleDiagramTypeButton');
-	//if (timelineStyle.display == "none") {
-		//timelineStyle.display = "block";
-		//logStyle.display = "none";
-		//toggleDiagramTypeButton.value = loc.get('tasks.view.table');
-		//localStorage.setItem("ta_diagram_table", "false");
-	//} else {
-		//timelineStyle.display = "none";
-		//logStyle.display = "block";
-		//toggleDiagramTypeButton.value = loc.get('tasks.view.timeline');;
-		//localStorage.setItem("ta_diagram_table", "true");
-	//} 
-//}
-
-function doChangeTaskFilterSearchSize() {
-	var elem = document.getElementById('taskSearchInput');
-	var newWidth = elem.value.length * 8 + 20;
-	var minWidth = 500;
-	if (newWidth > minWidth && newWidth < 700) {
-		elem.style.width = newWidth + 'px'
-	} else if (newWidth < minWidth) {
-		elem.style.width=minWidth + 'px'
-	} else {
-		elem.style.width=700 + 'px'
-	}
-}
-
 $(document).ready(function(){
-	$('#taskSearchInput').keypress(function(){
-		doChangeTaskFilterSearchSize();
-	})
+	var b = document.getElementById('holder').getElementsByTagName('input')[0];
+	var ls = localStorage.getItem('taskSearchInput');
+	if (ls) {
+		b.value = ls;
+	}
 
-	$('#taskSearchInput').keyup(function(){
-		doChangeTaskFilterSearchSize();
-	})
+	b.onkeyup = function() {
+		localStorage.setItem('taskSearchInput', b.value);
 
-	doChangeTaskFilterSearchSize();
+		// update ui
+		var filterValue = this.value;
+
+		Array.prototype.slice.call(
+			document.getElementById('taskList').getElementsByClassName("tasks")
+		).forEach(function(el){
+			var displayName = el.getElementsByClassName('tasksProjectName')[0].innerHTML + "-" + el.getElementsByClassName('tasksTaskName')[0].innerHTML;
+
+			var show = filterValue.split(",").filter(function(orBlock) {
+				return orBlock.split(" ").every(function(andBlock) {
+					return displayName.toLowerCase().indexOf(andBlock.toLowerCase()) != -1
+				})
+			}).length > 0;
+
+			if (show) {
+				el.firstElementChild.className="task";
+			} else {
+				el.firstElementChild.className="hiddenTask";
+			}
+		})
+	}
 	b.onkeyup();
-
-	if (localStorage.getItem("ta_diagram_table") === "true") { toggleDiagram(); }
 });
 
-var fullTaskList = new Array();
-
-
-
-var b = document.getElementById('holder').getElementsByTagName('input')[0];
-var ls = localStorage.getItem('taskSearchInput');
-if (ls) {
-	b.value = ls;
-}
-
-var timer;
-b.onkeyup = function() {
-	localStorage.setItem('taskSearchInput', b.value);
-
-	// update ui
-	var filterValue = this.value;
-
-	Array.prototype.slice.call(
-		document.getElementById('taskList').getElementsByClassName("tasks")
-	).forEach(function(el){
-		var displayName = el.getElementsByClassName('tasksProjectName')[0].innerHTML + "-" + el.getElementsByClassName('tasksTaskName')[0].innerHTML;
-
-		var show = filterValue.split(",").filter(function(orBlock) {
-			return orBlock.split(" ").every(function(andBlock) {
-				return displayName.toLowerCase().indexOf(andBlock.toLowerCase()) != -1
-			})
-		}).length > 0;
-
-		if (show) {
-			el.firstElementChild.className="task";
-		} else {
-			el.firstElementChild.className="hiddenTask";
+Raphael.fn.pieChart = function (cx, cy, r, values, colors, stroke) {
+	var paper = this,
+	rad = Math.PI / 180,
+	chart = this.set();
+	function sector(cx, cy, r, startAngle, endAngle, params) {
+		if (startAngle === 0 && endAngle === 360) {
+			endAngle -= 1;
 		}
-	})
-}
+		var x1 = cx + r * Math.cos(-startAngle * rad),
+		x2 = cx + r * Math.cos(-endAngle * rad),
+			y1 = cy + r * Math.sin(-startAngle * rad),
+			y2 = cy + r * Math.sin(-endAngle * rad);
+		return paper.path(["M", cx, cy, "L", x1, y1, "A", r, r, 0, +(endAngle - startAngle > 180), 0, x2, y2, "z"]).attr(params);
+	}
+	var angle = 0,
+	total = 0,
+		start = 0,
+		addText = function(params) {
+			var p = params.p;
+			var percent = params.percent;
+			var txt = paper.text(cx, cy, percent).attr({fill: "black", stroke: "none", opacity: 0, "font-size": 20});
+			var ms = 200;
+			p.mouseover(function () {
+				p.stop().animate({transform: "s1.05 1.05 " + cx + " " + cy}, ms, "elastic");
+				txt.stop().animate({opacity: 1}, ms, "elastic");
+			}).mouseout(function () {
+				p.stop().animate({transform: ""}, ms, "elastic");
+				txt.stop().animate({opacity: 0}, ms);
+			});
+			chart.push(txt);
+		},
+			process = function (j) {
+				var value = values[j];
+				var angleplus = 360 * value / total;
+				var popangle = angle + (angleplus / 2);
+				var color = Raphael.hsb(start, .75, 1);
+				var delta = 30;
+				var p = sector(cx, cy, r, angle, angle + angleplus, {fill: colors[j], stroke: stroke, "stroke-width": 3});
+				angle += angleplus;
+				chart.push(p);
+				start += .1;
+				return {p: p, percent: parseInt(Math.abs(angleplus / 3.6)) + "%"};
+			};
+
+	for (var i = 0, ii = values.length; i < ii; i++) {
+		total += values[i];
+	}
+	var frags = [];
+	for (i = 0; i < ii; i++) {
+		frags.push(process(i));
+	}
+	chart.push(sector(cx, cy, r/3, 1, 359, {fill: "white", stroke: stroke, "stroke-width": 3}));
+	for (i = 0; i < ii; i++) {
+		addText(frags[i]);
+	}
+	return chart;
+};
+
+$(function () {
+	var values = [],
+	colors = [];
+	$("#pieholder").each(function() {
+		$(this).find("tr").each(function() {
+			values.push(parseInt($("td", this).text(), 10));
+			colors.push($("th", this).text());
+		});
+		$(this).empty();
+	});
+	Raphael("pieholder", 200, 200).pieChart(100, 100, 80, values, colors, "#fff");
+});
