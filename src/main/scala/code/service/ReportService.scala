@@ -194,11 +194,17 @@ object ReportService {
         case _ => ""
       }
 
-      aggregatedDatas.append(AggregatedTaskItemData(aggregated._1, dur, projectName, taskName, task.isEmpty))
+      val rootProjectId: Long = project match {
+        case Full(p) => ProjectService.getRootProject(p).id.get
+        case _ => -1
+      }
+
+      aggregatedDatas.append(AggregatedTaskItemData(aggregated._1, rootProjectId, dur, projectName, taskName, task.isEmpty))
     }
-    val data = aggregatedDatas.toArray
-    Sorting.quickSort(data)
-    data
+
+    aggregatedDatas.toList.sortBy((t: AggregatedTaskItemData) => t.projectName + t.taskName).toArray
+    //Sorting.quickSort(data)
+    //data.sorted
   }
 
   /**
@@ -212,7 +218,7 @@ object ReportService {
 /**
  * TaskItem DTO that represents aggregated task items of a task for a given period.
  */
-case class AggregatedTaskItemData(taskId: Long, duration: Long, projectName: String, taskName: String, isPause: Boolean = false) extends Ordered[AggregatedTaskItemData] {
+case class AggregatedTaskItemData(taskId: Long, rootProjectId: Long, duration: Long, projectName: String, taskName: String, isPause: Boolean = false) extends Ordered[AggregatedTaskItemData] {
   def collator = Collator.getInstance(S.locale);
   def compare(that: AggregatedTaskItemData) = collator.compare(projectName + taskName, that.projectName + that.taskName)
   def durationInMinutes = (duration / 60D / 1000).toLong

@@ -195,6 +195,7 @@ class ProjectsSnippet {
   private def editor(hierarchicalItem: HierarchicalItem[_]): JsCmd = {
     object name extends TransientRequestVar(hierarchicalItem.name.get)
     object description extends TransientRequestVar(hierarchicalItem.description.get)
+    object color extends TransientRequestVar(hierarchicalItem.color.get)
     object active extends TransientRequestVar(hierarchicalItem.active.get)
 
     def submit: JsCmd = {
@@ -203,6 +204,7 @@ class ProjectsSnippet {
           Project.findByKey(hierarchicalItem.id.get.toLong).get
             .name(name.get)
             .description(description.get)
+            .color(color.get)
             .active(active.get)
             .save
         }
@@ -210,6 +212,7 @@ class ProjectsSnippet {
           Task.findByKey(hierarchicalItem.id.get.toLong).get
             .name(name.get)
             .description(description.get)
+            .color(color.get)
             .active(active.get)
             .save
         }
@@ -228,6 +231,9 @@ class ProjectsSnippet {
               "name" -> S.?("projects.popup.description"),
               "value" -> SHtml.textElem(description, "class" -> "form-control")) ++
           Helpers.bind("property", editorPropertyTemplate,
+              "name" -> S.?("projects.popup.color"),
+              "value" -> SHtml.textElem(color, "class" -> "form-control", "type" -> "color")) ++
+          Helpers.bind("property", editorPropertyTemplate,
               "name" -> S.?("projects.popup.active"),
               "value" -> SHtml.checkboxElem(active))),
         "title" -> S.?("projects.edit"),
@@ -240,11 +246,13 @@ class ProjectsSnippet {
   private def addRootEditor: JsCmd = {
     object name extends TransientRequestVar("")
     object description extends TransientRequestVar("")
+    object color extends TransientRequestVar("")
 
     def submit: JsCmd = {
       Project.create
         .name(name.get)
         .description(description.get)
+        .color(color.get)
         .active(true)
         .save
 
@@ -260,7 +268,11 @@ class ProjectsSnippet {
               "value" -> SHtml.textElem(name, "class" -> "form-control")) ++
           Helpers.bind("property", editorPropertyTemplate,
               "name" -> S.?("projects.popup.description"),
-              "value" -> SHtml.textElem(description, "class" -> "form-control"))),
+              "value" -> SHtml.textElem(description, "class" -> "form-control")) ++
+          Helpers.bind("property", editorPropertyTemplate,
+              "name" -> S.?("projects.popup.color"),
+              "value" -> SHtml.textElem(color, "class" -> "form-control", "type" -> "color"))
+            ),
         "title" -> S.?("projects.new_project"),
         "submit" -> SHtml.ajaxSubmit(S.?("button.save"), submit _, "class" -> "btn btn-primary"),
         "close" -> SHtml.ajaxSubmit(S.?("button.close"), closeDialog _, "class" -> "btn btn-default"))) &

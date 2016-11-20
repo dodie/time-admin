@@ -1,6 +1,8 @@
 package code
 package snippet
 
+import code.model.Project
+import code.service.ProjectService
 import scala.xml.NodeSeq.seqToNodeSeq
 import scala.xml.Elem
 import scala.xml.NodeSeq
@@ -71,10 +73,17 @@ class TaskItemSnippet extends DateFunctions {
         val active = (!taskItemDto.task.isEmpty)
         val (red, green, blue, alpha) = TaskService.getColor(taskItemDto.taskName.getOrElse(""), taskItemDto.projectName.getOrElse(""), active)
         val fragBarStyle = "background-color:rgba(" + red + " , " + green + " , " + blue + " ," + alpha + ");"
+        val fragBarProjectStyle = {
+          taskItemDto.project match {
+            case Some(project) => "background-color:" + ProjectService.getRootProject(project).color.get
+            case _ => ""
+          }
+        }
         ".date *" #> getDateString(taskItemDto) &
         ".project *" #> taskItemDto.projectName.getOrElse("") &
         ".task *" #> taskItemDto.taskName.getOrElse("") &
         ".taskColorIndicator [style]" #> fragBarStyle &
+        ".projectColorIndicator [style]" #> fragBarProjectStyle &
         (if (active)
           ".glyphicon-pause" #> NodeSeq.Empty
         else
@@ -115,26 +124,46 @@ class TaskItemSnippet extends DateFunctions {
               }
             }
 
-            val (red, green, blue, alpha) = TaskService.getColor(taskItemDto.taskName.getOrElse(""), taskItemDto.projectName.getOrElse(""), active)
-            val isDarkColor = (((red * 299) + (green * 587) + (blue * 114)) / 1000) < 128
-
             val fragStyle = "width:" + lengthInPercent + "%;"
-            val fragBarStyle = { if (isDarkColor) "color:white; " else "color:black; " } + "background-color:" + "rgba(" + red + " , " + green + " , " + blue + " , " + alpha + ");"
+            val fragBarStyle = {
+              val (red, green, blue, alpha) = TaskService.getColor(taskItemDto.taskName.getOrElse(""), taskItemDto.projectName.getOrElse(""), active)
+              val isDarkColor = (((red * 299) + (green * 587) + (blue * 114)) / 1000) < 128
+              (if (isDarkColor) "color:white; " else "color:black; ") +
+              "background-color:" + "rgba(" + red + " , " + green + " , " + blue + " , " + alpha + ");"
+            }
+            val fragBarProjectStyle = {
+              taskItemDto.project match {
+                case Some(project) => {
+                  var bgColor = ProjectService.getRootProject(project).color.get
+                  if (bgColor.length == 7) {
+                    val (red, green, blue) = (Integer.valueOf(bgColor.substring(1, 3), 16),
+                                              Integer.valueOf(bgColor.substring(3, 5), 16),
+                                              Integer.valueOf(bgColor.substring(5, 7), 16))
+                    val isDarkColor = (((red * 299) + (green * 587) + (blue * 114)) / 1000) < 128
+                    (if (isDarkColor) "color:white; " else "color:black; ") + "background-color:" + bgColor
+                  } else {
+                    ""
+                  }
+                }
+                case _ => ""
+              }
+            }
             val fragTextStyle = if (odd) Text("top:-80px;") else Text("top:15px;")
             val fragBarClass = if (active && last) "fragBar fragBarContinued" else if (active && !last) "fragBar" else "fragBar noborder"
 
             ".ProjectName *" #> taskItemDto.projectName.getOrElse("") &
-              ".TaskName *" #> taskItemDto.taskName.getOrElse("") &
-              ".Duration *" #> (S.?("duration") + ": " + taskItemDto.durationInMinutes + " " + S.?("minute")) &
-              ".fragText *" #> taskItemDto.timeString &
-              ".frag [style]" #> fragStyle &
-              ".fragBar [style]" #> fragBarStyle &
-              ".fragBar [class]" #> fragBarClass &
-              ".fragBarHover [style]" #> fragBarStyle &
-              ".fragText [style]" #> fragTextStyle &
-              "@taskitemid [value]" #> taskItemDto.taskItem.id.get &
-              "@taskid [value]" #> taskItemDto.taskItem.task.get &
-              "@time [value]" #> getDateString(taskItemDto)
+            ".ProjectName [style]" #> fragBarProjectStyle &
+            ".TaskName *" #> taskItemDto.taskName.getOrElse("") &
+            ".Duration *" #> (S.?("duration") + ": " + taskItemDto.durationInMinutes + " " + S.?("minute")) &
+            ".fragText *" #> taskItemDto.timeString &
+            ".frag [style]" #> fragStyle &
+            ".fragBar [style]" #> fragBarStyle &
+            ".fragBar [class]" #> fragBarClass &
+            ".fragBarHover [style]" #> fragBarStyle &
+            ".fragText [style]" #> fragTextStyle &
+            "@taskitemid [value]" #> taskItemDto.taskItem.id.get &
+            "@taskid [value]" #> taskItemDto.taskItem.task.get &
+            "@time [value]" #> getDateString(taskItemDto)
           }
         )).apply(in)
     }
@@ -156,12 +185,15 @@ class TaskItemSnippet extends DateFunctions {
 
           Helpers.bind("task", in,
             AttrBindParam("taskstyleclass", taskStyleClass, "class"),
-
             AttrBindParam("placeholder",
               if (offsetInDays == 0) Text("hh:mm")
               else Text("hh:mm"), "placeholder"),
-
-            AttrBindParam("colorindicator", Text("background-color: rgba(" + red + "," + green + "," + blue + " , " + alpha + ")"), "style"),
+            AttrBindParam("colorindicator",
+              Text("background-color: rgba(" + red + "," + green + "," + blue + " , " + alpha + ")"),
+              "style"),
+            AttrBindParam("projectcolorindicator",
+              Text("background-color:" + ProjectService.getRootProject(showTaskData.rootProject).color.get),
+              "style"),
             // Form sending without submit button
             AttrBindParam("formid", Text("tskf_" + showTaskData.task.id.get), "id"),
             AttrBindParam("rowid", Text("tskr_" + showTaskData.task.id.get), "id"),

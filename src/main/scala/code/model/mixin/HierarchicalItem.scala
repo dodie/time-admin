@@ -12,4 +12,5 @@ trait HierarchicalItem[T <: Mapper[T]] {
   object name extends MappedString[T](this, 140)
   object description extends MappedString[T](this, 300)
   object active extends MappedBoolean[T](this)
+  object color extends MappedString[T](this, 140)
 }

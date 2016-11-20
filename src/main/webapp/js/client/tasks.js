@@ -111,7 +111,7 @@ $(document).ready(function(){
 	b.onkeyup();
 });
 
-Raphael.fn.pieChart = function (cx, cy, r, values, colors, stroke) {
+Raphael.fn.pieChart = function (cx, cy, r, values, colors, projects, projectColors, stroke) {
 	var paper = this,
 	rad = Math.PI / 180,
 	chart = this.set();
@@ -127,57 +127,76 @@ Raphael.fn.pieChart = function (cx, cy, r, values, colors, stroke) {
 	}
 	var angle = 0,
 	total = 0,
-		start = 0,
-		addText = function(params) {
-			var p = params.p;
-			var percent = params.percent;
-			var txt = paper.text(cx, cy, percent).attr({fill: "black", stroke: "none", opacity: 0, "font-size": 20});
-			var ms = 200;
-			p.mouseover(function () {
-				p.stop().animate({transform: "s1.05 1.05 " + cx + " " + cy}, ms, "elastic");
-				txt.stop().animate({opacity: 1}, ms, "elastic");
-			}).mouseout(function () {
-				p.stop().animate({transform: ""}, ms, "elastic");
-				txt.stop().animate({opacity: 0}, ms);
-			});
-			chart.push(txt);
-		},
-			process = function (j) {
-				var value = values[j];
-				var angleplus = 360 * value / total;
-				var popangle = angle + (angleplus / 2);
-				var color = Raphael.hsb(start, .75, 1);
-				var delta = 30;
-				var p = sector(cx, cy, r, angle, angle + angleplus, {fill: colors[j], stroke: stroke, "stroke-width": 3});
-				angle += angleplus;
-				chart.push(p);
-				start += .1;
-				return {p: p, percent: parseInt(Math.abs(angleplus / 3.6)) + "%"};
-			};
+	start = 0,
+	addText = function(params) {
+		var p = params.p;
+		var percent = params.percent;
+		var txt = paper.text(cx, cy, percent).attr({fill: "black", stroke: "none", opacity: 0, "font-size": 20});
+		p.mouseover(function () {
+			p.stop().animate({opacity: 0.7}, 200);
+			txt.stop().animate({opacity: 1}, 200);
+		}).mouseout(function () {
+			p.stop().animate({opacity: 1}, 200);
+			txt.stop().animate({opacity: 0}, 100);
+		});
+		chart.push(txt);
+	},
+	process = function (j, rMult, values, colors) {
+		var value = values[j];
+		var angleplus = 360 * value / total;
+		var popangle = angle + (angleplus / 2);
+		var color = Raphael.hsb(start, .75, 1);
+		var delta = 30;
+		var p = sector(cx, cy, r * rMult, angle, angle + angleplus, {fill: colors[j], stroke: stroke, "stroke-width": 3});
+		angle += angleplus;
+		chart.push(p);
+		start += .1;
+		return {p: p, percent: parseInt(Math.abs(angleplus / 3.6)) + "%"};
+	};
 
 	for (var i = 0, ii = values.length; i < ii; i++) {
 		total += values[i];
 	}
 	var frags = [];
+	for (i = 0; i < projects.length; i++) {
+		frags.push(process(i, 1.2, projects, projectColors));
+	}
 	for (i = 0; i < ii; i++) {
-		frags.push(process(i));
+		frags.push(process(i, 1, values, colors));
 	}
 	chart.push(sector(cx, cy, r/3, 1, 359, {fill: "white", stroke: stroke, "stroke-width": 3}));
-	for (i = 0; i < ii; i++) {
+	for (i = 0; i < frags.length; i++) {
 		addText(frags[i]);
 	}
 	return chart;
 };
 
 $(function () {
-	var values = [],
-	colors = [];
+	var values = [];
+	var colors = [];
+	var projects = {};
+
 	$("#pieholder").each(function() {
 		$(this).find("tr").each(function() {
-			values.push(parseInt($("td", this).text(), 10));
-			colors.push($("th", this).text());
+			var min = parseInt($("td.minutes", this).text(), 10);
+			var color = $("td.color", this).text();
+			var projectColor = $("td.projectColor", this).text();
+			values.push(min);
+			colors.push(color);
+
+			if (projects[projectColor]) {
+				projects[projectColor] = projects[projectColor] + min;
+			} else {
+				projects[projectColor] = min;
+			}
 		});
 		$(this).empty();
 	});
-	Raphael("pieholder", 200, 200).pieChart(100, 100, 80, values, colors, "#fff");
+
+	var projectValues = [];
+	for (var i = 0; i < Object.keys(projects).length; i++) {
+		projectValues.push(projects[Object.keys(projects)[i]]);
+	}
+
+	Raphael("pieholder", 200, 200).pieChart(100, 100, 80, values, colors, projectValues, Object.keys(projects), "#fff");
 });

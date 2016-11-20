@@ -7,6 +7,8 @@ import scala.xml.NodeSeq
 import scala.xml.Node
 import scala.xml.Text
 
+import net.liftweb.common._
+import code.model.Project
 import code.service.TaskItemService
 import code.service.ReportService
 import code.service.TaskService
@@ -133,7 +135,11 @@ class DailySummarySnippet extends DateFunctions {
           val (red, green, blue, alpha) = TaskService.getColor(aggregatedData.taskName, aggregatedData.projectName, !aggregatedData.isPause)
 
           ".minutes *" #> (math.round(aggregatedData.duration / 60D / 1000)) &
-          ".color *" #> ("rgba(" + red + " , " + green + " , " + blue + " , " + alpha + ")")
+          ".color *" #> ("rgba(" + red + " , " + green + " , " + blue + " , " + alpha + ")") &
+          ".projectColor *" #> (Project.findByKey(aggregatedData.rootProjectId) match {
+              case Full(project) => project.color.get
+              case _ => "white"
+            })
         }) &
         ".SumTime *" #> sumTime &
         ".PauseTime *" #> pauseTime &

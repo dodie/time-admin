@@ -9,10 +9,15 @@ import net.liftweb.common.{Box, Full, Empty}
 object ProjectService {
 
   def getDisplayName(project: Project): String = projectPath(Nil, Full(project)).map(_.name).mkString("-")
-  
+
   private def projectPath(z: List[Project], project: Box[Project]): List[Project] = project match {
     case Full(p) => projectPath(p :: z, Project.findByKey(p.parent.get))
     case _ => z
+  }
+
+  def getRootProject(project: Project): Project = Project.findByKey(project.parent.get) match {
+    case Full(parent) => getRootProject(parent)
+    case _ => project
   }
 
   def move(project: Project, parent: Project) = project.parent(parent).save()

@@ -38,7 +38,7 @@ object TaskService {
     val taskDtos = new ListBuffer[ShowTaskData]
     val rootProjects = Project.findAll.filter(_.parent.isEmpty)
 
-    def addAllTasksForSubProject(project: Project, parentsName: String): Unit = {
+    def addAllTasksForSubProject(rootProject: Project, project: Project, parentsName: String): Unit = {
       if (!activeOnly || project.active.get) {
         val tasks = if (activeOnly) {
           Task.findAll(By(Task.parent, Project.find(By(Project.id, project.id.get))), By(Task.active, true))
@@ -47,16 +47,16 @@ object TaskService {
         }
 
         for (task <- tasks) {
-          taskDtos.append(ShowTaskData(task, parentsName))
+          taskDtos.append(ShowTaskData(task, rootProject, parentsName))
         }
         for (project <- Project.findAll(By(Project.parent, Project.find(By(Project.id, project.id.get)).get))) {
-          addAllTasksForSubProject(project, parentsName + "-" + project.name)
+          addAllTasksForSubProject(rootProject, project, parentsName + "-" + project.name)
         }
       }
     }
 
     for (rootProject <- rootProjects) {
-      addAllTasksForSubProject(rootProject, rootProject.name.get)
+      addAllTasksForSubProject(rootProject, rootProject, rootProject.name.get)
     }
     taskDtos.toList
   }
@@ -71,7 +71,7 @@ object TaskService {
               taskDto.projectName.toLowerCase.contains(filter.toLowerCase.trim))
       })
       .map(taskDto =>
-        ShowTaskData(taskDto.task, taskDto.projectName))
+        ShowTaskData(taskDto.task, taskDto.rootProject, taskDto.projectName))
       .toArray
 
     Sorting.quickSort(taskList)
@@ -109,7 +109,7 @@ object TaskService {
 /**
  * Task wrapper that contains the display name of the whole parent project structure, and comparable.
  */
-case class ShowTaskData(task: Task, projectName: String) extends Ordered[ShowTaskData] {
+case class ShowTaskData(task: Task, rootProject: Project, projectName: String) extends Ordered[ShowTaskData] {
   def collator = Collator.getInstance(S.locale);
   def compare(that: ShowTaskData) = collator.compare(getFullName(), that.getFullName())
   def getFullName(): String = projectName + "-" + task.name.get
