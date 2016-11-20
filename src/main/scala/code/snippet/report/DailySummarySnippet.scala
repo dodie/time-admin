@@ -50,7 +50,7 @@ class DailySummarySnippet extends DateFunctions {
     }
 
     if (aggregatedArray.isEmpty) {
-      <lift:embed what="no_data"/>
+      NodeSeq.Empty
     } else {
       val pause = aggregatedArray.filter(_.taskId == 0).headOption
       val pauseDuration = if (pause.isEmpty) {
