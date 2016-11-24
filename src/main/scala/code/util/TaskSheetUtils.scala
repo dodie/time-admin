@@ -13,6 +13,9 @@ object TaskSheetUtils {
   def formattedDurationInMinutes[D <: ReadablePartial](ts: TaskSheet[D], d: D, t: TaskSheetItem): String =
     ts.get(d).flatMap(_.get(t)).map(_.minutes.toString).getOrElse("")
 
+  def durationInMinutes[D <: ReadablePartial](ts: TaskSheet[D], d: D, t: TaskSheetItem): Long =
+    ts.get(d).flatMap(_.get(t)).map(_.minutes).getOrElse(0L)
+
   def dates[D <: ReadablePartial](ts: TaskSheet[D]): List[D] =
     ts.keys.toList.sorted
 

@@ -10,7 +10,7 @@ import sitemap._
 import Loc._
 import mapper._
 import code.model._
-import code.export.ExcelExport
+import code.export.{ExcelExport, ExcelExport2}
 import code.commons.TimeUtils
 import net.liftweb.http.provider._
 import net.liftweb.http._
@@ -203,7 +203,7 @@ class Boot {
             Full(RedirectResponse("/"))
           } else {
             for {
-              (contentStream, fileName) <- tryo(ExcelExport.exportTasksheet(User.currentUser.openOrThrowException("No user found!"), offset.toInt))
+              (contentStream, fileName) <- tryo(ExcelExport2.tasksheet(User.currentUser.openOrThrowException("No user found!"), offset.toInt))
               if null ne contentStream
             } yield StreamingResponse(contentStream, () =>
               contentStream.close,
