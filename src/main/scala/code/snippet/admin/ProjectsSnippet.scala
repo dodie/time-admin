@@ -297,6 +297,7 @@ class ProjectsSnippet {
           .name(name.get)
           .description(description.get)
           .active(true)
+          .specifiable(true)
           .save
       else
         Task.create
@@ -304,6 +305,7 @@ class ProjectsSnippet {
           .name(name.get)
           .description(description.get)
           .active(true)
+          .specifiable(true)
           .save
 
       rerenderProjectTree &
