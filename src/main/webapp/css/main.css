@@ -370,6 +370,16 @@ input[type="text"] {
 	background-color:#dddddd;
 }
 
+.taskName .specify-subtask {
+	display: none;
+	float: right;
+	padding-right: 5px;
+}
+
+.taskName:hover .specify-subtask {
+	display: inline;
+}
+
 .newTaskItemInput {
 	display: inline;
 	width:50px;
@@ -483,7 +493,7 @@ form.button {
 
 .timeLine .fragBar.noborder {
 	border: 0;
-	background: linear-gradient(to bottom, rgba(255,255,255,0) 43%,rgba(219,220,226,1) 46%,rgba(184,186,198,1) 49%,rgba(221,223,227,1) 52%,rgba(255,255,255,0) 56%);
+	background: linear-gradient(to bottom, rgba(255,255,255,0) 42%,rgba(219,220,226,1) 42%,rgba(184,186,198,1) 44%,rgba(221,223,227,1) 44%,rgba(255,255,255,0) 44%);
 }
 
 .AddHelpContainer {

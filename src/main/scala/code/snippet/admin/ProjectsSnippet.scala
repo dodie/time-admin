@@ -197,6 +197,7 @@ class ProjectsSnippet {
     object description extends TransientRequestVar(hierarchicalItem.description.get)
     object color extends TransientRequestVar(hierarchicalItem.color.get)
     object active extends TransientRequestVar(hierarchicalItem.active.get)
+    object specifiable extends TransientRequestVar(hierarchicalItem.specifiable.get)
 
     def submit: JsCmd = {
       hierarchicalItem match {
@@ -206,6 +207,7 @@ class ProjectsSnippet {
             .description(description.get)
             .color(color.get)
             .active(active.get)
+            .specifiable(specifiable.get)
             .save
         }
         case _: Task => {
@@ -214,6 +216,7 @@ class ProjectsSnippet {
             .description(description.get)
             .color(color.get)
             .active(active.get)
+            .specifiable(specifiable.get)
             .save
         }
       }
@@ -235,7 +238,10 @@ class ProjectsSnippet {
               "value" -> SHtml.textElem(color, "class" -> "form-control", "type" -> "color")) ++
           Helpers.bind("property", editorPropertyTemplate,
               "name" -> S.?("projects.popup.active"),
-              "value" -> SHtml.checkboxElem(active))),
+              "value" -> SHtml.checkboxElem(active)) ++
+          Helpers.bind("property", editorPropertyTemplate,
+              "name" -> S.?("projects.popup.specifiable"),
+              "value" -> SHtml.checkboxElem(specifiable))),
         "title" -> S.?("projects.edit"),
         "submit" -> SHtml.ajaxSubmit(S.?("button.save"), submit _, "class" -> "btn btn-primary"),
         "close" -> SHtml.ajaxSubmit(S.?("button.close"), closeDialog _, "class" -> "btn btn-default"))
@@ -254,6 +260,7 @@ class ProjectsSnippet {
         .description(description.get)
         .color(color.get)
         .active(true)
+        .specifiable(true)
         .save
 
       rerenderProjectTree &

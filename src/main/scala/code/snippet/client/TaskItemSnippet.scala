@@ -238,18 +238,18 @@ class TaskItemSnippet extends DateFunctions {
 
       if (mode == "default") {
         /*
-				 * DEFAULT (smart) mode - Append to current day or insert to given time of the selected day.
-				 * The given timeoffset parameter can be blank, it will be interpreted as 0.
-				 * 
-				 * If the parameter is a number, 
-				 * 	the new taskitem's date will be the current date minus the given number of minutes.
-				 * 	the taskitem will be appended to today's tasks. 
-				 * 	if not today is selected, rises an error.
-				 * 
-				 * Else, 
-				 * 	the parameter will be parsed as hh:mm, and will be interpreted as time of the selected day.
-				 * 	the taskitem will be inserted to the selected day at the given point of time
-				 */
+         * DEFAULT (smart) mode - Append to current day or insert to given time of the selected day.
+         * The given timeoffset parameter can be blank, it will be interpreted as 0.
+         *
+         * If the parameter is a number,
+         * 	the new taskitem's date will be the current date minus the given number of minutes.
+         * 	the taskitem will be appended to today's tasks.
+         * 	if not today is selected, rises an error.
+         *
+         * Else,
+         * 	the parameter will be parsed as hh:mm, and will be interpreted as time of the selected day.
+         * 	the taskitem will be inserted to the selected day at the given point of time
+         */
         val offsetStringParameter = {
           val offsetParameterString = (S.param("timeoffset") getOrElse "0")
           if (0 < offsetParameterString.length())
@@ -280,6 +280,15 @@ class TaskItemSnippet extends DateFunctions {
         if (!time.isEmpty) {
           // valid parameters, make changes
 
+          // Create new task if necessary
+          val newTaskName = S.param("newtaskname").getOrElse("")
+
+          val calculatedTaskId = if (!newTaskName.isEmpty) {
+            TaskService.specify(TaskService.getTask(selectedTaskId).get)
+          } else {
+            selectedTaskId;
+          }
+
           if (preciseTimeMode) {
             // precise time given, inserting
             TaskItemService.insertTaskItem(selectedTaskId, time.get)
@@ -300,9 +309,9 @@ class TaskItemSnippet extends DateFunctions {
         }
       } else if (mode == "taskitemsplit" || mode == "taskitemedit") {
         /*
-				 * SPLIT or EDIT mode.
-				 * The given timeoffset parameter must be in hh:mm format, and will be interpreted as time of the current day.
-				 */
+         * SPLIT or EDIT mode.
+         * The given timeoffset parameter must be in hh:mm format, and will be interpreted as time of the current day.
+         */
 
         // time offset parameter
         val offset = {
@@ -341,8 +350,8 @@ class TaskItemSnippet extends DateFunctions {
         }
       } else if (mode == "taskitemdelete") {
         /*
-				 * The specified taskitem will be deleted.
-				 */
+         * The specified taskitem will be deleted.
+         */
         TaskItemService.deleteTaskItem(S.param("taskitemid").get.toLong)
       }
 

@@ -104,6 +104,13 @@ object TaskService {
       throw new IllegalArgumentException("Tasks with TaskItems can not be deleted.");
     }
   }
+
+  def specify(task: Task) = {
+    //val parent = task.parent().get
+
+
+    task.id
+  }
 }
 
 /**

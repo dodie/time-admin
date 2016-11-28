@@ -200,3 +200,17 @@ $(function () {
 
 	Raphael("pieholder", 200, 200).pieChart(100, 100, 80, values, colors, projectValues, Object.keys(projects), "#fff");
 });
+
+function toggleSubtaskCreatorForm(element) {
+	$(element).parent().find('.newtaskholder').toggle();
+	$(element).parent().find('input[name=newtaskname]').val('');
+	$(element).find('*[data-open]').toggle();
+	$(element).find('*[data-close]').toggle();
+}
+
+
+function submitOnEnter(e) {
+	if(e && e.keyCode == 13) {
+		document.forms[0].submit();
+	}
+}
