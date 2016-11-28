@@ -374,6 +374,7 @@ input[type="text"] {
 	display: none;
 	float: right;
 	padding-right: 5px;
+	cursor: pointer;
 }
 
 .specifiable-task .taskName:hover .specify-subtask {
