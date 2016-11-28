@@ -181,7 +181,11 @@ class TaskItemSnippet extends DateFunctions {
           val (red, green, blue, alpha) = TaskService.getColor(showTaskData.task.name.get, showTaskData.projectName, true)
           val name = showTaskData.projectName + "-" + showTaskData.task.name.get
 
-          val taskStyleClass = Text("hiddenTask");
+          val taskStyleClass = if (showTaskData.task.specifiable.get) {
+            Text("hiddenTask specifiable-task");
+          } else {
+            Text("hiddenTask");
+          }
 
           Helpers.bind("task", in,
             AttrBindParam("taskstyleclass", taskStyleClass, "class"),
@@ -284,21 +288,21 @@ class TaskItemSnippet extends DateFunctions {
           val newTaskName = S.param("newtaskname").getOrElse("")
 
           val calculatedTaskId = if (!newTaskName.isEmpty) {
-            TaskService.specify(TaskService.getTask(selectedTaskId).get)
+            TaskService.specify(TaskService.getTask(selectedTaskId).get, newTaskName).id.get
           } else {
             selectedTaskId;
           }
 
           if (preciseTimeMode) {
             // precise time given, inserting
-            TaskItemService.insertTaskItem(selectedTaskId, time.get)
+            TaskItemService.insertTaskItem(calculatedTaskId, time.get)
           } else {
             // diff time given, appending
             if (offsetInDays != 0) {
               S.error(S.?("tasks.error.previous_day_precise_only"))
               S.redirectTo(S.uri)
             } else {
-              TaskItemService.appendTaskItem(selectedTaskId, time.get)
+              TaskItemService.appendTaskItem(calculatedTaskId, time.get)
             }
           }
 

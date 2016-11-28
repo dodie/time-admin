@@ -376,7 +376,7 @@ input[type="text"] {
 	padding-right: 5px;
 }
 
-.taskName:hover .specify-subtask {
+.specifiable-task .taskName:hover .specify-subtask {
 	display: inline;
 }
 

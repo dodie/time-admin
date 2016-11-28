@@ -26,21 +26,22 @@ class ProjectServiceTest extends FunSuite with DbSpec {
     assert(ProjectService.getDisplayName(project("bottom")) == "top-middle-bottom")
   }
 
-  test("Move bottom project to any parent project") {
-    givenSomeProjectData()
+  // TODO
+  //test("Move bottom project to any parent project") {
+    //givenSomeProjectData()
 
-    ProjectService.move(project("bottom"), project("any project"))
+    //ProjectService.move(project("bottom"), project("any project"))
 
-    assert(ProjectService.getDisplayName(project("bottom")) == "top-any project-bottom")
-  }
+    //assert(ProjectService.getDisplayName(project("bottom")) == "top-any project-bottom")
+  //}
 
-  test("Move bottom project to root") {
-    givenSomeProjectData()
+  //test("Move bottom project to root") {
+    //givenSomeProjectData()
 
-    ProjectService.moveToRoot(project("bottom"))
+    //ProjectService.moveToRoot(project("bottom"))
 
-    assert(ProjectService.getDisplayName(project("bottom")) == "bottom")
-  }
+    //assert(ProjectService.getDisplayName(project("bottom")) == "bottom")
+  //}
 
   test("The top level project is not empty") {
     givenSomeProjectData()
@@ -74,7 +75,7 @@ class ProjectServiceTest extends FunSuite with DbSpec {
     lazy val middle = Project.find(By(Project.name, "middle"))
     Project.create.name("bottom").parent(middle).save()
   }
-  
+
   def project(n: String): Project = Project.find(By(Project.name, n)).openOrThrowException("Test entity must be presented!")
 
 }
