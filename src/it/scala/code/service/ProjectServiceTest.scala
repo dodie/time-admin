@@ -26,22 +26,21 @@ class ProjectServiceTest extends FunSuite with DbSpec {
     assert(ProjectService.getDisplayName(project("bottom")) == "top-middle-bottom")
   }
 
-  // TODO
-  //test("Move bottom project to any parent project") {
-    //givenSomeProjectData()
+  test("Move bottom project to any parent project") {
+    givenSomeProjectData()
 
-    //ProjectService.move(project("bottom"), project("any project"))
+    ProjectService.move(project("bottom"), project("any project"))
 
-    //assert(ProjectService.getDisplayName(project("bottom")) == "top-any project-bottom")
-  //}
+    assert(ProjectService.getDisplayName(project("bottom")) == "top-any project-bottom")
+  }
 
-  //test("Move bottom project to root") {
-    //givenSomeProjectData()
+  test("Move bottom project to root") {
+    givenSomeProjectData()
 
-    //ProjectService.moveToRoot(project("bottom"))
+    ProjectService.moveToRoot(project("bottom"))
 
-    //assert(ProjectService.getDisplayName(project("bottom")) == "bottom")
-  //}
+    assert(ProjectService.getDisplayName(project("bottom")) == "bottom")
+  }
 
   test("The top level project is not empty") {
     givenSomeProjectData()
