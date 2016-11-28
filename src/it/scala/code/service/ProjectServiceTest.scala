@@ -74,7 +74,7 @@ class ProjectServiceTest extends FunSuite with DbSpec {
     lazy val middle = Project.find(By(Project.name, "middle"))
     Project.create.name("bottom").parent(middle).save()
   }
-  
+
   def project(n: String): Project = Project.find(By(Project.name, n)).openOrThrowException("Test entity must be presented!")
 
 }

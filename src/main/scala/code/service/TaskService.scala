@@ -104,6 +104,30 @@ object TaskService {
       throw new IllegalArgumentException("Tasks with TaskItems can not be deleted.");
     }
   }
+
+  def specify(task: Task, taskName: String) = {
+    if (!task.specifiable.get) {
+      throw new RuntimeException("Task is not specifiable!")
+    }
+    val parent = Project.find(By(Project.parent, task.parent.get), By(Project.name, task.name))
+    val parentProject = if (parent.isEmpty) {
+      val rootProject = Project.find(By(Project.id, task.parent.get)).get
+      val newParent = Project.create.name(task.name).active(true).parent(rootProject)
+      newParent.save
+      newParent
+    } else {
+      parent.get
+    }
+
+    val targetTask = Task.find(By(Task.parent, parentProject.id), By(Task.name, taskName))
+    if (targetTask.isEmpty) {
+      val specifiedTask = Task.create.name(taskName).active(true).specifiable(true).parent(parentProject)
+      specifiedTask.save
+      specifiedTask
+    } else {
+      targetTask.get
+    }
+  }
 }
 
 /**

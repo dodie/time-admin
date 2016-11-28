@@ -115,9 +115,20 @@
 								<div task:taskstyleclass="" task:rowid="">
 									<div class="taskName">
 										<div class="projectColorIndicator" task:projectcolorindicator="">-</div>
-										<form task:formid="" method="post" class="InlineCommandsForm"><input type="hidden" name="selecttaskid" task:taskid=""/><input class="newTaskItemInput" type="text" name="timeoffset" task:placeholder="" value="" autocomplete="off" onfocus="this.value='';" onclick="arguments[0].stopPropagation();"/></form>
-										<div class="taskColorIndicator" task:colorindicator="" task:onrowclick="">-&gt;</div>
-										<div class="taskName_info" task:onrowclick=""><span class="tasksProjectName"><task:projectname/></span>-<span class="tasksTaskName"><task:taskname/></span> <span class="tasksTaskDescription"><task:taskdescription/></span></div>
+										<form task:formid="" method="post" class="InlineCommandsForm">
+											<input type="hidden" name="selecttaskid" task:taskid=""/>
+											<input class="newTaskItemInput" type="text" name="timeoffset" task:placeholder="" value="" autocomplete="off" onfocus="this.value='';" onclick="arguments[0].stopPropagation();" onkeypress="return submitOnEnter(this, event)"/>
+											<div class="taskColorIndicator" task:colorindicator="" task:onrowclick="">-&gt;</div>
+											<div class="taskName_info" task:onrowclick=""><span class="tasksProjectName"><task:projectname/></span>-<span class="tasksTaskName"><task:taskname/></span> <span class="tasksTaskDescription"><task:taskdescription/></span></div>
+											<span style="display:none;" class="newtaskholder">
+												-
+												<input type="text" name="newtaskname" onkeypress="return submitOnEnter(this, event)"/>
+											</span>
+										</form>
+										<a class="specify-subtask" onclick="toggleSubtaskCreatorForm(this);">
+											<span data-open>+ <lift:loc>tasks.new</lift:loc></span>
+											<span data-close style="display:none;">- <lift:loc>tasks.cancel</lift:loc></span>
+										</a>
 									</div>
 								</div>
 							</div>

@@ -101,10 +101,13 @@ $(document).ready(function(){
 				})
 			}).length > 0;
 
+			var taskElem = $(el.firstElementChild);
 			if (show) {
-				el.firstElementChild.className="task";
+				taskElem.addClass("task")
+				taskElem.removeClass("hiddenTask")
 			} else {
-				el.firstElementChild.className="hiddenTask";
+				taskElem.removeClass("task")
+				taskElem.addClass("hiddenTask")
 			}
 		})
 	}
@@ -127,7 +130,6 @@ Raphael.fn.pieChart = function (cx, cy, r, values, colors, projects, projectColo
 	}
 	var angle = 0,
 	total = 0,
-	start = 0,
 	addText = function(params) {
 		var p = params.p;
 		var percent = params.percent;
@@ -144,13 +146,10 @@ Raphael.fn.pieChart = function (cx, cy, r, values, colors, projects, projectColo
 	process = function (j, rMult, values, colors) {
 		var value = values[j];
 		var angleplus = 360 * value / total;
-		var popangle = angle + (angleplus / 2);
-		var color = Raphael.hsb(start, .75, 1);
 		var delta = 30;
 		var p = sector(cx, cy, r * rMult, angle, angle + angleplus, {fill: colors[j], stroke: stroke, "stroke-width": 3});
 		angle += angleplus;
 		chart.push(p);
-		start += .1;
 		return {p: p, percent: parseInt(Math.abs(angleplus / 3.6)) + "%"};
 	};
 
@@ -161,6 +160,7 @@ Raphael.fn.pieChart = function (cx, cy, r, values, colors, projects, projectColo
 	for (i = 0; i < projects.length; i++) {
 		frags.push(process(i, 1.2, projects, projectColors));
 	}
+	angle = 0;
 	for (i = 0; i < ii; i++) {
 		frags.push(process(i, 1, values, colors));
 	}
@@ -198,5 +198,21 @@ $(function () {
 		projectValues.push(projects[Object.keys(projects)[i]]);
 	}
 
-	Raphael("pieholder", 200, 200).pieChart(100, 100, 80, values, colors, projectValues, Object.keys(projects), "#fff");
+	if (values && values.length > 0) {
+		Raphael("pieholder", 200, 200).pieChart(100, 100, 80, values, colors, projectValues, Object.keys(projects), "#fff");
+	}
 });
+
+function toggleSubtaskCreatorForm(element) {
+	$(element).parent().find('.newtaskholder').toggle();
+	$(element).parent().find('input[name=newtaskname]').val('');
+	$(element).find('*[data-open]').toggle();
+	$(element).find('*[data-close]').toggle();
+}
+
+
+function submitOnEnter(elem, e) {
+	if(e && e.keyCode == 13) {
+		elem.form.submit();
+	}
+}
