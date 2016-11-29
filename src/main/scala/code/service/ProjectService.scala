@@ -27,7 +27,11 @@ object ProjectService {
   def isEmpty(project: Project) = Task.findAll(By(Task.parent, project)).isEmpty && Project.findAll(By(Project.parent, project)).isEmpty
 
   def delete(project: Project) =
-    if (isEmpty(project)) project.delete_!
-    else throw new IllegalArgumentException("Projects with tasks or subprojects can not be deleted.")
+    if (project.active)
+      project.active(false).save
+    else if (isEmpty(project))
+      project.delete_!
+    else
+      throw new IllegalArgumentException("Projects with tasks or subprojects can not be deleted.")
 
 }

@@ -20,13 +20,13 @@
 								<span class="name"><project:name/></span>
 								<span class="caret"></span>
 							</a>
-							<ul class="dropdown-menu lift:usersSnippet.userPages">
-								<li><a class="addSubProject" project:onclick=""><lift:loc>projects.edit</lift:loc></a></li>
-								<li><a class="addSubProject" project:subprojectonclick=""><lift:loc>projects.add_subproject</lift:loc></a></li>
-								<li><a class="addSubProject" project:subtaskonclick=""><lift:loc>projects.add_task</lift:loc></a></li>
-								<li><a class="addSubProject" project:deleteprojectonclick=""><lift:loc>projects.delete</lift:loc></a></li>
-								<li><a class="addSubProject" project:selectonclick=""><lift:loc>projects.select</lift:loc></a></li>
-								<li><a class="addSubProject" project:movetoonclick=""><lift:loc>projects.moveto</lift:loc></a></li>
+							<ul class="dropdown-menu">
+								<li><a project:onclick=""><lift:loc>projects.edit</lift:loc></a></li>
+								<li><a project:subprojectonclick=""><lift:loc>projects.add_subproject</lift:loc></a></li>
+								<li><a project:subtaskonclick=""><lift:loc>projects.add_task</lift:loc></a></li>
+								<li><a project:deleteprojectonclick=""><lift:loc>projects.delete</lift:loc></a></li>
+								<li><a project:selectonclick=""><lift:loc>projects.select</lift:loc></a></li>
+								<li><a project:movetoonclick=""><lift:loc>projects.moveto</lift:loc></a></li>
 							</ul>
 						</span>
 					</span>
@@ -41,10 +41,11 @@
 								<span class="name"><task:name/></span>
 								<span class="caret"></span>
 							</a>
-							<ul class="dropdown-menu lift:usersSnippet.userPages">
-								<li><a class="addSubProject" task:onclick=""><lift:loc>projects.edit</lift:loc></a></li>
-								<li><a class="addSubProject" task:deletetaskonclick=""><lift:loc>projects.delete</lift:loc></a></li>
-								<li><a class="addSubProject" task:selectonclick=""><lift:loc>projects.select</lift:loc></a></li>
+							<ul class="dropdown-menu">
+								<li><a task:onclick=""><lift:loc>projects.edit</lift:loc></a></li>
+								<li><a task:deletetaskonclick=""><lift:loc>projects.delete</lift:loc></a></li>
+								<li><a task:selectonclick=""><lift:loc>projects.select</lift:loc></a></li>
+								<li><a task:mergeintoonclick=""><lift:loc>projects.mergeinto</lift:loc></a></li>
 							</ul>
 						</span>
 					</span>
