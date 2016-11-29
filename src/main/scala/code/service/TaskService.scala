@@ -97,12 +97,17 @@ object TaskService {
 
   def isEmpty(task: Task) = TaskItem.findAll(By(TaskItem.task, task)).isEmpty
 
-  def delete(task: Task) = {
-    if (isEmpty(task)) {
+  def delete(task: Task) =
+    if (task.active)
+      task.active(false).save
+    else if (isEmpty(task))
       task.delete_!
-    } else {
-      throw new IllegalArgumentException("Tasks with TaskItems can not be deleted.");
-    }
+    else
+      throw new IllegalArgumentException("Tasks with TaskItems can not be deleted.")
+
+  def merge(what: Task, into: Task) = {
+    TaskItem.findAll(By(TaskItem.task, what)).foreach((ti: TaskItem) => ti.task(into).save)
+    delete(what)
   }
 
   def specify(task: Task, taskName: String) = {
@@ -116,6 +121,9 @@ object TaskService {
       newParent.save
       newParent
     } else {
+      if (!parent.get.active) {
+        parent.get.active(true).save
+      }
       parent.get
     }
 
@@ -125,6 +133,9 @@ object TaskService {
       specifiedTask.save
       specifiedTask
     } else {
+      if (!targetTask.get.active) {
+        targetTask.get.active(true).save
+      }
       targetTask.get
     }
   }
