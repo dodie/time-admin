@@ -2,6 +2,7 @@ package code.service
 
 import code.model.Project
 import code.model.Task
+import code.model.TaskItem
 import code.test.utils.DbSpec
 import net.liftweb.common.Box
 import net.liftweb.mapper.By
@@ -49,7 +50,6 @@ class TaskServiceTest extends FunSuite with DbSpec {
     assert(getProject(anotherSpecificSupportTask.parent.get) == getProject(specificSupportTask.parent.get))
   }
 
-
   test("specify task with same name multiple times") {
     val project = Project.create.name("My Project")
     project.save()
@@ -65,6 +65,34 @@ class TaskServiceTest extends FunSuite with DbSpec {
     val accidentallyReSpecifiedSupportTask = TaskService.specify(genericSupportTask, "fix random bug")
 
     assert(specificSupportTask == accidentallyReSpecifiedSupportTask)
+  }
+
+  test("merge removes merged Task") {
+    val project = Project.create.name("My Project")
+    project.save()
+    val mainTask = Task.create.name("Main task").parent(project)
+    mainTask.save()
+    val taskToBeMerged = Task.create.name("Task to be merged").parent(project)
+    taskToBeMerged.save()
+
+    TaskService.merge(taskToBeMerged, mainTask)
+
+    assert(Task.find(By(Task.id, taskToBeMerged.id.get)).isEmpty)
+  }
+
+  test("merge transfers TaskItems to the target Task") {
+    val project = Project.create.name("My Project")
+    project.save()
+    val mainTask = Task.create.name("Main task").parent(project)
+    mainTask.save()
+    val taskToBeMerged = Task.create.name("Task to be merged").parent(project)
+    taskToBeMerged.save()
+    val taskItem = TaskItem.create.task(mainTask)
+    taskItem.save
+
+    TaskService.merge(taskToBeMerged, taskToBeMerged)
+
+    assert(taskItem.task.get == mainTask.id.get)
   }
 
   def getProject(id: Long): Project = Project.find(By(Project.id, id)).openOrThrowException("project not found")
