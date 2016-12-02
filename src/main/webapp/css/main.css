@@ -379,6 +379,7 @@ input[type="text"] {
 
 .specifiable-task .taskName:hover .specify-subtask {
 	display: inline;
+	line-height: 0;
 }
 
 .newTaskItemInput {
