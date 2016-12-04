@@ -489,6 +489,7 @@ form.button {
 	width: 30px;
 	font-family: monospace;
 	transform: rotate(-55deg);
+	cursor: pointer;
 }
 
 .timeLine .fragBar.fragBarContinued {
