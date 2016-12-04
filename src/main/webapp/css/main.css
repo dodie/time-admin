@@ -565,7 +565,6 @@ form.button {
 
 #taskList .taskColorIndicator {
 	cursor: pointer;
-	margin-top: 6px;
 }
 
 .taskColorIndicator {
@@ -586,7 +585,7 @@ form.button {
 	margin-right: 4px;
 	font-size: 10px;
 	vertical-align: top;
-	margin-top: 6px;
+	margin-top: 4px;
 	display: inline-block;
 	margin-left: 35px;
 	border-radius: 2px;
