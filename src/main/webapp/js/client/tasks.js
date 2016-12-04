@@ -63,7 +63,7 @@ function setTaskItemEditorPopup(taskItemId, timeOffset, selectedTaskId) {
 		var displayName = el.getElementsByClassName('tasksProjectName')[0].innerHTML + "-" + el.getElementsByClassName('tasksTaskName')[0].innerHTML;
 		var id = el.getElementsByClassName('InlineCommandsForm')[0].selecttaskid.value;
 
-		if (el.firstElementChild.className === "specifiable-task task" || id == selectedTaskId) {
+		if ($(el.firstElementChild).hasClass("task") || id == selectedTaskId) {
 			if (id == selectedTaskId) {
 				tieSelector.removeChild(tieSelector.firstChild);
 			}

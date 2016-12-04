@@ -385,6 +385,7 @@ input[type="text"] {
 .newTaskItemInput {
 	display: inline;
 	width:50px;
+	vertical-align: top;
 }
 .tasksPage .tasksrow {
 	margin-top: 10px;
