@@ -9,6 +9,11 @@ $(function(){
 		$('html,body').scrollTop(scrollmem);
 	});
 
+	window.onhashchange = function() {
+		var hash = window.location.hash;
+		hash && $('ul.nav a[href="' + hash + '"]').tab('show');
+	}
+
 	$("*[data-tab-aware]").each(function() {
 		$(this).click(function() {
 			this.href = this.href + window.location.hash;
@@ -39,7 +44,15 @@ function setTaskItemEditorPopup(taskItemId, timeOffset, selectedTaskId) {
 		tieSelector.removeChild(tieSelector.firstChild);
 	}
 
-	var option = document.createElement('option');
+	var option;
+	if (selectedTaskId != 0) {
+		option = document.createElement('option');
+		option.innerHTML = loc.get("do_not_change");
+		option.value = selectedTaskId;
+		tieSelector.appendChild(option);
+	}
+
+	option = document.createElement('option');
 	option.innerHTML = loc.get("pause");
 	option.value = -1;
 	tieSelector.appendChild(option);
@@ -50,7 +63,10 @@ function setTaskItemEditorPopup(taskItemId, timeOffset, selectedTaskId) {
 		var displayName = el.getElementsByClassName('tasksProjectName')[0].innerHTML + "-" + el.getElementsByClassName('tasksTaskName')[0].innerHTML;
 		var id = el.getElementsByClassName('InlineCommandsForm')[0].selecttaskid.value;
 
-		if (el.firstElementChild.className=="task" || id == selectedTaskId) {
+		if (el.firstElementChild.className === "specifiable-task task" || id == selectedTaskId) {
+			if (id == selectedTaskId) {
+				tieSelector.removeChild(tieSelector.firstChild);
+			}
 			var option = document.createElement('option');
 			option.innerHTML = displayName;
 			option.value = id;

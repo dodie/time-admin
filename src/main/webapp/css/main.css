@@ -229,7 +229,7 @@ input[type="text"] {
 
 .OfftimeOffsetInput {
 	width: 50px;
-	margin-left: 10px;
+	margin-left: 50px;
 }
 
 .day-pager-holder {
@@ -437,7 +437,9 @@ input[type="text"] {
 }
 
 #taskItemLogMainHolder .projectColorIndicator {
-	margin:0;
+	margin-left: 0;
+	margin-right: 0;
+	margin-top: 4px;
 }
 
 #tieselecttaskid {
@@ -534,22 +536,19 @@ form.button {
 }
 
 .InlineCommandsForm.Pause {
-	padding:0 42px 0 0;
+	padding:0 42px 5px 0;
 }
 
 .InlineCommandsForm.Pause .glyphicon {
-	margin-left: 13px;
-	margin-right: 4px;
-	margin-bottom: 23px;
 	font-size: 19px;
 }
 
 #taskItemLogMainHolder .glyphicon-pause {
-	margin-left: 14px;
+	margin-left: 15px;
 }
 
 .InlineCommandsForm.Pause .btn {
-	margin-left: 14px;
+	margin-left: 16px;
 }
 
 .InlineCommandsForm {
@@ -564,13 +563,13 @@ form.button {
 
 #taskList .taskColorIndicator {
 	cursor: pointer;
+	margin-top: 6px;
 }
 
 .taskColorIndicator {
 	color:transparent;
 	cursor: default;
 	font-family: monospace;
-	margin-right: 4px;
 	font-size: 10px;
 	vertical-align: top;
 	margin-top: 4px;
@@ -585,7 +584,7 @@ form.button {
 	margin-right: 4px;
 	font-size: 10px;
 	vertical-align: top;
-	margin-top: 4px;
+	margin-top: 6px;
 	display: inline-block;
 	margin-left: 35px;
 	border-radius: 2px;

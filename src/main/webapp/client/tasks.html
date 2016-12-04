@@ -7,6 +7,7 @@
 	<span class="lift:jsL10n.addJsLoc">tasks.confirm_delete</span>
 	<span class="lift:jsL10n.addJsLoc">tasks.view.table</span>
 	<span class="lift:jsL10n.addJsLoc">tasks.view.timeline</span>
+	<span class="lift:jsL10n.addJsLoc">do_not_change</span>
 
 	<div class="tasksPage">
 		<div class="container">
@@ -50,7 +51,7 @@
 										(<span class="Duration"></span>)
 
 									</div>
-									<div class="fragText"></div>
+									<div class="fragText" onclick="$(this).parent().find('.fragBar')[0].onclick();"></div>
 								</div>
 							</div>
 						</div>
@@ -107,9 +108,11 @@
 						<div id="taskList">
 							<form method="post" class="InlineCommandsForm Pause">
 								<input type="hidden" name="selecttaskid" value="-1"/>
-								<span class="glyphicon glyphicon-pause" aria-hidden="true"></span>
 								<input type="text" class="OfftimeOffsetInput" name="timeoffset" value="" placeholder="hh:mm" autocomplete="off" />
-								<input type="submit" value="tasks.pause" class="btn btn-primary lift:L10n.value"/>
+								<a class="btn btn-primary pause-button" onclick="$(this).parent().submit();">
+									<span aria-hidden="true" class="glyphicon glyphicon-pause"></span>
+								</a>
+
 							</form>
 							<div class="lift:taskItemSnippet.selectableTasks tasks">
 								<div task:taskstyleclass="" task:rowid="">
@@ -140,7 +143,7 @@
 						<div class="summary">
 							<div class="lift:dailySummarySnippet.summaryForToday">
 								<div id="pieholder">
-									<table>
+									<table style="display:none;">
 										<tbody class="chartContainer">
 											<tr class="fragWrapper">
 												<td class="color"></td>
