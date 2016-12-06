@@ -32,7 +32,8 @@ libraryDependencies ++= {
     "org.eclipse.jetty"           % "jetty-webapp"              % "8.1.7.v20120910"     % "compile,container,test,it,e2e",
     "org.eclipse.jetty"           % "jetty-plus"                % "8.1.7.v20120910"     % "compile,container,test,it,e2e",
     "org.eclipse.jetty.orbit"     % "javax.servlet"             % "3.0.0.v201112011016" % "compile,container,test,e2e" artifacts Artifact("javax.servlet", "jar", "jar"),
-    "ch.qos.logback"              % "logback-classic"           % "1.0.6",
+    "log4j"                       % "log4j"                     % "1.2.17"
+    "org.slf4j"                   % "slf4j-log4j12"             % "1.7.21"
     "org.specs2"                  %% "specs2"                   % "2.3.12"              % "test,it,e2e",
     "org.scalatest"               % "scalatest_2.11"            % "2.2.4"               % "test,it,e2e",
     "org.seleniumhq.selenium"     % "selenium-firefox-driver"   % "2.53.1"              % "test,it,e2e",
