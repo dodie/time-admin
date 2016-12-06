@@ -57,8 +57,6 @@
 .form-signin .form-control {
 	position: relative;
 	height: auto;
-	-webkit-box-sizing: border-box;
-	-moz-box-sizing: border-box;
 	box-sizing: border-box;
 	padding: 10px;
 	font-size: 16px;
@@ -123,7 +121,7 @@
 }
 
 .top-menu .nav .open>a, .top-menu .nav .open>a:focus, .top-menu .nav .open>a:hover {
-  background-color: #178ACC;
+	background-color: #178ACC;
 }
 
 /* -----
@@ -156,7 +154,7 @@
 }
 
 /*-------
-  general 
+  general
   -------*/
 body {
 	font-family: verdana, arial, sans-serif;
@@ -200,8 +198,8 @@ input[type="text"] {
 }
 
 .DefaultUserWarning {
-	font-weight: bold; 
-	color: red; 
+	font-weight: bold;
+	color: red;
 	font-size: 18px;
 	text-align: center;
 	padding-bottom: 25px;
@@ -209,8 +207,8 @@ input[type="text"] {
 }
 
 .logo {
-    padding: 5px;
-    padding-right: 26px;
+	padding: 5px;
+	padding-right: 26px;
 }
 
 /* LoginBox, and user bar */
@@ -333,6 +331,13 @@ input[type="text"] {
 	z-index: -1000;
 }
 
+.timeLine .fragBarHover {
+	top: -40px;
+}
+.timeLine:hover .fragBarHover {
+	top: -80px;
+}
+
 .frag:hover .fragBarHover {
 	opacity: 0.9;
 	position: absolute;
@@ -347,7 +352,6 @@ input[type="text"] {
 	opacity: 0;
 	padding: 5px;
 	position: absolute;
-	top: -80px;
 	z-index: 100;
 	box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
 	text-align: center;
@@ -360,7 +364,6 @@ input[type="text"] {
 
 .TaskFilter {
 	width: 100%;
-	height: 25px;
 	margin-bottom: 10px;
 	margin-left: 10px;
 	margin-right: 10px;
@@ -468,8 +471,9 @@ form.button {
 
 .timeLine {
 	margin: 45px 5px 15px 5px;
-	height: 90px;
 	position: relative;
+	height: 55px;
+	margin-bottom: 45px;
 }
 
 .timeLine .fragBar {
@@ -494,7 +498,7 @@ form.button {
 }
 
 .timeLine .fragBar.fragBarContinued {
-	border-right: 3px dotted black !important;
+	border-right: 3px dotted white !important;
 }
 
 .timeLine .fragBar.noborder {
@@ -538,7 +542,7 @@ form.button {
 }
 
 .InlineCommandsForm.Pause {
-	padding:0 42px 5px 0;
+	padding: 0 42px 5px 0;
 }
 
 .InlineCommandsForm.Pause .glyphicon {
@@ -579,7 +583,7 @@ form.button {
 }
 
 .projectColorIndicator {
-	color:transparent;
+	color: transparent;
 	cursor: default;
 	font-family: monospace;
 	margin-right: 4px;
@@ -607,7 +611,7 @@ form.button {
 	font-weight: bold;
 }
 
-.content .tasks .task .taskName{
+.content .tasks .task .taskName {
 	padding: 10px 0px 15px 0px;
 }
 
@@ -615,7 +619,7 @@ form.button {
 	font-style: italic;
 }
 
-.taskName_info{
+.taskName_info {
 	cursor: pointer;
 	display: inline-block;
 }
@@ -655,7 +659,7 @@ form.button {
 }
 
 /*-------------
-  Popup general 
+  Popup general
   -------------*/
 .popup {
 	max-height: 80%;
@@ -746,8 +750,7 @@ form.button {
 }
 
 .projectsPage .projectName {
-	background: url("/images/project_icon.png") no-repeat scroll 0 0
-		transparent;
+	background: url("/images/project_icon.png") no-repeat scroll 0 0 transparent;
 	font-weight: bold;
 	padding-left: 20px;
 }
@@ -756,6 +759,7 @@ form.button {
 	color: darkRed;
 	text-decoration: none;
 }
+
 .projectsPage .project.selected, .projectsPage .task.selected {
 	background: #178ACC;
 	border-radius: 5px;
@@ -771,8 +775,7 @@ form.button {
 }
 
 .projectsPage .taskName {
-	background: url("/images/task_icon.png") no-repeat scroll 0 0
-		transparent;
+	background: url("/images/task_icon.png") no-repeat scroll 0 0 transparent;
 	color: darkBlue;
 	padding-left: 20px;
 	font-weight: normal !important;
@@ -792,10 +795,7 @@ form.button {
 	cursor: pointer;
 }
 
-/*
- *	TaskSheet
- */
-
+/* TaskSheet */
 .tasksheetTable {
 	width: 100%;
 	min-width: 1185px;
@@ -844,7 +844,7 @@ form.button {
 	text-align: center;
 }
 
-.tasksheetTable th.taskname{
+.tasksheetTable th.taskname {
 	width:160px;
 }
 
@@ -876,9 +876,7 @@ form.button {
 	border-top: 2px solid black;
 }
 
-/*
-	Timesheet
-*/
+/* Timesheet */
 .timesheetTable {
 	border: 1px solid darkGray;
 	border-collapse: collapse;
@@ -896,11 +894,7 @@ form.button {
 	border-bottom: 2px solid black;
 }
 
-/*
-	Felhasznaloi beallitasok
-*/
-
-
+/* Felhasznaloi beallitasok */
 .userPreferences .PreferenceGroup {
 	font-weight: bold;
 	padding-top: 50px;
