@@ -192,11 +192,11 @@ $(function () {
 	var colors = [];
 	var projects = {};
 
-	$("#pieholder").each(function() {
+	$("#piedata").each(function() {
 		$(this).find("tr").each(function() {
-			var min = parseInt($("td.minutes", this).text(), 10);
-			var color = $("td.color", this).text();
-			var projectColor = $("td.projectColor", this).text();
+			var min = parseInt($(".minutes", this).text(), 10);
+			var color = $(".taskColorIndicator", this).css("background-color");
+			var projectColor = $(".projectColorIndicator", this).css("background-color");
 			values.push(min);
 			colors.push(color);
 
@@ -206,7 +206,6 @@ $(function () {
 				projects[projectColor] = min;
 			}
 		});
-		$(this).empty();
 	});
 
 	var projectValues = [];

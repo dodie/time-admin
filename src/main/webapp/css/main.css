@@ -525,8 +525,9 @@ form.button {
 
 .summaryMetrics {
 	font-family: monospace;
-	position: relative;
-	margin: auto;
+	border-top: 1px solid black;
+	padding-top: 15px;
+	margin-top: 15px;
 }
 
 .summaryMetrics table {
@@ -537,8 +538,13 @@ form.button {
 	display: block;
 }
 
-.chartContainer {
-	height: 60px;
+.chartContainer td:nth-child(3) {
+	padding: 3px 3px;
+	text-align: right;
+}
+
+.chartContainer td:nth-child(2) {
+	white-space: nowrap;
 }
 
 .InlineCommandsForm.Pause {
