@@ -38,10 +38,10 @@ object TaskItemService {
    */
   def getTaskItemsForDay(offset: Int, user: Box[User] = User.currentUser): List[TaskItemWithDuration] = {
     /**
-     * Takes a list of consecutive TaskItems and converts them to a TaskItemWithDuration.
+     * Takes a list of consecutive TaskItems and converts them to TaskItemWithDurations.
      * The function calculates the durations of the task items.
      */
-    def toTimeline(taskItems: List[TaskItem]): List[TaskItemWithDuration] = { // TODO: call for each user separately
+    def toTimeline(taskItems: List[TaskItem]): List[TaskItemWithDuration] = { // TODO: group by
       val taskItemDtos = new ListBuffer[TaskItemWithDuration]
 
       if (!taskItems.isEmpty) {
@@ -83,7 +83,7 @@ object TaskItemService {
         }
       }
 
-      taskItemDtos.reverse.toList
+      taskItemDtos.reverse.toList.filter(item => item.duration != 0 || item.taskItem.task.get == 0)
     }
 
     val taskItemsForPeriod =
@@ -92,15 +92,20 @@ object TaskItemService {
         By_<(TaskItem.start, TimeUtils.currentDayEndInMs(offset)),
         By_>=(TaskItem.start, TimeUtils.currentDayStartInMs(offset)))
 
-    val lastPartTaskItemBeforePeriodThatMightCount: List[TaskItem] =
-      if (!taskItemsForPeriod.exists(_.start.get == TimeUtils.currentDayStartInMs(offset)))
-        TaskItem.findAll(OrderBy(TaskItem.start, Descending),
-          MaxRows(1),
-          user.map(u => By(TaskItem.user, u)).getOrElse(alwaysTrue), // TODO
-          By_<(TaskItem.start, TimeUtils.currentDayStartInMs(offset)))
-        .filter(_.task != 0)
+    val users =
+      if (!user.isEmpty)
+        List(user.get)
       else
-        List()
+        User.findAll
+
+    val lastPartTaskItemBeforePeriodThatMightCount: List[TaskItem] =
+      users
+        .flatMap(u =>
+          TaskItem.findAll(OrderBy(TaskItem.start, Descending),
+            MaxRows(1),
+            By(TaskItem.user, u),
+            By_<(TaskItem.start, TimeUtils.currentDayStartInMs(offset)))
+          .filter(_.task != 0))
 
     val taskItems = lastPartTaskItemBeforePeriodThatMightCount ::: taskItemsForPeriod
 
