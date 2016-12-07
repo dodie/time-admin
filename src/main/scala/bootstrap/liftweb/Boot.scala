@@ -191,7 +191,7 @@ class Boot {
               contentStream.available,
               List(
                 "Content-Type" -> "application/vnd.ms-excel",
-                "Content-Disposition" -> ("attachment; filename=\"" + fileName + ".xls\"")), Nil, 200)
+                "Content-Disposition" -> ("attachment; filename=\"" + fileName + "\"")), Nil, 200)
           }
         }
 
@@ -210,7 +210,7 @@ class Boot {
               contentStream.available,
               List(
                 "Content-Type" -> "application/vnd.ms-excel",
-                "Content-Disposition" -> ("attachment; filename=\"" + fileName + ".xls\"")), Nil, 200)
+                "Content-Disposition" -> ("attachment; filename=\"" + fileName + "\"")), Nil, 200)
           }
         }
     }
