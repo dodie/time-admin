@@ -41,22 +41,32 @@ object TaskItemService {
      * Takes a list of consecutive TaskItems and converts them to a TaskItemWithDuration.
      * The function calculates the durations of the task items.
      */
-    def taskItemsToTaskItemDtos(taskItems: List[TaskItem]): List[TaskItemWithDuration] = {
+    def taskItemsToTaskItemDtos(taskItems: List[TaskItem]): List[TaskItemWithDuration] = { // TODO: call for each user separately
       val taskItemDtos = new ListBuffer[TaskItemWithDuration]
-      if (taskItems.isEmpty) {
-        return taskItemDtos.toList
-      } else {
-        var previousTaskStart: Long = {
-          if (TimeUtils.dayStartInMs(taskItems.head.start.get) == TimeUtils.currentDayStartInMs) TimeUtils.currentTime
-          else taskItems.last.start.get
-        }
-        for (taskItem <- taskItems.reverse) {
+
+      if (!taskItems.isEmpty) {
+        val cappedTaskItems =
+          if (taskItems.last.task.get != 0 && TimeUtils.currentDayEndInMs(offset) < TimeUtils.currentTime) {
+            taskItems ::: List(TaskItem.create.user(taskItems.last.user.get).start(TimeUtils.currentDayEndInMs(offset) - 1))
+          } else {
+            taskItems
+          }
+
+        var previousTaskStart: Long =
+          if (cappedTaskItems.last.task.get == 0) {
+            cappedTaskItems.last.start.get
+          } else {
+            TimeUtils.currentTime
+          }
+
+        for (taskItem <- cappedTaskItems.reverse) {
           val duration = previousTaskStart - taskItem.start.get
           previousTaskStart = taskItem.start.get
           taskItemDtos += TaskItemWithDuration(taskItem, duration)
         }
-        taskItemDtos.reverse.toList
       }
+
+      taskItemDtos.reverse.toList
     }
 
     // task items for the given day
@@ -66,15 +76,15 @@ object TaskItemService {
         By_<(TaskItem.start, TimeUtils.currentDayEndInMs(offset)),
         By_>=(TaskItem.start, TimeUtils.currentDayStartInMs(offset))))
 
-    // if there there is'nt a task item at the start of the day, we have to check the last task item before the given day
+    // if there there isn't a task item at the start of the period, we have to check the last task item before the period
     if (!list.exists(_.taskItem.start.get == TimeUtils.currentDayStartInMs(offset))) {
-      // last task item before the given day
+      // last task item before the period
       val lastItem = taskItemsToTaskItemDtos(
         TaskItem.findAll(OrderBy(TaskItem.start, Descending),
           MaxRows(1),
           user.map(u => By(TaskItem.user, u)).getOrElse(alwaysTrue),
           By_<(TaskItem.start, TimeUtils.currentDayStartInMs(offset))))
-      // if the lastItem is not Pause, then it will be truncated to the given day, and will count in the result 
+      // if there is a task item before the period, and it is not Pause, then it will be truncated to the given period, and will count in the result
       if (!lastItem.isEmpty && lastItem.head.taskItem.id != 0) {
         val dto = TaskItemWithDuration(
           user.map(u => TaskItem.create.user(u).task(lastItem.head.taskItem.task.get).start(TimeUtils.currentDayStartInMs(offset)))
@@ -95,16 +105,6 @@ object TaskItemService {
       // if the result is empty, then return a list that contains only a Pause item
       List(TaskItemWithDuration(TaskItem.create.user(user).start(TimeUtils.currentDayStartInMs(offset) + 1), 0))
     } else {
-      // if the given day is not today, and the last task item is not Pause,
-      // then it will be truncated to the given day, and will count in the result
-      // (this is achieved by inserting an additional Pause item to midnight)
-      if (offset != 0 && list.last.taskItem.task.get != 0) {
-        list.last.duration = TimeUtils.currentDayEndInMs(offset) - 1 - list.last.taskItem.start.get
-        list = list ::: List(TaskItemWithDuration(
-          user.map(u => TaskItem.create.user(u).start(TimeUtils.currentDayEndInMs(offset) - 1))
-              .getOrElse(TaskItem.create.start(TimeUtils.currentDayEndInMs(offset) - 1)),
-          0))
-      }
       list
     }
   }
