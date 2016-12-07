@@ -332,7 +332,7 @@ input[type="text"] {
 }
 
 .timeLine .fragBarHover {
-	top: -40px;
+	top: -60px;
 }
 .timeLine:hover .fragBarHover {
 	top: -80px;
