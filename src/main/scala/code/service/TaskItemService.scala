@@ -37,11 +37,8 @@ object TaskItemService {
    * The ordering is determined by the item's start time.
    */
   def getTaskItemsForDay(offset: Int, user: Box[User] = User.currentUser): List[TaskItemWithDuration] = {
-    /**
-     * Takes a list of consecutive TaskItems and converts them to TaskItemWithDurations.
-     * The function calculates the durations of the task items.
-     */
-    def toTimeline(taskItems: List[TaskItem]): List[TaskItemWithDuration] = { // TODO: group by
+
+    def toTimeline(taskItems: List[TaskItem]): List[TaskItemWithDuration] = {
       val taskItemDtos = new ListBuffer[TaskItemWithDuration]
 
       if (!taskItems.isEmpty) {
@@ -109,7 +106,7 @@ object TaskItemService {
 
     val taskItems = lastPartTaskItemBeforePeriodThatMightCount ::: taskItemsForPeriod
 
-    val list = toTimeline(taskItems).dropWhile(_.taskItem.task.get == 0)
+    val list = taskItems.groupBy(_.user.get).flatMap(userItems => toTimeline(userItems._2).dropWhile(_.taskItem.task.get == 0)).toList
 
     if (list.isEmpty) {
       // if the result is empty, then return a list that contains only a Pause item
