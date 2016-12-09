@@ -1,35 +1,24 @@
 package code
 package snippet
 
-import code.model.Project
 import code.service.ProjectService
+
 import scala.xml.NodeSeq.seqToNodeSeq
-import scala.xml.Elem
 import scala.xml.NodeSeq
 import scala.xml.Text
 import code.commons.TimeUtils
 import code.service.TaskItemService
 import code.service.TaskItemWithDuration
 import code.service.TaskService
-import code.service.UserPreferenceNames
-import code.service.UserPreferenceService
 import code.snippet.mixin.DateFunctions
 import net.liftweb.common.Box.box2Option
 import net.liftweb.http.S
-import net.liftweb.mapper.MappedField.mapToType
 import net.liftweb.util.BindHelpers.strToCssBindPromoter
 import net.liftweb.util.Helpers.AttrBindParam
-import net.liftweb.util.Helpers.strToSuperArrowAssoc
-import net.liftweb.util.IterableConst.boxNodeSeq
-import net.liftweb.util.IterableConst.itNodeSeqFunc
-import net.liftweb.util.StringPromotable.longToStrPromo
 import net.liftweb.util.Helpers
 import net.liftweb.util.PCDataXmlParser
-import code.service.ShowTaskData
-import net.liftweb.http.SHtml.a
-import net.liftweb.util.Helpers.bind
 import net.liftweb.util.Helpers.strToSuperArrowAssoc
-import net.liftweb.http.js.JsCmds.Noop
+import org.joda.time.LocalDate
 
 /**
  * Task item editing and listing.
@@ -38,7 +27,7 @@ import net.liftweb.http.js.JsCmds.Noop
 class TaskItemSnippet extends DateFunctions {
 
   /** All task items today for current user. */
-  lazy val taskItems = TaskItemService.getTaskItemsForDay(offsetInDays)
+  lazy val taskItems = TaskItemService.getTaskItems(new LocalDate().minusDays(offsetInDays).toInterval)
 
   /** All tasks. */
   lazy val tasks = TaskService.getTaskArray()

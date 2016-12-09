@@ -6,19 +6,15 @@ import java.text.Collator
 import java.text.DecimalFormat
 
 import scala.collection.mutable.ListBuffer
-import scala.util.Sorting
 import net.liftweb.common._
-import org.joda.time.{Duration, DateTime, _}
+import org.joda.time.{LocalDate, DateTime, Duration, _}
 import code.commons.TimeUtils
 import net.liftweb.http.S
 import code.model.{Project, User}
-import code.service.TaskItemService.getTaskItemsForDay
-import org.joda.time.Days.daysBetween
-import org.joda.time.LocalDate.now
+import code.service.TaskItemService.getTaskItems
 import com.github.nscala_time.time.Imports._
 
-import scala.collection.immutable.Seq
-
+import scala.collection.immutable.{IndexedSeq, Seq}
 import code.util.ListToFoldedMap._
 
 /**
@@ -32,7 +28,7 @@ object ReportService {
    * Calculates the number of milliseconds to be subtracted from leave time for a day,
    * based on user preferences and the given offtime.
    */
-  def calculateTimeRemovalFromLeaveTime(offtime: Long) = {
+  def calculateTimeRemovalFromLeaveTime(offtime: Long): Long = {
     val removeOfftimeFromLeaveTime = UserPreferenceService.getUserPreference(UserPreferenceNames.timesheetLeaveOfftime).toBoolean
     val additionalLeaveTime = UserPreferenceService.getUserPreference(UserPreferenceNames.timesheetLeaveAdditionalTime).toLong * 1000 * 60
 
@@ -48,7 +44,7 @@ object ReportService {
    * and returns data that can be used in timesheets.
    * @return a sequence of (dayOfMonth: String, arriveTime: String, leaveTime: String) tuples. Arrive and leave time strings are in hh:mm format.
    */
-  def getTimesheetData(offset: Int) = {
+  def getTimesheetData(offset: Int): IndexedSeq[(String, String, String, String)] = {
     val formatter = new DecimalFormat("#.#")
 
     // deduct offtime from leaving time based on user preferences
@@ -61,11 +57,11 @@ object ReportService {
 
     // for all days, get all taskitems and produce data touples
     (for (offset <- monthStartOffset until monthEndOffset + 1) yield {
-      val taskItemsForDay = getTaskItemsForDay(offset)
+      val taskItemsForDay = getTaskItems(new LocalDate().minusDays(offset).toInterval)
 
       val offtimeToRemoveFromLeaveTime = {
         val aggregatedArray = createAggregatedDatas(taskItemsForDay)
-        val pause = aggregatedArray.filter(_.taskId == 0).headOption
+        val pause = aggregatedArray.find(_.taskId == 0)
         val pauseTime = if (pause.isEmpty) {
           0L
         } else {
@@ -74,7 +70,7 @@ object ReportService {
         calculateTimeRemovalFromLeaveTime(pauseTime)
       }
 
-      if (!trim(taskItemsForDay.toSeq).isEmpty && (offset <= 0)) {
+      if (trim(taskItemsForDay).nonEmpty && (offset <= 0)) {
         val last = taskItemsForDay.lastOption
         val first = taskItemsForDay.headOption
 
@@ -115,52 +111,32 @@ object ReportService {
     }).filter(_ != null)
   }
 
-  /**
-   * Processes the TaskItems in the given month defined by the offset (in days) from the current day,
-   * and returns data that can be used in tasksheets.
-   * @return a 2D map in the following format: Map[day-of-month, Map[task-id, total-duration]]
-   */
-  def getTasksheetData(offset: Int): Map[Int, Map[Long, Long]] = {
-    val outerMatrix = new scala.collection.mutable.HashMap[Int, Map[Long, Long]]
+  type TaskSheet[D <: ReadablePartial] = Map[D, Map[TaskSheetItem,Duration]]
 
-    val offsetMonthStart = TimeUtils.currentMonthStartInOffset(offset) + offset
-    val offsetMonthEnd = TimeUtils.currentMonthEndInOffset(offset) + offset
+  def taskSheetData[D <: ReadablePartial](u: Box[User], i: Interval, f: LocalDate => D): TaskSheet[D] =
+    dates(i, f).map(d => (f(d), activeTaskItems(intervalFrom(f(d)), u).map(t => taskSheetItemWithDuration(t))))
+      .reducedMap(Nil: List[(TaskSheetItem,Duration)])(_ ::: _)
+      .mapValues(_.reducedMap(Duration.ZERO)(_ + _))
 
-    for (currentOffset <- offsetMonthStart to offsetMonthEnd; if currentOffset <= 0) {
-      val innerMatrix = new scala.collection.mutable.HashMap[Long, Long]
-
-      getTaskItemsForDay(currentOffset).foreach(tiwd => {
-        val key = tiwd.taskItem.task.get
-
-        if (!innerMatrix.contains(key))
-          innerMatrix += key -> tiwd.duration
-        else
-          innerMatrix += key -> (innerMatrix.get(key).get + tiwd.duration)
-      })
-
-      outerMatrix += (currentOffset - offsetMonthStart + 1) -> innerMatrix.toMap[Long, Long]
-    }
-    outerMatrix.toMap[Int, Map[Long, Long]]
-  }
-
-  def days(i: Interval): List[LocalDate] =
+  def dates[D <: ReadablePartial](i: Interval, f: LocalDate => D): List[D] =
     {
       if (i.contains(DateTime.now())) 0 to i.withEnd(DateTime.now()).toPeriod(PeriodType.days).getDays
       else 0 until i.toPeriod(PeriodType.days).getDays
 
-    } map (i.start.toLocalDate.plusDays(_)) toList
+    }.map(i.start.toLocalDate.plusDays(_)).toSet.map(f).toList
 
-  type TaskSheet[D <: ReadablePartial] = Map[D, Map[TaskSheetItem,Duration]]
+  def intervalFrom[D <: ReadablePartial](d: D): Interval = d match {
+    case d: {def toInterval(): Interval} => d.toInterval
+  }
 
-  def taskSheetData[D <: ReadablePartial](u: Box[User], i: Interval, f: LocalDate => D): TaskSheet[D] =
-    days(i).map(d => (f(d), taskItemsForDay(d, u) map taskSheetItemWithDuration))
-      .foldedMap(Nil: List[(TaskSheetItem,Duration)])(_ ::: _)
-      .mapValues(_.foldedMap(Duration.ZERO)(_ + _))
+  def activeTaskItems(i: Interval, u: Box[User]): List[TaskItemWithDuration] =
+    getTaskItems(i, u) filter (_.project.exists(_.active.get))
 
-  def taskItemsForDay(d: LocalDate, u: Box[User]): List[TaskItemWithDuration] =
-    getTaskItemsForDay(daysBetween(now(), d).getDays, u).filter(_.project.exists(_.active.get))
+  def dateWithTask[D <: ReadablePartial](f: LocalDate => D)(t: TaskItemWithDuration): (D, List[TaskItemWithDuration]) =
+    (f(new DateTime(t.taskItem.start.get).toLocalDate), List(t))
 
-  def taskSheetItemWithDuration(t: TaskItemWithDuration): (TaskSheetItem, Duration) = (TaskSheetItem(t), new Duration(t.duration))
+  def taskSheetItemWithDuration(t: TaskItemWithDuration): (TaskSheetItem, Duration) =
+    (TaskSheetItem(t), new Duration(t.duration))
 
   /**
    * Aggregates the given TaskItem DTOs.

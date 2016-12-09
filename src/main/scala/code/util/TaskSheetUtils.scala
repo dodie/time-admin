@@ -23,7 +23,7 @@ object TaskSheetUtils {
     ts.values.flatMap(_.keySet).toSet.toList.sortBy((t: TaskSheetItem) => t.name)
 
   def sumByTasks[D <: ReadablePartial](ts: TaskSheet[D]): Map[TaskSheetItem, Duration] =
-    ts.values.flatMap(_.toList).toList.foldedMap(Duration.millis(0))(_ + _)
+    ts.values.flatMap(_.toList).toList.reducedMap(Duration.millis(0))(_ + _)
 
   def sum[D <: ReadablePartial](ts: TaskSheet[D]): Duration =
     sumByDates(ts).values.foldLeft(Duration.millis(0))(_ + _)
