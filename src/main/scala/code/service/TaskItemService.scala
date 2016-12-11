@@ -41,7 +41,7 @@ object TaskItemService {
     def toTimeline(taskItems: List[TaskItem]): List[TaskItemWithDuration] = {
       val taskItemDtos = new ListBuffer[TaskItemWithDuration]
 
-      if (!taskItems.isEmpty) {
+      if (taskItems.nonEmpty) {
         val trimmedItems =
           taskItems
             .map(item =>
@@ -89,11 +89,7 @@ object TaskItemService {
         By_<(TaskItem.start, TimeUtils.currentDayEndInMs(offset)),
         By_>=(TaskItem.start, TimeUtils.currentDayStartInMs(offset)))
 
-    val users =
-      if (!user.isEmpty)
-        List(user.get)
-      else
-        User.findAll
+    val users = user.map(List(_)).getOrElse(User.findAll)
 
     val lastPartTaskItemBeforePeriodThatMightCount: List[TaskItem] =
       users
