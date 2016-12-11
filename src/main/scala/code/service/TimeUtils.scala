@@ -1,15 +1,16 @@
 package code
 package commons
 
-import org.joda.time.Days
-import org.joda.time.DateTime
+import org.joda.time._
 import java.util.Date
 import java.util.Calendar
 import java.util.GregorianCalendar
 import java.util.TimeZone
 import java.text.SimpleDateFormat
-import org.joda.time.DateTimeConstants
+
 import net.liftweb.http.S
+
+import scala.language.reflectiveCalls
 
 /**
  * Common time handling functions.
@@ -223,6 +224,12 @@ object TimeUtils {
   def getPreviousMonthOffset(): Int = {
     val today: DateTime = new DateTime(currentTime).withDayOfMonth(1);
     deltaInDays(today.toDate, today.minusMonths(1).toDate);
+  }
+
+  def offsetToDailyInterval[D <: ReadablePartial](offset: Int): Interval = new Interval(currentDayStartInMs(offset), currentDayEndInMs(offset))
+
+  def intervalFrom[D <: ReadablePartial](d: D): Interval = d match {
+    case d: { def toInterval: Interval } => d.toInterval
   }
 
   val monthNames = List(S.?("date.month.january"),
