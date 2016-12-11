@@ -111,34 +111,6 @@ object ReportService {
     }).filter(_ != null)
   }
 
-  /**
-   * Processes the TaskItems in the given month defined by the offset (in days) from the current day,
-   * and returns data that can be used in tasks heets.
-   * @return a 2D map in the following format: Map[day-of-month, Map[task-id, total-duration]]
-   */
-  def getTasksheetData(offset: Int): Map[Int, Map[Long, Long]] = {
-    val outerMatrix = new scala.collection.mutable.HashMap[Int, Map[Long, Long]]
-
-    val offsetMonthStart = TimeUtils.currentMonthStartInOffset(offset) + offset
-    val offsetMonthEnd = TimeUtils.currentMonthEndInOffset(offset) + offset
-
-    for (currentOffset <- offsetMonthStart to offsetMonthEnd; if currentOffset <= 0) {
-      val innerMatrix = new scala.collection.mutable.HashMap[Long, Long]
-
-      getTaskItems(TimeUtils.offsetToDailyInterval(currentOffset)).foreach(tiwd => {
-        val key = tiwd.taskItem.task.get
-
-        if (!innerMatrix.contains(key))
-          innerMatrix += key -> tiwd.duration
-        else
-          innerMatrix += key -> (innerMatrix(key) + tiwd.duration)
-      })
-
-      outerMatrix += (currentOffset - offsetMonthStart + 1) -> innerMatrix.toMap[Long, Long]
-    }
-    outerMatrix.toMap[Int, Map[Long, Long]]
-  }
-
   type TaskSheet[D <: ReadablePartial] = Map[D, Map[TaskSheetItem,Duration]]
 
   def taskSheetData[D <: ReadablePartial](u: Box[User], i: Interval, f: LocalDate => D): TaskSheet[D] =
