@@ -36,6 +36,8 @@ import code.model.mixin.HierarchicalItem
  */
 class ProjectsSnippet {
 
+  val collator = Collator.getInstance(S.locale);
+
   private var template: NodeSeq = null
 
   private var projectTemplate: NodeSeq = null
@@ -113,7 +115,7 @@ class ProjectsSnippet {
     } else {
       Sorting.quickSort(data)(new Ordering[Project] {
         def compare(x: Project, y: Project) = {
-          x.name.get compare y.name.get
+          collator.compare(x.name.get, y.name.get)
         }
       })
       data.toSeq.flatMap(project => renderProject(project, in))
@@ -170,7 +172,7 @@ class ProjectsSnippet {
 
       Sorting.quickSort(data)(new Ordering[Task] {
         def compare(x: Task, y: Task) = {
-          x.name.get compare y.name.get
+          collator.compare(x.name.get, y.name.get)
         }
       })
 
