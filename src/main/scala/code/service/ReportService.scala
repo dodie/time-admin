@@ -51,21 +51,17 @@ object ReportService {
   def getTimesheetData(offset: Int) = {
     val formatter = new DecimalFormat("#.#")
 
-    // deduct offtime from leaving time based on user preferences
-    val removeOfftimeFromLeaveTime = UserPreferenceService.getUserPreference(UserPreferenceNames.timesheetLeaveOfftime).toBoolean
-    val additionalLeaveTime = UserPreferenceService.getUserPreference(UserPreferenceNames.timesheetLeaveAdditionalTime).toLong * 1000 * 60
-
     // calculate first and last days of the month
     val monthStartOffset = TimeUtils.currentMonthStartInOffset(offset) + offset
     val monthEndOffset = TimeUtils.currentMonthEndInOffset(offset) + offset
 
-    // for all days, get all taskitems and produce data touples
+    // for all days, get all task items and produce data tuples
     (for (offset <- monthStartOffset until monthEndOffset + 1) yield {
-      val taskItemsForDay = getTaskItems(offset)
+      val taskItemsForDay = getTaskItems(TimeUtils.offsetToInterval(offset, _.toLocalDate))
 
       val offtimeToRemoveFromLeaveTime = {
         val aggregatedArray = createAggregatedDatas(taskItemsForDay)
-        val pause = aggregatedArray.filter(_.taskId == 0).headOption
+        val pause = aggregatedArray.find(_.taskId == 0)
         val pauseTime = if (pause.isEmpty) {
           0L
         } else {
@@ -74,7 +70,7 @@ object ReportService {
         calculateTimeRemovalFromLeaveTime(pauseTime)
       }
 
-      if (!trim(taskItemsForDay.toSeq).isEmpty && (offset <= 0)) {
+      if (trim(taskItemsForDay).nonEmpty && (offset <= 0)) {
         val last = taskItemsForDay.lastOption
         val first = taskItemsForDay.headOption
 
@@ -117,7 +113,7 @@ object ReportService {
 
   /**
    * Processes the TaskItems in the given month defined by the offset (in days) from the current day,
-   * and returns data that can be used in tasksheets.
+   * and returns data that can be used in tasks heets.
    * @return a 2D map in the following format: Map[day-of-month, Map[task-id, total-duration]]
    */
   def getTasksheetData(offset: Int): Map[Int, Map[Long, Long]] = {
@@ -129,19 +125,28 @@ object ReportService {
     for (currentOffset <- offsetMonthStart to offsetMonthEnd; if currentOffset <= 0) {
       val innerMatrix = new scala.collection.mutable.HashMap[Long, Long]
 
-      getTaskItems(currentOffset).foreach(tiwd => {
+      getTaskItems(TimeUtils.offsetToInterval(currentOffset, _.toLocalDate)).foreach(tiwd => {
         val key = tiwd.taskItem.task.get
 
         if (!innerMatrix.contains(key))
           innerMatrix += key -> tiwd.duration
         else
-          innerMatrix += key -> (innerMatrix.get(key).get + tiwd.duration)
+          innerMatrix += key -> (innerMatrix(key) + tiwd.duration)
       })
 
       outerMatrix += (currentOffset - offsetMonthStart + 1) -> innerMatrix.toMap[Long, Long]
     }
     outerMatrix.toMap[Int, Map[Long, Long]]
   }
+
+  type TaskSheet[D <: ReadablePartial] = Map[D, Map[TaskSheetItem,Duration]]
+
+  def taskSheetData[D <: ReadablePartial](u: Box[User], i: Interval, f: LocalDate => D): TaskSheet[D] =
+    dates(i, f).map(d => (d, activeTaskItems(TimeUtils.intervalFrom(d), u).map(t => taskSheetItemWithDuration(t))))
+      .foldedMap(Nil: List[(TaskSheetItem,Duration)])(_ ::: _)
+      .mapValues(_.foldedMap(Duration.ZERO)(_ + _))
+
+  def dates[D <: ReadablePartial](i: Interval, f: LocalDate => D): List[D] = days(i).map(f).distinct
 
   def days(i: Interval): List[LocalDate] =
     {
@@ -150,15 +155,8 @@ object ReportService {
 
     } map (i.start.toLocalDate.plusDays(_)) toList
 
-  type TaskSheet[D <: ReadablePartial] = Map[D, Map[TaskSheetItem,Duration]]
-
-  def taskSheetData[D <: ReadablePartial](u: Box[User], i: Interval, f: LocalDate => D): TaskSheet[D] =
-    days(i).map(d => (f(d), taskItemsForDay(d, u) map taskSheetItemWithDuration))
-      .foldedMap(Nil: List[(TaskSheetItem,Duration)])(_ ::: _)
-      .mapValues(_.foldedMap(Duration.ZERO)(_ + _))
-
-  def taskItemsForDay(d: LocalDate, u: Box[User]): List[TaskItemWithDuration] =
-    getTaskItems(daysBetween(now(), d).getDays, u).filter(_.project.exists(_.active.get))
+  def activeTaskItems(i: Interval, u: Box[User]): List[TaskItemWithDuration] =
+    getTaskItems(i, u).filter(_.project.exists(_.active.get))
 
   def taskSheetItemWithDuration(t: TaskItemWithDuration): (TaskSheetItem, Duration) = (TaskSheetItem(t), new Duration(t.duration))
 

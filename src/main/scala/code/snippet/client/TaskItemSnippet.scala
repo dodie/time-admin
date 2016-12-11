@@ -38,7 +38,7 @@ import net.liftweb.http.js.JsCmds.Noop
 class TaskItemSnippet extends DateFunctions {
 
   /** All task items today for current user. */
-  lazy val taskItems = TaskItemService.getTaskItems(offsetInDays)
+  lazy val taskItems = TaskItemService.getTaskItems(TimeUtils.offsetToInterval(offsetInDays, _.toLocalDate))
 
   /** All tasks. */
   lazy val tasks = TaskService.getTaskArray()
