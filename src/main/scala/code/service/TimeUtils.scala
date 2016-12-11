@@ -226,7 +226,7 @@ object TimeUtils {
     deltaInDays(today.toDate, today.minusMonths(1).toDate);
   }
 
-  def offsetToInterval[D <: ReadablePartial](offset: Int, f: DateTime => D): Interval = intervalFrom(f(DateTime.now().minusDays(offset)))
+  def offsetToDailyInterval[D <: ReadablePartial](offset: Int): Interval = new Interval(currentDayStartInMs(offset), currentDayEndInMs(offset))
 
   def intervalFrom[D <: ReadablePartial](d: D): Interval = d match {
     case d: { def toInterval: Interval } => d.toInterval

@@ -24,7 +24,7 @@ object TaskItemService {
    * Returns the last option for the given day.
    */
   def getLastTaskItemForDay(offset: Int) = {
-    getTaskItems(TimeUtils.offsetToInterval(offset, _.toLocalDate)).lastOption
+    getTaskItems(TimeUtils.offsetToDailyInterval(offset)).lastOption
   }
 
   def alwaysTrue[T <: Mapper[T]]: QueryParam[T] = BySql[T]("1=1", IHaveValidatedThisSQL("suliatis", "2016-11-10"))

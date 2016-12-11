@@ -56,8 +56,8 @@ object ReportService {
     val monthEndOffset = TimeUtils.currentMonthEndInOffset(offset) + offset
 
     // for all days, get all task items and produce data tuples
-    (for (offset <- monthStartOffset until monthEndOffset + 1) yield {
-      val taskItemsForDay = getTaskItems(TimeUtils.offsetToInterval(offset, _.toLocalDate))
+    (for (currentOffset <- monthStartOffset until monthEndOffset + 1) yield {
+      val taskItemsForDay = getTaskItems(TimeUtils.offsetToDailyInterval(currentOffset))
 
       val offtimeToRemoveFromLeaveTime = {
         val aggregatedArray = createAggregatedDatas(taskItemsForDay)
@@ -70,11 +70,11 @@ object ReportService {
         calculateTimeRemovalFromLeaveTime(pauseTime)
       }
 
-      if (trim(taskItemsForDay).nonEmpty && (offset <= 0)) {
+      if (trim(taskItemsForDay).nonEmpty && (currentOffset <= 0)) {
         val last = taskItemsForDay.lastOption
         val first = taskItemsForDay.headOption
 
-        val day = (math.abs(monthStartOffset) - math.abs(offset) + 1).toString
+        val day = (math.abs(monthStartOffset) - math.abs(currentOffset) + 1).toString
 
         val arrive = if (first.isEmpty) {
           Left("-")
@@ -125,7 +125,7 @@ object ReportService {
     for (currentOffset <- offsetMonthStart to offsetMonthEnd; if currentOffset <= 0) {
       val innerMatrix = new scala.collection.mutable.HashMap[Long, Long]
 
-      getTaskItems(TimeUtils.offsetToInterval(currentOffset, _.toLocalDate)).foreach(tiwd => {
+      getTaskItems(TimeUtils.offsetToDailyInterval(currentOffset)).foreach(tiwd => {
         val key = tiwd.taskItem.task.get
 
         if (!innerMatrix.contains(key))
