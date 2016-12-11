@@ -12,7 +12,7 @@ import org.joda.time.{Duration, DateTime, _}
 import code.commons.TimeUtils
 import net.liftweb.http.S
 import code.model.{Project, User}
-import code.service.TaskItemService.getTaskItemsForDay
+import code.service.TaskItemService.getTaskItems
 import org.joda.time.Days.daysBetween
 import org.joda.time.LocalDate.now
 import com.github.nscala_time.time.Imports._
@@ -61,7 +61,7 @@ object ReportService {
 
     // for all days, get all taskitems and produce data touples
     (for (offset <- monthStartOffset until monthEndOffset + 1) yield {
-      val taskItemsForDay = getTaskItemsForDay(offset)
+      val taskItemsForDay = getTaskItems(offset)
 
       val offtimeToRemoveFromLeaveTime = {
         val aggregatedArray = createAggregatedDatas(taskItemsForDay)
@@ -129,7 +129,7 @@ object ReportService {
     for (currentOffset <- offsetMonthStart to offsetMonthEnd; if currentOffset <= 0) {
       val innerMatrix = new scala.collection.mutable.HashMap[Long, Long]
 
-      getTaskItemsForDay(currentOffset).foreach(tiwd => {
+      getTaskItems(currentOffset).foreach(tiwd => {
         val key = tiwd.taskItem.task.get
 
         if (!innerMatrix.contains(key))
@@ -158,7 +158,7 @@ object ReportService {
       .mapValues(_.foldedMap(Duration.ZERO)(_ + _))
 
   def taskItemsForDay(d: LocalDate, u: Box[User]): List[TaskItemWithDuration] =
-    getTaskItemsForDay(daysBetween(now(), d).getDays, u).filter(_.project.exists(_.active.get))
+    getTaskItems(daysBetween(now(), d).getDays, u).filter(_.project.exists(_.active.get))
 
   def taskSheetItemWithDuration(t: TaskItemWithDuration): (TaskSheetItem, Duration) = (TaskSheetItem(t), new Duration(t.duration))
 

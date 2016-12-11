@@ -27,7 +27,7 @@ object TaskItemService {
    * Returns the last option for the given day.
    */
   def getLastTaskItemForDay(offset: Int) = {
-    getTaskItemsForDay(offset).lastOption
+    getTaskItems(offset).lastOption
   }
 
   def alwaysTrue[T <: Mapper[T]]: QueryParam[T] = BySql[T]("1=1", IHaveValidatedThisSQL("suliatis", "2016-11-10"))
@@ -36,7 +36,7 @@ object TaskItemService {
    * Returns a sequence with the task item entries on the given day.
    * The ordering is determined by the item's start time.
    */
-  def getTaskItemsForDay(offset: Int, user: Box[User] = User.currentUser): List[TaskItemWithDuration] = {
+  def getTaskItems(offset: Int, user: Box[User] = User.currentUser): List[TaskItemWithDuration] = {
 
     def toTimeline(taskItems: List[TaskItem]): List[TaskItemWithDuration] = {
       val taskItemDtos = new ListBuffer[TaskItemWithDuration]
