@@ -12,6 +12,7 @@ import net.liftweb.http.S
 import Helpers._
 import java.util.Date
 import java.util.Random
+import java.text.Collator
 import scala.xml._
 import net.liftweb.util.BindHelpers.strToCssBindPromoter
 
@@ -20,6 +21,8 @@ import net.liftweb.util.BindHelpers.strToCssBindPromoter
  * @author David Csakvari
  */
 class UsersSnippet {
+
+  val collator = Collator.getInstance(S.locale);
 
   /**
    * Renders the current user name.
@@ -86,7 +89,7 @@ class UsersSnippet {
   }
 
   def selectUser(in: NodeSeq): NodeSeq = {
-    val users = User.findAll.sortWith((a, b) => a.niceName.compareTo(b.niceName) < 0)
+    val users = User.findAll.sortWith((a, b) => collator.compare(a.niceName, b.niceName) < 0)
     (
       "option" #> users.map(user => {
         if (S.param("user").getOrElse("-1").toLong == user.id.get)
@@ -104,8 +107,8 @@ class UsersSnippet {
    * Renders a list of the users and permissions.
    */
   def listUsers(in: NodeSeq): NodeSeq = {
-    val roles = Role.findAll.sortWith((a, b) => a.name.get.compareTo(b.name.get) < 0)
-    val users = User.findAll.sortWith((a, b) => a.niceName.compareTo(b.niceName) < 0)
+    val roles = Role.findAll.sortWith((a, b) => collator.compare(a.name.get, b.name.get) < 0)
+    val users = User.findAll.sortWith((a, b) => collator.compare(a.niceName, b.niceName) < 0)
 
     (
       ".header" #> roles.map(role => ".header *" #> role.name.get) &
@@ -150,8 +153,8 @@ class UsersSnippet {
       if (!S.param("useredit").isEmpty && !S.param("edit").isEmpty) {
         User.findByKey(S.param("edit").get.toLong).get.toForm(Full("save"), "/item/list")
       } else {
-        val roles = Role.findAll.sortWith((a, b) => a.name.get.compareTo(b.name.get) < 0)
-        val users = User.findAll.sortWith((a, b) => a.niceName.compareTo(b.niceName) < 0)
+        val roles = Role.findAll.sortWith((a, b) => collator.compare(a.name.get, b.name.get) < 0)
+        val users = User.findAll.sortWith((a, b) => collator.compare(a.niceName, b.niceName) < 0)
 
         var changed = false
         for (user <- users) {
