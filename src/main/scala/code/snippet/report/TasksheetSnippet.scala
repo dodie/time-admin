@@ -12,6 +12,8 @@ import net.liftweb.util.CssSel
 import org.joda.time.ReadablePartial
 import code.util.TaskSheetUtils._
 
+import scala.util.Try
+
 /**
  * Tasksheet displaying component.
  * @author David Csakvari
