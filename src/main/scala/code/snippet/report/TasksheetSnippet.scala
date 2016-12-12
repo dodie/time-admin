@@ -9,10 +9,9 @@ import net.liftweb.http.S
 import com.github.nscala_time.time.Imports._
 import net.liftweb.common.Box
 import net.liftweb.util.CssSel
-import org.joda.time.ReadablePartial
+import org.joda.time.{Months, ReadablePartial}
 import code.util.TaskSheetUtils._
 
-import scala.util.Try
 
 /**
  * Tasksheet displaying component.
@@ -43,12 +42,29 @@ class TasksheetSnippet extends DateFunctions {
   }
 
   def tasksheet(in: NodeSeq): NodeSeq = {
-    val date = S.param("date").or(S.getSessionAttribute("date")).map(s => DateTime.parse(s))
-    date.foreach(d => S.setSessionAttribute("date", d.toString))
+    val interval = try {
+      val intervalStart = S.param("intervalStart").map(s => DateTime.parse(s))
+      val intervalEnd = S.param("intervalEnd").map(s => DateTime.parse(s))
 
-    val interval = new YearMonth(date.getOrElse(DateTime.now())).toInterval
+      new Interval(
+        new YearMonth(intervalStart.getOrElse(DateTime.now())).toInterval.start,
+        new YearMonth(intervalEnd.getOrElse(DateTime.now())).toInterval.end
+      )
+    } catch {
+      case _: Exception => new Interval(
+        new YearMonth(DateTime.now()).toInterval.start,
+        new YearMonth(DateTime.now()).toInterval.end
+      )
+    }
 
-    renderTaskSheet(interval, d => d, User.currentUser)(in)
+    val scale: LocalDate => ReadablePartial = interval.toPeriod match {
+      case p if p.getMonths == 1 && p.getWeeks == 0 && p.getDays == 0 => d => d
+      case _ => d => new YearMonth(d)
+    }
+
+    val user = S.param("user").map(_.toLong).flatMap(User.findByKey).or(User.currentUser)
+
+    renderTaskSheet(interval, scale, user)(in)
   }
 
   def tasksheetSummary(in: NodeSeq): NodeSeq = {
