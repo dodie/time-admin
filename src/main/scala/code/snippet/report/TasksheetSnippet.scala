@@ -7,7 +7,7 @@ import code.snippet.mixin.DateFunctions
 import net.liftweb.util.BindHelpers.strToCssBindPromoter
 import net.liftweb.http.S
 import com.github.nscala_time.time.Imports._
-import net.liftweb.common.Box
+import net.liftweb.common.{Box, Empty, Full}
 import net.liftweb.util.CssSel
 import org.joda.time.{Months, ReadablePartial}
 import code.util.TaskSheetUtils._
@@ -42,30 +42,25 @@ class TasksheetSnippet extends DateFunctions {
   }
 
   def tasksheet(in: NodeSeq): NodeSeq = {
-    val interval = try {
-      val intervalStart = S.param("intervalStart").map(s => DateTime.parse(s))
-      val intervalEnd = S.param("intervalEnd").map(s => DateTime.parse(s))
-
-      new Interval(
-        new YearMonth(intervalStart.getOrElse(DateTime.now())).toInterval.start,
-        new YearMonth(intervalEnd.getOrElse(DateTime.now())).toInterval.end
-      )
-    } catch {
-      case _: Exception => new Interval(
-        new YearMonth(DateTime.now()).toInterval.start,
-        new YearMonth(DateTime.now()).toInterval.end
-      )
-    }
-
-    val scale: LocalDate => ReadablePartial = interval.toPeriod match {
-      case p if p.getMonths == 1 && p.getWeeks == 0 && p.getDays == 0 => d => d
-      case _ => d => new YearMonth(d)
-    }
+    val (interval, scale) = try {
+        (for {
+          start <- S.param("intervalStart").map(s => YearMonth.parse(s))
+          end <- S.param("intervalEnd").map(s => YearMonth.parse(s))
+        } yield intervalOf(start, end)) getOrElse thisMonth
+      } catch {
+        case _: Exception => thisMonth
+      }
 
     val user = S.param("user").map(_.toLong).flatMap(User.findByKey).or(User.currentUser)
 
     renderTaskSheet(interval, scale, user)(in)
   }
+
+  def intervalOf(start: YearMonth, end: YearMonth): (Interval, LocalDate => ReadablePartial) =
+    if (start.year == end.year && start.monthOfYear == end.monthOfYear) (start.toInterval, identity)
+    else (new Interval(start.toInterval.start, end.toInterval.end), d => new YearMonth(d))
+
+  def thisMonth: (Interval, LocalDate => ReadablePartial) = (YearMonth.now().toInterval, identity)
 
   def tasksheetSummary(in: NodeSeq): NodeSeq = {
     val interval = try {
