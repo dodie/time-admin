@@ -7,9 +7,10 @@ import code.snippet.mixin.DateFunctions
 import net.liftweb.util.BindHelpers.strToCssBindPromoter
 import net.liftweb.http.S
 import com.github.nscala_time.time.Imports._
-import net.liftweb.common.{Box, Empty, Full}
+import net.liftweb.common.Box
 import net.liftweb.util.CssSel
-import org.joda.time.{Months, ReadablePartial}
+import net.liftweb.util.ControlHelpers._
+import org.joda.time.ReadablePartial
 import code.util.TaskSheetUtils._
 
 
@@ -42,14 +43,13 @@ class TasksheetSnippet extends DateFunctions {
   }
 
   def tasksheet(in: NodeSeq): NodeSeq = {
-    val (interval, scale) = try {
-        (for {
-          start <- S.param("intervalStart").map(s => YearMonth.parse(s))
-          end <- S.param("intervalEnd").map(s => YearMonth.parse(s))
-        } yield intervalOf(start, end)) getOrElse thisMonth
-      } catch {
-        case _: Exception => thisMonth
-      }
+
+    val (interval, scale) = tryo {
+      for {
+        start <- S.param("intervalStart").map(s => YearMonth.parse(s))
+        end <- S.param("intervalEnd").map(s => YearMonth.parse(s))
+      } yield intervalOf(start, end)
+    } flatMap identity getOrElse thisMonth
 
     val user = S.param("user").map(_.toLong).flatMap(User.findByKey).or(User.currentUser)
 
