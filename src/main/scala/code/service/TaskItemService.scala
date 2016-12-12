@@ -71,7 +71,8 @@ object TaskItemService {
 
         for (taskItem <- allTaskItems.reverse) {
           val start = taskItem.start.get
-          val duration = previousTaskStart - start
+          //compensate lost millisecond at the end of the day
+          val duration = (if (previousTaskStart == TimeUtils.dayEndInMs(previousTaskStart)) previousTaskStart + 1 else previousTaskStart) - start
           previousTaskStart = start
           taskItemDtos += TaskItemWithDuration(taskItem, duration)
         }
