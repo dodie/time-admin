@@ -3,6 +3,7 @@ package code.snippet
 import scala.xml.NodeSeq
 import code.model.User
 import code.service.ReportService
+import code.snippet.Params.{parseInterval, thisMonth}
 import code.snippet.mixin.DateFunctions
 import net.liftweb.util.BindHelpers.strToCssBindPromoter
 import net.liftweb.http.S
@@ -43,15 +44,8 @@ class TasksheetSnippet extends DateFunctions {
   }
 
   def tasksheet(in: NodeSeq): NodeSeq = {
-
-    val (interval, scale) = tryo {
-      for {
-        start <- S.param("intervalStart").map(s => YearMonth.parse(s))
-        end <- S.param("intervalEnd").map(s => YearMonth.parse(s))
-      } yield intervalOf(start, end)
-    } flatMap identity getOrElse thisMonth
-
-    val user = S.param("user").map(_.toLong).flatMap(User.findByKey).or(User.currentUser)
+    val (interval, scale) = parseInterval(S) getOrElse thisMonth
+    val user = Params.parseUser(S) or User.currentUser
 
     renderTaskSheet(interval, scale, user)(in)
   }
