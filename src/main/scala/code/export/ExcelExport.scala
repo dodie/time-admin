@@ -161,7 +161,7 @@ object ExcelExport {
       out.flush()
       new ByteArrayInputStream(out.toByteArray)
     }
-    (contentStream, fullTitle.toLowerCase.replace(" ", "") + ".xls")
+    (contentStream, s"tasksheet_${fullTitle.toLowerCase.replace(" ", "")}.xls")
   }
 
   def using[A, B <: {def close(): Unit}] (closeable: B) (f: B => A): A = try { f(closeable) } finally { closeable.close() }
