@@ -16,6 +16,12 @@ import net.liftweb.http.provider._
 import net.liftweb.http._
 import java.util.Locale
 
+import code.service.UserService
+import code.service.UserService.nonAdmin
+import code.snippet.Params
+import code.snippet.Params.{parseInterval, parseUser, thisMonth}
+import com.github.nscala_time.time.Imports.YearMonth
+import net.liftweb.util.ControlHelpers.tryo
 import org.joda.time.DateTime
 
 /**
@@ -101,7 +107,6 @@ class Boot {
       Menu(S ? "page.tasksheet") / "report" / "tasksheet" >> If(clientUser _, S ? "no_permission"),
 
       // admin pages
-      Menu(S ? "page.tasksheet.summary") / "report" / "tasksheetsummary" >> If(adminUser _, S ? "no_permission"),
       Menu(S ? "page.projects") / "admin" / "projects" >> If(adminUser _, S ? "no_permission"),
       Menu(S ? "page.users") / "admin" / "users" >> If(adminUser _, S ? "no_permission"),
       Menu(S ? "page.edituser") / "admin" / "user" >> If(adminUser _, S ? "no_permission") >> Hidden,
@@ -173,44 +178,27 @@ class Boot {
           }
         }
 
-      case Req("export" :: "tasksheetSummary" :: Nil, "", GetRequest) =>
-        () => {
-          // access control
-          if (!adminUser) {
-            Full(RedirectResponse("/"))
-          } else {
-            for {
-              (contentStream, fileName) <- tryo(ExcelExport.exportTasksheetSummary(
-                S.param("user").flatMap(id => User.findByKey(id.toLong)),
-                S.param("intervalStart").orElse(Full("")).map(s => DateTime.parse(s)).get,
-                S.param("intervalEnd").orElse(Full("")).map(s => DateTime.parse(s)).get
-              ))
-              if null ne contentStream
-            } yield StreamingResponse(contentStream, () =>
-              contentStream.close,
-              contentStream.available,
-              List(
-                "Content-Type" -> "application/vnd.ms-excel",
-                "Content-Disposition" -> ("attachment; filename=\"" + fileName + ".xls\"")), Nil, 200)
-          }
-        }
-
         // personal tasksheet export
-      case Req("export" :: "tasksheet" :: offset :: Nil, "", GetRequest) =>
+      case Req("export" :: "tasksheet" :: Nil, "", GetRequest) =>
         () => {
           // access control
           if (!clientUser) {
             Full(RedirectResponse("/"))
           } else {
+
             for {
-              (contentStream, fileName) <- tryo(ExcelExport2.tasksheet(User.currentUser.openOrThrowException("No user found!"), offset.toInt))
+              (contentStream, fileName) <- {
+                val (interval, scale) = parseInterval(S) getOrElse thisMonth()
+                val user = User.currentUser filter nonAdmin or parseUser(S)
+                tryo(ExcelExport.exportTasksheet(interval, scale, user))
+              }
               if null ne contentStream
             } yield StreamingResponse(contentStream, () =>
               contentStream.close,
               contentStream.available,
               List(
                 "Content-Type" -> "application/vnd.ms-excel",
-                "Content-Disposition" -> ("attachment; filename=\"" + fileName + ".xls\"")), Nil, 200)
+                "Content-Disposition" -> ("attachment; filename=\"" + fileName + "\"")), Nil, 200)
           }
         }
     }

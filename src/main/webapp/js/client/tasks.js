@@ -9,6 +9,11 @@ $(function(){
 		$('html,body').scrollTop(scrollmem);
 	});
 
+	window.onhashchange = function() {
+		var hash = window.location.hash;
+		hash && $('ul.nav a[href="' + hash + '"]').tab('show');
+	}
+
 	$("*[data-tab-aware]").each(function() {
 		$(this).click(function() {
 			this.href = this.href + window.location.hash;
@@ -39,7 +44,15 @@ function setTaskItemEditorPopup(taskItemId, timeOffset, selectedTaskId) {
 		tieSelector.removeChild(tieSelector.firstChild);
 	}
 
-	var option = document.createElement('option');
+	var option;
+	if (selectedTaskId != 0) {
+		option = document.createElement('option');
+		option.innerHTML = loc.get("do_not_change");
+		option.value = selectedTaskId;
+		tieSelector.appendChild(option);
+	}
+
+	option = document.createElement('option');
 	option.innerHTML = loc.get("pause");
 	option.value = -1;
 	tieSelector.appendChild(option);
@@ -50,7 +63,10 @@ function setTaskItemEditorPopup(taskItemId, timeOffset, selectedTaskId) {
 		var displayName = el.getElementsByClassName('tasksProjectName')[0].innerHTML + "-" + el.getElementsByClassName('tasksTaskName')[0].innerHTML;
 		var id = el.getElementsByClassName('InlineCommandsForm')[0].selecttaskid.value;
 
-		if (el.firstElementChild.className=="task" || id == selectedTaskId) {
+		if ($(el.firstElementChild).hasClass("task") || id == selectedTaskId) {
+			if (id == selectedTaskId) {
+				tieSelector.removeChild(tieSelector.firstChild);
+			}
 			var option = document.createElement('option');
 			option.innerHTML = displayName;
 			option.value = id;
@@ -101,10 +117,13 @@ $(document).ready(function(){
 				})
 			}).length > 0;
 
+			var taskElem = $(el.firstElementChild);
 			if (show) {
-				el.firstElementChild.className="task";
+				taskElem.addClass("task")
+				taskElem.removeClass("hiddenTask")
 			} else {
-				el.firstElementChild.className="hiddenTask";
+				taskElem.removeClass("task")
+				taskElem.addClass("hiddenTask")
 			}
 		})
 	}
@@ -127,7 +146,6 @@ Raphael.fn.pieChart = function (cx, cy, r, values, colors, projects, projectColo
 	}
 	var angle = 0,
 	total = 0,
-	start = 0,
 	addText = function(params) {
 		var p = params.p;
 		var percent = params.percent;
@@ -144,13 +162,10 @@ Raphael.fn.pieChart = function (cx, cy, r, values, colors, projects, projectColo
 	process = function (j, rMult, values, colors) {
 		var value = values[j];
 		var angleplus = 360 * value / total;
-		var popangle = angle + (angleplus / 2);
-		var color = Raphael.hsb(start, .75, 1);
 		var delta = 30;
 		var p = sector(cx, cy, r * rMult, angle, angle + angleplus, {fill: colors[j], stroke: stroke, "stroke-width": 3});
 		angle += angleplus;
 		chart.push(p);
-		start += .1;
 		return {p: p, percent: parseInt(Math.abs(angleplus / 3.6)) + "%"};
 	};
 
@@ -161,6 +176,7 @@ Raphael.fn.pieChart = function (cx, cy, r, values, colors, projects, projectColo
 	for (i = 0; i < projects.length; i++) {
 		frags.push(process(i, 1.2, projects, projectColors));
 	}
+	angle = 0;
 	for (i = 0; i < ii; i++) {
 		frags.push(process(i, 1, values, colors));
 	}
@@ -176,11 +192,11 @@ $(function () {
 	var colors = [];
 	var projects = {};
 
-	$("#pieholder").each(function() {
+	$("#piedata").each(function() {
 		$(this).find("tr").each(function() {
-			var min = parseInt($("td.minutes", this).text(), 10);
-			var color = $("td.color", this).text();
-			var projectColor = $("td.projectColor", this).text();
+			var min = parseInt($(".minutes", this).text(), 10);
+			var color = $(".taskColorIndicator", this).css("background-color");
+			var projectColor = $(".projectColorIndicator", this).css("background-color");
 			values.push(min);
 			colors.push(color);
 
@@ -190,7 +206,6 @@ $(function () {
 				projects[projectColor] = min;
 			}
 		});
-		$(this).empty();
 	});
 
 	var projectValues = [];
@@ -198,5 +213,21 @@ $(function () {
 		projectValues.push(projects[Object.keys(projects)[i]]);
 	}
 
-	Raphael("pieholder", 200, 200).pieChart(100, 100, 80, values, colors, projectValues, Object.keys(projects), "#fff");
+	if (values && values.length > 0) {
+		Raphael("pieholder", 200, 200).pieChart(100, 100, 80, values, colors, projectValues, Object.keys(projects), "#fff");
+	}
 });
+
+function toggleSubtaskCreatorForm(element) {
+	$(element).parent().find('.newtaskholder').toggle();
+	$(element).parent().find('input[name=newtaskname]').val('');
+	$(element).find('*[data-open]').toggle();
+	$(element).find('*[data-close]').toggle();
+}
+
+
+function submitOnEnter(elem, e) {
+	if(e && e.keyCode == 13) {
+		elem.form.submit();
+	}
+}

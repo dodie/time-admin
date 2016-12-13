@@ -12,7 +12,6 @@ import org.apache.poi.poifs.filesystem.POIFSFileSystem
 import org.apache.poi.ss.usermodel.Cell
 import org.apache.poi.ss.usermodel.IndexedColors
 import org.apache.poi.ss.util.CellReference
-import org.joda.time.{DateTime => _, Interval => _, _}
 import code.commons.TimeUtils
 import code.model._
 import net.liftweb.util.Props
@@ -25,6 +24,7 @@ import code.service.ReportService.TaskSheet
 import code.util.TaskSheetUtils._
 import com.github.nscala_time.time.Imports._
 import net.liftweb.common.Box
+import org.joda.time.ReadablePartial
 
 /**
  * Excel export features.
@@ -103,25 +103,18 @@ object ExcelExport {
     (contentStream, name)
   }
 
-  def exportTasksheetSummary(user: Box[User], intervalStart: DateTime, intervalEnd: DateTime): (InputStream, String) = {
-
+  def exportTasksheet(interval: Interval, scale: LocalDate => ReadablePartial, user: Box[User]): (InputStream, String) = {
     val workbook = new HSSFWorkbook
     val sheet = workbook.createSheet("Tasksheet")
 
-    val interval = new Interval(
-      new YearMonth(intervalStart).toInterval.start,
-      new YearMonth(intervalEnd).toInterval.end
-    )
-    val start = interval.getStart
-    val end = interval.getEnd
-
-    val taskSheet = ReportService.taskSheetData(user, interval, d => new YearMonth(d))
+    val taskSheet = ReportService.taskSheetData(interval, scale, User.currentUser)
 
     val ds = dates(taskSheet)
 
-    //FIXME: title text (month index)
-    val title = start.getYear + ". " + TimeUtils.monthNumberToText(start.getMonthOfYear - 1) + " - " + end.getYear+ ". " + TimeUtils.monthNumberToText(end.getMonthOfYear - 2)
-    renderTaskSheetTitle(workbook, sheet, title, rowNum = 0, dates(taskSheet).length)
+    val userName = user.map(u => s"${u.lastName} ${u.firstName} ").getOrElse("")
+    val fullTitle = userName + title(interval, scale)
+
+    renderTaskSheetTitle(workbook, sheet, fullTitle, rowNum = 0, dates(taskSheet).length)
     renderTaskSheetFieldNames(workbook, sheet, ds, interval, rowNum = 1)
     val rowNum = renderContent(workbook, sheet, taskSheet, interval, 2)
     renderSummary(workbook, sheet, rowNum, ds.length + 1)
@@ -133,36 +126,7 @@ object ExcelExport {
       out.flush()
       new ByteArrayInputStream(out.toByteArray)
     }
-    val fileName = s"tasksheet_${start.getYear}-${start.getMonthOfYear}_${end.getYear}-${end.getMonthOfYear-1}${user.map(u => "_" + u.firstName.toLowerCase + u.lastName.toLowerCase).getOrElse("")}.xls"
-    (contentStream, fileName)
-  }
-
-  def exportTasksheet(user: User, offset: Int): (InputStream, String) = {
-    val date = new DateTime(TimeUtils.currentDayStartInMs(offset))
-
-    val workbook = new HSSFWorkbook
-    val sheet = workbook.createSheet("Tasksheet")
-
-    val interval = date.monthOfYear().toInterval
-    val taskSheet = ReportService.taskSheetData(User.currentUser, interval, d => d)
-
-    val ds = dates(taskSheet)
-
-    //FIXME: title text (month index)
-    renderTaskSheetTitle(workbook, sheet, date.getYear + ". " + TimeUtils.monthNumberToText(date.getMonthOfYear - 1), rowNum = 0, dates(taskSheet).length)
-    renderTaskSheetFieldNames(workbook, sheet, ds, interval, rowNum = 1)
-    val rowNum = renderContent(workbook, sheet, taskSheet, interval, 2)
-    renderSummary(workbook, sheet, rowNum, ds.length + 1)
-
-    sheet.createFreezePane(1, 2)
-
-    val contentStream = using(new ByteArrayOutputStream()) { out =>
-      workbook.write(out)
-      out.flush()
-      new ByteArrayInputStream(out.toByteArray)
-    }
-    val fileName = s"tasksheet_${date.getYear}-${date.getMonthOfYear}_${user.firstName.toLowerCase + user.lastName.toLowerCase}.xls"
-    (contentStream, fileName)
+    (contentStream, s"tasksheet_${fullTitle.toLowerCase.replace(" ", "")}.xls")
   }
 
   def using[A, B <: {def close(): Unit}] (closeable: B) (f: B => A): A = try { f(closeable) } finally { closeable.close() }

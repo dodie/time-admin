@@ -36,6 +36,8 @@ import code.model.mixin.HierarchicalItem
  */
 class ProjectsSnippet {
 
+  val collator = Collator.getInstance(S.locale);
+
   private var template: NodeSeq = null
 
   private var projectTemplate: NodeSeq = null
@@ -113,7 +115,7 @@ class ProjectsSnippet {
     } else {
       Sorting.quickSort(data)(new Ordering[Project] {
         def compare(x: Project, y: Project) = {
-          x.name.get compare y.name.get
+          collator.compare(x.name.get, y.name.get)
         }
       })
       data.toSeq.flatMap(project => renderProject(project, in))
@@ -170,7 +172,7 @@ class ProjectsSnippet {
 
       Sorting.quickSort(data)(new Ordering[Task] {
         def compare(x: Task, y: Task) = {
-          x.name.get compare y.name.get
+          collator.compare(x.name.get, y.name.get)
         }
       })
 
@@ -189,7 +191,8 @@ class ProjectsSnippet {
       AttrBindParam("class", { if (task.active.get) "taskName" else "taskName inactive" }, "class"),
       AttrBindParam("onclick", SHtml.ajaxInvoke(() => editor(task)).toJsCmd, "onclick"),
       AttrBindParam("deletetaskonclick", SHtml.ajaxInvoke(() => deleteTask(task)).toJsCmd, "onclick"),
-      AttrBindParam("selectonclick", SHtml.ajaxInvoke(() => selectTask(task)).toJsCmd, "onclick"))
+      AttrBindParam("selectonclick", SHtml.ajaxInvoke(() => selectTask(task)).toJsCmd, "onclick"),
+      AttrBindParam("mergeintoonclick", SHtml.ajaxInvoke(() => mergeTask(task)).toJsCmd, "onclick"))
   }
 
   private def editor(hierarchicalItem: HierarchicalItem[_]): JsCmd = {
@@ -197,6 +200,7 @@ class ProjectsSnippet {
     object description extends TransientRequestVar(hierarchicalItem.description.get)
     object color extends TransientRequestVar(hierarchicalItem.color.get)
     object active extends TransientRequestVar(hierarchicalItem.active.get)
+    object specifiable extends TransientRequestVar(hierarchicalItem.specifiable.get)
 
     def submit: JsCmd = {
       hierarchicalItem match {
@@ -206,6 +210,7 @@ class ProjectsSnippet {
             .description(description.get)
             .color(color.get)
             .active(active.get)
+            .specifiable(specifiable.get)
             .save
         }
         case _: Task => {
@@ -214,6 +219,7 @@ class ProjectsSnippet {
             .description(description.get)
             .color(color.get)
             .active(active.get)
+            .specifiable(specifiable.get)
             .save
         }
       }
@@ -221,21 +227,48 @@ class ProjectsSnippet {
       closeDialog
     }
 
-    SetHtml("inject",
-      Helpers.bind("editor", editorTemplate,
-        "fields" ->
-          (Helpers.bind("property", editorPropertyTemplate,
+    val defaultFieldBindings =
+          Helpers.bind("property", editorPropertyTemplate,
               "name" -> S.?("projects.popup.name"),
               "value" -> SHtml.textElem(name, "class" -> "form-control")) ++
           Helpers.bind("property", editorPropertyTemplate,
               "name" -> S.?("projects.popup.description"),
-              "value" -> SHtml.textElem(description, "class" -> "form-control")) ++
+              "value" -> SHtml.textElem(description, "class" -> "form-control"))
+
+    val fieldBindigsWithColor =
+      if (!hierarchicalItem.parent.defined_?)
+        defaultFieldBindings ++
+        Helpers.bind("property", editorPropertyTemplate,
+            "name" -> S.?("projects.popup.color"),
+            "value" -> SHtml.textElem(color, "type" -> "color"))
+      else
+        defaultFieldBindings
+
+    val fieldbindingsWithActive =
+      if (hierarchicalItem.active.get)
+        fieldBindigsWithColor
+      else
+        fieldBindigsWithColor ++
+        Helpers.bind("property", editorPropertyTemplate,
+            "name" -> S.?("projects.popup.active"),
+            "value" -> SHtml.checkboxElem(active))
+
+    val fieldBindings =
+      hierarchicalItem match {
+        case _: Project => {
+          fieldbindingsWithActive
+        }
+        case _: Task => {
+          fieldbindingsWithActive ++
           Helpers.bind("property", editorPropertyTemplate,
-              "name" -> S.?("projects.popup.color"),
-              "value" -> SHtml.textElem(color, "class" -> "form-control", "type" -> "color")) ++
-          Helpers.bind("property", editorPropertyTemplate,
-              "name" -> S.?("projects.popup.active"),
-              "value" -> SHtml.checkboxElem(active))),
+              "name" -> S.?("projects.popup.specifiable"),
+              "value" -> SHtml.checkboxElem(specifiable))
+        }
+      }
+
+    SetHtml("inject",
+      Helpers.bind("editor", editorTemplate,
+        "fields" -> fieldBindings,
         "title" -> S.?("projects.edit"),
         "submit" -> SHtml.ajaxSubmit(S.?("button.save"), submit _, "class" -> "btn btn-primary"),
         "close" -> SHtml.ajaxSubmit(S.?("button.close"), closeDialog _, "class" -> "btn btn-default"))
@@ -254,6 +287,7 @@ class ProjectsSnippet {
         .description(description.get)
         .color(color.get)
         .active(true)
+        .specifiable(true)
         .save
 
       rerenderProjectTree &
@@ -290,6 +324,7 @@ class ProjectsSnippet {
           .name(name.get)
           .description(description.get)
           .active(true)
+          .specifiable(true)
           .save
       else
         Task.create
@@ -297,6 +332,7 @@ class ProjectsSnippet {
           .name(name.get)
           .description(description.get)
           .active(true)
+          .specifiable(true)
           .save
 
       rerenderProjectTree &
@@ -335,6 +371,16 @@ class ProjectsSnippet {
     } else if (selectedTask.get != null) {
       TaskService.move(selectedTask.get, project)
       selectedTask.set(null)
+    }
+    rerenderProjectTree
+  }
+
+  private def mergeTask(task: Task): JsCmd = {
+    if (selectedTask.get != null) {
+      TaskService.merge(selectedTask.get, task)
+      selectedTask.set(null)
+    } else {
+      net.liftweb.http.js.JsCmds.Alert("No task selected!")
     }
     rerenderProjectTree
   }

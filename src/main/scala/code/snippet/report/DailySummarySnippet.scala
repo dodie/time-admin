@@ -36,7 +36,7 @@ class DailySummarySnippet extends DateFunctions {
     }
 
     // All task today for current user
-    val taskItems = TaskItemService.getTaskItemsForDay(offsetInDays)
+    val taskItems = TaskItemService.getTaskItems(TimeUtils.offsetToDailyInterval(offsetInDays))
 
     // aggregated data items
     val aggregatedArray = ReportService.createAggregatedDatas(taskItems)
@@ -134,12 +134,18 @@ class DailySummarySnippet extends DateFunctions {
         ".fragWrapper *" #> aggregatedArray.map(aggregatedData => {
           val (red, green, blue, alpha) = TaskService.getColor(aggregatedData.taskName, aggregatedData.projectName, !aggregatedData.isPause)
 
-          ".minutes *" #> (math.round(aggregatedData.duration / 60D / 1000)) &
-          ".color *" #> ("rgba(" + red + " , " + green + " , " + blue + " , " + alpha + ")") &
-          ".projectColor *" #> (Project.findByKey(aggregatedData.rootProjectId) match {
-              case Full(project) => project.color.get
-              case _ => "white"
+          val fragBarStyle = "background-color:rgba(" + red + " , " + green + " , " + blue + " ," + alpha + ");"
+          val fragBarProjectStyle = {
+            (Project.findByKey(aggregatedData.rootProjectId) match {
+              case Full(project) => "background-color:" + project.color.get
+              case _ => "background-color: white"
             })
+          }
+
+          ".minutes *" #> (math.round(aggregatedData.duration / 60D / 1000)) &
+          ".name *" #> (if (aggregatedData.projectName.isEmpty) aggregatedData.taskName else (aggregatedData.projectName + "-" + aggregatedData.taskName)) &
+          ".taskColorIndicator [style]" #> fragBarStyle &
+          ".projectColorIndicator [style]" #> fragBarProjectStyle
         }) &
         ".SumTime *" #> sumTime &
         ".PauseTime *" #> pauseTime &

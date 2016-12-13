@@ -7,6 +7,7 @@
 	<span class="lift:jsL10n.addJsLoc">tasks.confirm_delete</span>
 	<span class="lift:jsL10n.addJsLoc">tasks.view.table</span>
 	<span class="lift:jsL10n.addJsLoc">tasks.view.timeline</span>
+	<span class="lift:jsL10n.addJsLoc">do_not_change</span>
 
 	<div class="tasksPage">
 		<div class="container">
@@ -50,7 +51,7 @@
 										(<span class="Duration"></span>)
 
 									</div>
-									<div class="fragText"></div>
+									<div class="fragText" onclick="$(this).parent().find('.fragBar')[0].onclick();"></div>
 								</div>
 							</div>
 						</div>
@@ -107,20 +108,30 @@
 						<div id="taskList">
 							<form method="post" class="InlineCommandsForm Pause">
 								<input type="hidden" name="selecttaskid" value="-1"/>
-								<span class="glyphicon glyphicon-pause" aria-hidden="true"></span>
 								<input type="text" class="OfftimeOffsetInput" name="timeoffset" value="" placeholder="hh:mm" autocomplete="off" />
-								<input type="submit" value="tasks.pause" class="btn btn-primary lift:L10n.value"/>
+								<a class="btn btn-primary pause-button" onclick="$(this).parent().submit();">
+									<span aria-hidden="true" class="glyphicon glyphicon-pause"></span>
+								</a>
+
 							</form>
 							<div class="lift:taskItemSnippet.selectableTasks tasks">
 								<div task:taskstyleclass="" task:rowid="">
 									<div class="taskName">
-										<div class="projectColorIndicator" task:projectcolorindicator="">-</div>
-										<form task:formid="" method="post" class="InlineCommandsForm"><input type="hidden" name="selecttaskid" task:taskid=""/><input class="newTaskItemInput" type="text" name="timeoffset" task:placeholder="" value="" autocomplete="off" onfocus="this.value='';" onclick="arguments[0].stopPropagation();"/></form>
-										<div class="taskColorIndicator" task:colorindicator="" task:onrowclick="">-&gt;</div>
-										<div class="taskName_info" task:onrowclick=""><span class="tasksProjectName"><task:projectname/></span>-<span class="tasksTaskName"><task:taskname/></span> <span class="tasksTaskDescription"><task:taskdescription/></span></div>
-										<button type="button" class="btn btn-default" aria-label="Left Align">
-											<span class="glyphicon glyphicon-pushpin" aria-hidden="true"></span>
-										</button>
+										<form task:formid="" method="post" class="InlineCommandsForm">
+											<div class="projectColorIndicator" task:projectcolorindicator="">-</div>
+											<input type="hidden" name="selecttaskid" task:taskid=""/>
+											<input class="newTaskItemInput" type="text" name="timeoffset" task:placeholder="" value="" autocomplete="off" onfocus="this.value='';" onclick="arguments[0].stopPropagation();" onkeypress="return submitOnEnter(this, event)"/>
+											<div class="taskColorIndicator" task:colorindicator="" task:onrowclick="">-&gt;</div>
+											<div class="taskName_info" task:onrowclick=""><span class="tasksProjectName"><task:projectname/></span>-<span class="tasksTaskName"><task:taskname/></span> <span class="tasksTaskDescription"><task:taskdescription/></span></div>
+											<span style="display:none;" class="newtaskholder">
+												-
+												<input type="text" name="newtaskname" onkeypress="return submitOnEnter(this, event)"/>
+											</span>
+										</form>
+										<a class="specify-subtask" onclick="toggleSubtaskCreatorForm(this);">
+											<span data-open>+ <lift:loc>tasks.new</lift:loc></span>
+											<span data-close style="display:none;">- <lift:loc>tasks.cancel</lift:loc></span>
+										</a>
 									</div>
 								</div>
 							</div>
@@ -132,16 +143,21 @@
 						<div class="summary">
 							<div class="lift:dailySummarySnippet.summaryForToday">
 								<div id="pieholder">
-									<table>
-										<tbody class="chartContainer">
-											<tr class="fragWrapper">
-												<td class="color"></td>
-												<td class="projectColor"></td>
-												<td class="minutes"></td>
-											</tr>
-										</tbody>
-									</table>
 								</div>
+								<table id="piedata">
+									<tbody class="chartContainer">
+										<tr class="fragWrapper">
+											<td>
+												<div class="projectColorIndicator">-</div>
+											</td>
+											<td>
+												<div class="taskColorIndicator">-&gt;</div>
+											</td>
+											<td><span class="minutes"></span><span>m</span></td>
+											<td class="name"></td>
+										</tr>
+									</tbody>
+								</table>
 								<div class="summaryMetrics">
 									<table>
 										<tbody>

@@ -1,19 +1,16 @@
 package code
 package service
 
-import java.util.Date
-
 import scala.collection.mutable.ListBuffer
-import scala.util.Sorting
-import org.joda.time.DateTime
+import org.joda.time.{DateTime, Interval}
 import code.commons.TimeUtils
 import code.model.TaskItem
 import code.model.User
 import code.model.Project
 import net.liftweb.common.Box.box2Option
 import net.liftweb.common.{Box, Full}
-import net.liftweb.mapper.MappedField.mapToType
 import net.liftweb.mapper._
+import com.github.nscala_time.time.Imports._
 
 /**
  * TaskItem data handling and conversion service.
@@ -27,7 +24,7 @@ object TaskItemService {
    * Returns the last option for the given day.
    */
   def getLastTaskItemForDay(offset: Int) = {
-    getTaskItemsForDay(offset).lastOption
+    getTaskItems(TimeUtils.offsetToDailyInterval(offset)).lastOption
   }
 
   def alwaysTrue[T <: Mapper[T]]: QueryParam[T] = BySql[T]("1=1", IHaveValidatedThisSQL("suliatis", "2016-11-10"))
@@ -36,75 +33,79 @@ object TaskItemService {
    * Returns a sequence with the task item entries on the given day.
    * The ordering is determined by the item's start time.
    */
-  def getTaskItemsForDay(offset: Int, user: Box[User] = User.currentUser): List[TaskItemWithDuration] = {
-    /**
-     * Takes a list of consecutive TaskItems and converts them to a TaskItemWithDuration.
-     * The function calculates the durations of the task items.
-     */
-    def taskItemsToTaskItemDtos(taskItems: List[TaskItem]): List[TaskItemWithDuration] = {
+  def getTaskItems(interval: Interval, user: Box[User] = User.currentUser): List[TaskItemWithDuration] = {
+
+    def toTimeline(taskItems: List[TaskItem]): List[TaskItemWithDuration] = {
       val taskItemDtos = new ListBuffer[TaskItemWithDuration]
-      if (taskItems.isEmpty) {
-        return taskItemDtos.toList
-      } else {
-        var previousTaskStart: Long = {
-          if (TimeUtils.dayStartInMs(taskItems.head.start.get) == TimeUtils.currentDayStartInMs) TimeUtils.currentTime
-          else taskItems.last.start.get
-        }
-        for (taskItem <- taskItems.reverse) {
-          val duration = previousTaskStart - taskItem.start.get
-          previousTaskStart = taskItem.start.get
+
+      if (taskItems.nonEmpty) {
+        val trimmedItems =
+          taskItems
+            .map(item =>
+              if (item.start.get < interval.startMillis)
+                TaskItem.create
+                  .user(item.user.get)
+                  .task(item.task.get)
+                  .start(interval.startMillis)
+              else
+                item)
+
+        val cap =
+          if (taskItems.last.task.get != 0 && interval.endMillis < TimeUtils.currentTime) {
+            List(TaskItem.create
+              .user(taskItems.last.user.get)
+              .task(0)
+              .start(interval.endMillis - 1))
+          } else {
+            List()
+          }
+
+        val allTaskItems = trimmedItems ::: cap
+
+        var previousTaskStart: Long =
+          if (allTaskItems.last.task.get == 0) {
+            allTaskItems.last.start.get
+          } else {
+            TimeUtils.currentTime
+          }
+
+        for (taskItem <- allTaskItems.reverse) {
+          val start = taskItem.start.get
+          //compensate lost millisecond at the end of the day
+          val duration = (if (previousTaskStart == TimeUtils.dayEndInMs(previousTaskStart)) previousTaskStart + 1 else previousTaskStart) - start
+          previousTaskStart = start
           taskItemDtos += TaskItemWithDuration(taskItem, duration)
         }
-        taskItemDtos.reverse.toList
       }
+
+      taskItemDtos.reverse.toList.filter(item => item.duration != 0 || item.taskItem.task.get == 0)
     }
 
-    // task items for the given day
-    var list = taskItemsToTaskItemDtos(
+    val taskItemsForPeriod =
       TaskItem.findAll(OrderBy(TaskItem.start, Ascending),
         user.map(u => By(TaskItem.user, u)).getOrElse(alwaysTrue),
-        By_<(TaskItem.start, TimeUtils.currentDayEndInMs(offset)),
-        By_>=(TaskItem.start, TimeUtils.currentDayStartInMs(offset))))
+        By_<(TaskItem.start, interval.endMillis),
+        By_>=(TaskItem.start, interval.startMillis))
 
-    // if there there is'nt a task item at the start of the day, we have to check the last task item before the given day
-    if (!list.exists(_.taskItem.start.get == TimeUtils.currentDayStartInMs(offset))) {
-      // last task item before the given day
-      val lastItem = taskItemsToTaskItemDtos(
-        TaskItem.findAll(OrderBy(TaskItem.start, Descending),
-          MaxRows(1),
-          user.map(u => By(TaskItem.user, u)).getOrElse(alwaysTrue),
-          By_<(TaskItem.start, TimeUtils.currentDayStartInMs(offset))))
-      // if the lastItem is not Pause, then it will be truncated to the given day, and will count in the result 
-      if (!lastItem.isEmpty && lastItem.head.taskItem.id != 0) {
-        val dto = TaskItemWithDuration(
-          user.map(u => TaskItem.create.user(u).task(lastItem.head.taskItem.task.get).start(TimeUtils.currentDayStartInMs(offset)))
-              .getOrElse(TaskItem.create.task(lastItem.head.taskItem.task.get).start(TimeUtils.currentDayStartInMs(offset))),
-          {
-            if (list.isEmpty) (TimeUtils.currentTime - (TimeUtils.currentDayStartInMs(offset) + 1))
-            else (list.head.taskItem.start.get - (TimeUtils.currentDayStartInMs(offset) + 1))
-          })
+    val users = user.map(List(_)).getOrElse(User.findAll)
 
-        list = List(dto) ::: list
-      }
-    }
+    val lastPartTaskItemBeforePeriodThatMightCount: List[TaskItem] =
+      users
+        .flatMap(u =>
+          TaskItem.findAll(OrderBy(TaskItem.start, Descending),
+            MaxRows(1),
+            By(TaskItem.user, u),
+            By_<(TaskItem.start, interval.startMillis))
+          .filter(_.task != 0))
 
-    // remove starting Pause items
-    list = list.dropWhile(_.taskItem.task.get == 0)
+    val taskItems = lastPartTaskItemBeforePeriodThatMightCount ::: taskItemsForPeriod
+
+    val list = taskItems.groupBy(_.user.get).flatMap(userItems => toTimeline(userItems._2).dropWhile(_.taskItem.task.get == 0)).toList
 
     if (list.isEmpty) {
       // if the result is empty, then return a list that contains only a Pause item
-      List(TaskItemWithDuration(TaskItem.create.user(user).start(TimeUtils.currentDayStartInMs(offset) + 1), 0))
+      List(TaskItemWithDuration(TaskItem.create.user(user).start(interval.startMillis + 1), 0))
     } else {
-      // if the given day is not today, and the last task item is not Pause,
-      // then it will be truncated to the given day, and will count in the result
-      // (this is achieved by inserting an additional Pause item to midnight)
-      if (offset != 0 && list.last.taskItem.task.get != 0) {
-        list.last.duration = TimeUtils.currentDayEndInMs(offset) - 1 - list.last.taskItem.start.get
-        list = list ::: List(TaskItemWithDuration(
-          user.map(u => TaskItem.create.user(u).start(TimeUtils.currentDayEndInMs(offset) - 1))
-              .getOrElse(TaskItem.create.start(TimeUtils.currentDayEndInMs(offset) - 1)),
-          0))
-      }
       list
     }
   }

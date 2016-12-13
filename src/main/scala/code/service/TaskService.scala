@@ -97,11 +97,46 @@ object TaskService {
 
   def isEmpty(task: Task) = TaskItem.findAll(By(TaskItem.task, task)).isEmpty
 
-  def delete(task: Task) = {
-    if (isEmpty(task)) {
+  def delete(task: Task) =
+    if (task.active)
+      task.active(false).save
+    else if (isEmpty(task))
       task.delete_!
+    else
+      throw new IllegalArgumentException("Tasks with TaskItems can not be deleted.")
+
+  def merge(what: Task, into: Task) = {
+    TaskItem.findAll(By(TaskItem.task, what)).foreach((ti: TaskItem) => ti.task(into).save)
+    delete(what)
+  }
+
+  def specify(task: Task, taskName: String) = {
+    if (!task.specifiable.get) {
+      throw new RuntimeException("Task is not specifiable!")
+    }
+    val parent = Project.find(By(Project.parent, task.parent.get), By(Project.name, task.name))
+    val parentProject = if (parent.isEmpty) {
+      val rootProject = Project.find(By(Project.id, task.parent.get)).get
+      val newParent = Project.create.name(task.name).active(true).parent(rootProject)
+      newParent.save
+      newParent
     } else {
-      throw new IllegalArgumentException("Tasks with TaskItems can not be deleted.");
+      if (!parent.get.active) {
+        parent.get.active(true).save
+      }
+      parent.get
+    }
+
+    val targetTask = Task.find(By(Task.parent, parentProject.id), By(Task.name, taskName))
+    if (targetTask.isEmpty) {
+      val specifiedTask = Task.create.name(taskName).active(true).specifiable(true).parent(parentProject)
+      specifiedTask.save
+      specifiedTask
+    } else {
+      if (!targetTask.get.active) {
+        targetTask.get.active(true).save
+      }
+      targetTask.get
     }
   }
 }

@@ -25,7 +25,7 @@ object ExcelExport2 {
     val date = new DateTime(TimeUtils.currentDayStartInMs(offset))
 
     val interval = date.monthOfYear.toInterval
-    val taskSheet = ReportService.taskSheetData(User.currentUser, interval, d => d)
+    val taskSheet = ReportService.taskSheetData(interval, d => d, User.currentUser)
 
     val ds = dates(taskSheet)
     val ts = tasks(taskSheet)

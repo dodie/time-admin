@@ -30,8 +30,8 @@ object User extends User with MetaMegaProtoUser[User] with ManyToMany {
         {form.map(_.asInstanceOf[Elem]% ("class" -> "form-control"))}
         <span><lift:Msg id={fieldId} errorClass="edit_error_class"></lift:Msg></span>
       </div>
-      }
     }
+  }
 
   override def signupFields: List[FieldPointerType] = List(firstName, lastName, email, locale, password)
 

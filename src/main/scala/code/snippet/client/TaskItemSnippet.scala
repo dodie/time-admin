@@ -1,35 +1,22 @@
 package code
 package snippet
 
-import code.model.Project
 import code.service.ProjectService
 import scala.xml.NodeSeq.seqToNodeSeq
-import scala.xml.Elem
 import scala.xml.NodeSeq
 import scala.xml.Text
 import code.commons.TimeUtils
 import code.service.TaskItemService
 import code.service.TaskItemWithDuration
 import code.service.TaskService
-import code.service.UserPreferenceNames
-import code.service.UserPreferenceService
 import code.snippet.mixin.DateFunctions
 import net.liftweb.common.Box.box2Option
 import net.liftweb.http.S
-import net.liftweb.mapper.MappedField.mapToType
 import net.liftweb.util.BindHelpers.strToCssBindPromoter
 import net.liftweb.util.Helpers.AttrBindParam
-import net.liftweb.util.Helpers.strToSuperArrowAssoc
-import net.liftweb.util.IterableConst.boxNodeSeq
-import net.liftweb.util.IterableConst.itNodeSeqFunc
-import net.liftweb.util.StringPromotable.longToStrPromo
 import net.liftweb.util.Helpers
 import net.liftweb.util.PCDataXmlParser
-import code.service.ShowTaskData
-import net.liftweb.http.SHtml.a
-import net.liftweb.util.Helpers.bind
 import net.liftweb.util.Helpers.strToSuperArrowAssoc
-import net.liftweb.http.js.JsCmds.Noop
 
 /**
  * Task item editing and listing.
@@ -38,7 +25,7 @@ import net.liftweb.http.js.JsCmds.Noop
 class TaskItemSnippet extends DateFunctions {
 
   /** All task items today for current user. */
-  lazy val taskItems = TaskItemService.getTaskItemsForDay(offsetInDays)
+  lazy val taskItems = TaskItemService.getTaskItems(TimeUtils.offsetToDailyInterval(offsetInDays))
 
   /** All tasks. */
   lazy val tasks = TaskService.getTaskArray()
@@ -181,7 +168,11 @@ class TaskItemSnippet extends DateFunctions {
           val (red, green, blue, alpha) = TaskService.getColor(showTaskData.task.name.get, showTaskData.projectName, true)
           val name = showTaskData.projectName + "-" + showTaskData.task.name.get
 
-          val taskStyleClass = Text("hiddenTask");
+          val taskStyleClass = if (showTaskData.task.specifiable.get) {
+            Text("hiddenTask specifiable-task");
+          } else {
+            Text("hiddenTask");
+          }
 
           Helpers.bind("task", in,
             AttrBindParam("taskstyleclass", taskStyleClass, "class"),
@@ -238,18 +229,18 @@ class TaskItemSnippet extends DateFunctions {
 
       if (mode == "default") {
         /*
-				 * DEFAULT (smart) mode - Append to current day or insert to given time of the selected day.
-				 * The given timeoffset parameter can be blank, it will be interpreted as 0.
-				 * 
-				 * If the parameter is a number, 
-				 * 	the new taskitem's date will be the current date minus the given number of minutes.
-				 * 	the taskitem will be appended to today's tasks. 
-				 * 	if not today is selected, rises an error.
-				 * 
-				 * Else, 
-				 * 	the parameter will be parsed as hh:mm, and will be interpreted as time of the selected day.
-				 * 	the taskitem will be inserted to the selected day at the given point of time
-				 */
+         * DEFAULT (smart) mode - Append to current day or insert to given time of the selected day.
+         * The given timeoffset parameter can be blank, it will be interpreted as 0.
+         *
+         * If the parameter is a number,
+         * 	the new taskitem's date will be the current date minus the given number of minutes.
+         * 	the taskitem will be appended to today's tasks.
+         * 	if not today is selected, rises an error.
+         *
+         * Else,
+         * 	the parameter will be parsed as hh:mm, and will be interpreted as time of the selected day.
+         * 	the taskitem will be inserted to the selected day at the given point of time
+         */
         val offsetStringParameter = {
           val offsetParameterString = (S.param("timeoffset") getOrElse "0")
           if (0 < offsetParameterString.length())
@@ -280,16 +271,25 @@ class TaskItemSnippet extends DateFunctions {
         if (!time.isEmpty) {
           // valid parameters, make changes
 
+          // Create new task if necessary
+          val newTaskName = S.param("newtaskname").getOrElse("")
+
+          val calculatedTaskId = if (!newTaskName.isEmpty) {
+            TaskService.specify(TaskService.getTask(selectedTaskId).get, newTaskName).id.get
+          } else {
+            selectedTaskId;
+          }
+
           if (preciseTimeMode) {
             // precise time given, inserting
-            TaskItemService.insertTaskItem(selectedTaskId, time.get)
+            TaskItemService.insertTaskItem(calculatedTaskId, time.get)
           } else {
             // diff time given, appending
             if (offsetInDays != 0) {
               S.error(S.?("tasks.error.previous_day_precise_only"))
               S.redirectTo(S.uri)
             } else {
-              TaskItemService.appendTaskItem(selectedTaskId, time.get)
+              TaskItemService.appendTaskItem(calculatedTaskId, time.get)
             }
           }
 
@@ -300,9 +300,9 @@ class TaskItemSnippet extends DateFunctions {
         }
       } else if (mode == "taskitemsplit" || mode == "taskitemedit") {
         /*
-				 * SPLIT or EDIT mode.
-				 * The given timeoffset parameter must be in hh:mm format, and will be interpreted as time of the current day.
-				 */
+         * SPLIT or EDIT mode.
+         * The given timeoffset parameter must be in hh:mm format, and will be interpreted as time of the current day.
+         */
 
         // time offset parameter
         val offset = {
@@ -341,8 +341,8 @@ class TaskItemSnippet extends DateFunctions {
         }
       } else if (mode == "taskitemdelete") {
         /*
-				 * The specified taskitem will be deleted.
-				 */
+         * The specified taskitem will be deleted.
+         */
         TaskItemService.deleteTaskItem(S.param("taskitemid").get.toLong)
       }
 
