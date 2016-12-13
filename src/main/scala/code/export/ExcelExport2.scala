@@ -6,9 +6,9 @@ import code.model.User
 import code.service.ReportService
 import code.util.TaskSheetUtils
 import code.util.TaskSheetUtils._
-import com.norbitltd.spoiwo.model.enums.CellHorizontalAlignment.Center
+import com.norbitltd.spoiwo.model.enums.CellHorizontalAlignment.{Center, Right}
 import com.norbitltd.spoiwo.model.{CellStyle, _}
-import com.norbitltd.spoiwo.model.enums.{CellBorderStyle, CellFill}
+import com.norbitltd.spoiwo.model.enums.{CellBorderStyle, CellFill, CellHorizontalAlignment}
 import com.norbitltd.spoiwo.natures.xlsx.Model2XlsxConversions.XlsxSheet
 import net.liftweb.http.S
 import org.joda.time.{DateTime, ReadablePartial}
@@ -32,12 +32,12 @@ object ExcelExport2 {
     val workbook = Sheet(
       name = fullTitle,
       rows =
-        Row(header(fullTitle)) ::
+        Row(main(fullTitle)) ::
         Row(taskTitle :: (ds.map(d => header(d.toString)) :+ sumTitle)) :: {
           ts.map { t =>
             Row(Cell(t.name) :: (ds.map { d => value(duration(taskSheet, d, t).minutes) } :+ value(sumByTasks(taskSheet)(t).minutes)))
           } :+
-          Row(sumTitle :: (ds.map { d => footer(sumByDates(taskSheet)(d).minutes) } :+ footer(sum(taskSheet).minutes)))
+          Row(sumFooter :: (ds.map { d => footer(sumByDates(taskSheet)(d).minutes) } :+ footer(sum(taskSheet).minutes)))
         },
       mergedRegions = List(CellRange(0 -> 0, 0 -> (ds.length + 1)))
     ).convertAsXlsx()
@@ -51,15 +51,20 @@ object ExcelExport2 {
     (contentStream, s"tasksheet_${fullTitle.toLowerCase.replace(" ", "")}.xls")
   }
 
+
   def taskTitle: Cell = header(S.?("export.tasksheet.project_identifier"))
 
   def sumTitle: Cell = header(S.?("export.tasksheet.sum"))
 
-  def header[T: CellValueType](t: T): Cell = Cell(value = t, style = bold.withBorders(CellBorders().withStyle(CellBorderStyle.Thin)))
+  def sumFooter: Cell = footer(S.?("export.tasksheet.sum"))
+
+  def main[T: CellValueType](t: T): Cell = Cell(value = t, style = bold.withHorizontalAlignment(Center))
+
+  def header[T: CellValueType](t: T): Cell = Cell(value = t, style = bold.withBorders(CellBorders().withBottomStyle(CellBorderStyle.Medium)))
 
   def value[T: CellValueType](t: T): Cell = Cell(value = t, style = bold)
 
-  def footer[T: CellValueType](t: T): Cell = header(t)
+  def footer[T: CellValueType](t: T): Cell = Cell(value = t, style = bold.withBorders(CellBorders().withTopStyle(CellBorderStyle.Thin)))
 
   def using[A, B <: {def close(): Unit}] (closeable: B) (f: B => A): A = try { f(closeable) } finally { closeable.close() }
 
