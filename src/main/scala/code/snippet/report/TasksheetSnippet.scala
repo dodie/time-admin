@@ -2,8 +2,11 @@ package code.snippet
 
 import scala.xml.NodeSeq
 import code.model.User
-import code.service.ReportService
+import code.service.UserService.nonAdmin
+import code.service.{ReportService, UserService}
+import code.snippet.Params.{parseInterval, parseUser, thisMonth}
 import code.snippet.mixin.DateFunctions
+import code.util.TaskSheetUtils
 import net.liftweb.util.BindHelpers.strToCssBindPromoter
 import net.liftweb.http.S
 import com.github.nscala_time.time.Imports._
@@ -12,7 +15,6 @@ import net.liftweb.util.CssSel
 import org.joda.time.ReadablePartial
 import code.util.TaskSheetUtils._
 
-import scala.util.Try
 
 /**
  * Tasksheet displaying component.
@@ -21,60 +23,33 @@ import scala.util.Try
 class TasksheetSnippet extends DateFunctions {
 
   /**
-   * Blank tasksheet download link.
-   */
-  def blankTasksheetExportLink(in: NodeSeq): NodeSeq = {
-    (
-      "a [href]" #> ("/export/tasksheet/blank/" + offsetInDays)
-    ).apply(in)
-  }
-
-  /**
    * Tasksheet download link.
    */
   def tasksheetExportLink(in: NodeSeq): NodeSeq = {
-    (
-      "a [href]" #> ("/export/tasksheet/" + offsetInDays)
-    ).apply(in)
+    S.param("user").map("&user=" + _).getOrElse("")
+
+    val params = List(
+      "intervalStart" -> S.param("intervalStart").getOrElse(LocalDate.now().toString),
+      "intervalEnd" -> S.param("intervalEnd").getOrElse(LocalDate.now().toString)
+    ) ::: (S.param("user") map (u => List("user" -> u)) getOrElse Nil)
+
+    ("a [href]" #> s"/export/tasksheet?${ params map { case (k, v) => k + "=" + v } mkString "&" }").apply(in)
   }
 
-  def tasksheetSummaryExportLink(in: NodeSeq): NodeSeq = {
-    ("a [href]" #> s"/export/tasksheetSummary?intervalStart=${S.param("intervalStart").getOrElse(LocalDate.now().toString)}&intervalEnd=${S.param("intervalEnd").getOrElse(LocalDate.now().toString)}&user=${S.param("user").getOrElse("-1").toLong}").apply(in)
+  def title(in: NodeSeq): NodeSeq = {
+    val (interval, scale) = parseInterval(S) getOrElse thisMonth()
+    <span>{TaskSheetUtils.title(interval, scale)}</span>
   }
 
   def tasksheet(in: NodeSeq): NodeSeq = {
-    val date = S.param("date").or(S.getSessionAttribute("date")).map(s => DateTime.parse(s))
-    date.foreach(d => S.setSessionAttribute("date", d.toString))
+    val (interval, scale) = parseInterval(S) getOrElse thisMonth
+    val user = User.currentUser filter nonAdmin or parseUser(S)
 
-    val interval = new YearMonth(date.getOrElse(DateTime.now())).toInterval
-
-    renderTaskSheet(interval, d => d, User.currentUser)(in)
-  }
-
-  def tasksheetSummary(in: NodeSeq): NodeSeq = {
-    val interval = try {
-      val intervalStart = S.param("intervalStart").map(s => DateTime.parse(s))
-      val intervalEnd = S.param("intervalEnd").map(s => DateTime.parse(s))
-
-      new Interval(
-        new YearMonth(intervalStart.getOrElse(DateTime.now())).toInterval.start,
-        new YearMonth(intervalEnd.getOrElse(DateTime.now())).toInterval.end
-      )
-    } catch {
-      case e: Exception => new Interval(
-          new YearMonth(DateTime.now()).toInterval.start,
-          new YearMonth(DateTime.now()).toInterval.end
-        )
-    }
-
-    val userId = S.param("user").getOrElse("-1").toLong
-    val user = User.findByKey(userId)
-
-    renderTaskSheet(interval, d => new YearMonth(d), user)(in)
+    renderTaskSheet(interval, scale, user)(in)
   }
 
   def renderTaskSheet[D <: ReadablePartial](i: Interval, f: LocalDate => D, u: Box[User]): CssSel = {
-    val taskSheet = ReportService.taskSheetData(u, i, f)
+    val taskSheet = ReportService.taskSheetData(i, f, u)
 
     ".dayHeader" #> dates(taskSheet).map(d => ".dayHeader *" #> dayOf(d).map(_.toString).getOrElse(d.toString)) &
         ".TaskRow" #> tasks(taskSheet).map { t =>

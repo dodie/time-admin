@@ -6,15 +6,12 @@ import java.text.Collator
 import java.text.DecimalFormat
 
 import scala.collection.mutable.ListBuffer
-import scala.util.Sorting
 import net.liftweb.common._
 import org.joda.time.{Duration, DateTime, _}
 import code.commons.TimeUtils
 import net.liftweb.http.S
 import code.model.{Project, User}
 import code.service.TaskItemService.getTaskItems
-import org.joda.time.Days.daysBetween
-import org.joda.time.LocalDate.now
 import com.github.nscala_time.time.Imports._
 
 import scala.collection.immutable.Seq
@@ -113,7 +110,7 @@ object ReportService {
 
   type TaskSheet[D <: ReadablePartial] = Map[D, Map[TaskSheetItem,Duration]]
 
-  def taskSheetData[D <: ReadablePartial](u: Box[User], i: Interval, f: LocalDate => D): TaskSheet[D] =
+  def taskSheetData[D <: ReadablePartial](i: Interval, f: LocalDate => D, u: Box[User]): TaskSheet[D] =
     dates(i, f).map(d => (d, activeTaskItems(TimeUtils.intervalFrom(d), u).map(t => taskSheetItemWithDuration(t))))
       .foldedMap(Nil: List[(TaskSheetItem,Duration)])(_ ::: _)
       .mapValues(_.foldedMap(Duration.ZERO)(_ + _))
