@@ -210,7 +210,7 @@ class Boot {
             for {
               (contentStream, fileName) <- {
                 val (interval, scale) = parseInterval(S) getOrElse thisMonth()
-                val user = Params.parseUser(S) or User.currentUser
+                val user = Params.parseUser(S)
                 tryo(ExcelExport.exportTasksheet(interval, scale, user))
               }
               if null ne contentStream

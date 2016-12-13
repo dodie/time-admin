@@ -2,17 +2,19 @@ package code
 package snippet
 
 import _root_.scala.xml.NodeSeq
-import _root_.net.liftweb.util.Helpers
+import _root_.net.liftweb.util.{BindHelpers, CssSel, Helpers}
 import code.model._
 import net.liftweb.mapper.By
 import net.liftweb.common.Full
 import net.liftweb.http.js.JsCmds
-import net.liftweb.util.BindHelpers
 import net.liftweb.http.S
 import Helpers._
 import java.util.Date
 import java.util.Random
 import java.text.Collator
+
+import code.snippet.Params.parseUser
+
 import scala.xml._
 import net.liftweb.util.BindHelpers.strToCssBindPromoter
 
@@ -88,20 +90,34 @@ class UsersSnippet {
     }
   }
 
-  def selectUser(in: NodeSeq): NodeSeq = {
-    val users = User.findAll.sortWith((a, b) => collator.compare(a.niceName, b.niceName) < 0)
-    (
-      "option" #> users.map(user => {
-        if (S.param("user").getOrElse("-1").toLong == user.id.get)
-          "option *" #> user.niceName &
-          "option [value]" #> user.id.get &
-          "option [selected]" #> "true"
-        else
-          "option *" #> user.niceName &
-          "option [value]" #> user.id.get
-      })
-    ).apply(in)
+  def selectUser(in: NodeSeq): NodeSeq =
+    User.currentUser filter isClient map { _ =>
+      "select [style]" #> "display:none;" & "option" #> ""
+    } getOrElse {
+      "select" #> ("option" #> (everybody :: {
+        User.findAll() sortWith niceName map { u =>
+          option(u, selected = parseUser(S).exists(_.id.get == u.id.get))
+        }
+      }))
+    } apply in
+
+  private def isClient(u: User): Boolean = {
+    val admin = Role.find(By(Role.name, "admin"))
+    val client = Role.find(By(Role.name, "client"))
+    UserRoles.findAll(By(UserRoles.role, admin), By(UserRoles.user, u)).isEmpty &&
+    UserRoles.findAll(By(UserRoles.role, client), By(UserRoles.user, u)).nonEmpty
+
   }
+
+  private def option(u: User, selected: Boolean): CssSel = {
+    val css = "option *" #> u.niceName & "option [value]" #> u.id.get
+    if (selected) css & "option [selected]" #> selected else css
+  }
+
+  private def everybody: CssSel = "option *" #> S.?("tasksheet.users.select.everybody") & "option [value]" #> -1
+
+  private def niceName: (User, User) => Boolean =
+    (a, b) => collator.compare(a.niceName, b.niceName) < 0
 
   /**
    * Renders a list of the users and permissions.

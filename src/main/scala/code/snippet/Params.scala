@@ -1,6 +1,5 @@
 package code.snippet
 
-
 import code.model.User
 import com.github.nscala_time.time.Imports._
 import net.liftweb.common.Box
@@ -24,5 +23,6 @@ object Params {
 
   def thisMonth(): (Interval, LocalDate => ReadablePartial) = (YearMonth.now().toInterval, identity)
 
-  def parseUser(s: S): Box[User] = S.param("user").map(_.toLong).flatMap(User.findByKey)
+  def parseUser(s: S): Box[User] =
+    S.param("user") map (_.toLong) or (User.currentUser map (_.id.get)) flatMap User.findByKey
 }

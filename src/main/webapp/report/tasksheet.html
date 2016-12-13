@@ -1,8 +1,11 @@
 <lift:surround with="client" at="content">
-	<div>
+	<form>
 		<form style="text-align: right; padding-right: 10px;">
+			<select class="form-control lift:usersSnippet.selectUser" style="display:inline;width:auto;" onchange="$(this).closest('form').submit();" name="user">
+				<option value="id" class="lift:usersSnippet.selectUser">user name</option>
+			</select>
 			<span class="lift:tasksheetSnippet.selectedMonthInterval"></span>
-		</div>
+		</form>
 		<h1>
 			<a class="btn btn-primary lift:tasksheetSnippet.tasksheetExportLink">
 				<span class="glyphicon glyphicon-download-alt" aria-hidden="true"></span>

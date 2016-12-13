@@ -39,7 +39,7 @@ class TasksheetSnippet extends DateFunctions {
 
   def tasksheet(in: NodeSeq): NodeSeq = {
     val (interval, scale) = parseInterval(S) getOrElse thisMonth
-    val user = Params.parseUser(S) or User.currentUser
+    val user = Params.parseUser(S)
 
     renderTaskSheet(interval, scale, user)(in)
   }
