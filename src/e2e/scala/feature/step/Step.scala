@@ -60,11 +60,11 @@ class Step extends ScalaDsl with EN with Matchers {
   }
 
   Then("""^I can not see the Admin pages$""") { () =>
-    mainMenu should contain noneOf ("Projects", "Users", "Tasksheet summary")
+    mainMenu should contain noneOf ("Projects", "Users")
   }
 
   Then("""^I can see the Admin pages$""") { () =>
-    mainMenu should contain allOf ("Projects", "Users", "Tasksheet summary")
+    mainMenu should contain allOf ("Projects", "Users")
   }
 
   Then("""^I can not see the User pages$""") { () =>
@@ -290,7 +290,7 @@ class Step extends ScalaDsl with EN with Matchers {
 
   Then("""^the user can see the Admin pages$""") { () =>
     login(someNewUser.email.get, "abc123")
-    mainMenu should contain allOf ("Projects", "Users", "Tasksheet summary")
+    mainMenu should contain allOf ("Projects", "Users")
   }
 
   Given("""^there is a Client user$""") { () =>
@@ -320,7 +320,7 @@ class Step extends ScalaDsl with EN with Matchers {
 
   Then("""^the user can not see the Admin pages$""") { () =>
     login(someNewUser.email.get, "abc123")
-    mainMenu should contain noneOf ("Projects", "Users", "Tasksheet summary")
+    mainMenu should contain noneOf ("Projects", "Users")
   }
 
   def randomUser = {
