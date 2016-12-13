@@ -10,7 +10,6 @@ import net.liftweb.http.S
 import com.github.nscala_time.time.Imports._
 import net.liftweb.common.Box
 import net.liftweb.util.CssSel
-import net.liftweb.util.ControlHelpers._
 import org.joda.time.ReadablePartial
 import code.util.TaskSheetUtils._
 
@@ -22,21 +21,10 @@ import code.util.TaskSheetUtils._
 class TasksheetSnippet extends DateFunctions {
 
   /**
-   * Blank tasksheet download link.
-   */
-  def blankTasksheetExportLink(in: NodeSeq): NodeSeq = {
-    (
-      "a [href]" #> ("/export/tasksheet/blank/" + offsetInDays)
-    ).apply(in)
-  }
-
-  /**
    * Tasksheet download link.
    */
   def tasksheetExportLink(in: NodeSeq): NodeSeq = {
-    (
-      "a [href]" #> ("/export/tasksheet/" + offsetInDays)
-    ).apply(in)
+    ("a [href]" #> s"/export/tasksheet?intervalStart=${S.param("intervalStart").getOrElse(LocalDate.now().toString)}&intervalEnd=${S.param("intervalEnd").getOrElse(LocalDate.now().toString)}&user=${S.param("user").getOrElse("-1").toLong}").apply(in)
   }
 
   def tasksheetSummaryExportLink(in: NodeSeq): NodeSeq = {
@@ -49,12 +37,6 @@ class TasksheetSnippet extends DateFunctions {
 
     renderTaskSheet(interval, scale, user)(in)
   }
-
-  def intervalOf(start: YearMonth, end: YearMonth): (Interval, LocalDate => ReadablePartial) =
-    if (start.year == end.year && start.monthOfYear == end.monthOfYear) (start.toInterval, identity)
-    else (new Interval(start.toInterval.start, end.toInterval.end), d => new YearMonth(d))
-
-  def thisMonth: (Interval, LocalDate => ReadablePartial) = (YearMonth.now().toInterval, identity)
 
   def tasksheetSummary(in: NodeSeq): NodeSeq = {
     val interval = try {
@@ -79,7 +61,7 @@ class TasksheetSnippet extends DateFunctions {
   }
 
   def renderTaskSheet[D <: ReadablePartial](i: Interval, f: LocalDate => D, u: Box[User]): CssSel = {
-    val taskSheet = ReportService.taskSheetData(u, i, f)
+    val taskSheet = ReportService.taskSheetData(i, f, u)
 
     ".dayHeader" #> dates(taskSheet).map(d => ".dayHeader *" #> dayOf(d).map(_.toString).getOrElse(d.toString)) &
         ".TaskRow" #> tasks(taskSheet).map { t =>

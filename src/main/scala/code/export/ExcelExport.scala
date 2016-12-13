@@ -115,7 +115,7 @@ object ExcelExport {
     val start = interval.getStart
     val end = interval.getEnd.minusMonths(1)
 
-    val taskSheet = ReportService.taskSheetData(user, interval, d => new YearMonth(d))
+    val taskSheet = ReportService.taskSheetData(interval, d => new YearMonth(d), user)
 
     val ds = dates(taskSheet)
 
@@ -136,14 +136,12 @@ object ExcelExport {
     (contentStream, fileName)
   }
 
-  def exportTasksheet(user: User, offset: Int): (InputStream, String) = {
-    val date = new DateTime(TimeUtils.currentDayStartInMs(offset))
-
+  def exportTasksheet(interval: Interval, scale: LocalDate => ReadablePartial, user: Box[User]): (InputStream, String) = {
     val workbook = new HSSFWorkbook
     val sheet = workbook.createSheet("Tasksheet")
 
-    val interval = date.monthOfYear().toInterval
-    val taskSheet = ReportService.taskSheetData(User.currentUser, interval, d => d)
+    val taskSheet = ReportService.taskSheetData(interval, scale, User.currentUser)
+    val date = interval.start
 
     val ds = dates(taskSheet)
 
@@ -159,7 +157,7 @@ object ExcelExport {
       out.flush()
       new ByteArrayInputStream(out.toByteArray)
     }
-    val fileName = s"tasksheet_${date.getYear}-${date.getMonthOfYear}_${user.firstName.toLowerCase + user.lastName.toLowerCase}.xls"
+    val fileName = s"tasksheet_${date.getYear}-${date.getMonthOfYear}_${user.map(u => "_" + u.firstName.toLowerCase + u.lastName.toLowerCase).getOrElse("")}.xls"
     (contentStream, fileName)
   }
 

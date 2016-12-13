@@ -16,6 +16,10 @@ import net.liftweb.http.provider._
 import net.liftweb.http._
 import java.util.Locale
 
+import code.snippet.Params
+import code.snippet.Params.{parseInterval, thisMonth}
+import com.github.nscala_time.time.Imports.YearMonth
+import net.liftweb.util.ControlHelpers.tryo
 import org.joda.time.DateTime
 
 /**
@@ -196,14 +200,19 @@ class Boot {
         }
 
         // personal tasksheet export
-      case Req("export" :: "tasksheet" :: offset :: Nil, "", GetRequest) =>
+      case Req("export" :: "tasksheet" :: Nil, "", GetRequest) =>
         () => {
           // access control
           if (!clientUser) {
             Full(RedirectResponse("/"))
           } else {
+
             for {
-              (contentStream, fileName) <- tryo(ExcelExport.exportTasksheet(User.currentUser.openOrThrowException("No user found!"), offset.toInt))
+              (contentStream, fileName) <- {
+                val (interval, scale) = parseInterval(S) getOrElse thisMonth()
+                val user = Params.parseUser(S) or User.currentUser
+                tryo(ExcelExport.exportTasksheet(interval, scale, user))
+              }
               if null ne contentStream
             } yield StreamingResponse(contentStream, () =>
               contentStream.close,
