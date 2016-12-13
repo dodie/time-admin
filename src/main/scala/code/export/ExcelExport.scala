@@ -21,6 +21,7 @@ import org.apache.poi.ss.usermodel.Font
 import org.apache.poi.ss.util.CellRangeAddress
 import code.service.ReportService
 import code.service.ReportService.TaskSheet
+import code.util.TaskSheetUtils
 import code.util.TaskSheetUtils._
 import com.github.nscala_time.time.Imports._
 import net.liftweb.common.Box
@@ -145,7 +146,10 @@ object ExcelExport {
 
     val ds = dates(taskSheet)
 
-    renderTaskSheetTitle(workbook, sheet, date.getYear + "." + date.getMonthOfYear, rowNum = 0, dates(taskSheet).length)
+    val userName = user.map(u => s"${u.lastName} ${u.firstName} ").getOrElse("")
+    val fullTitle = userName + title(interval, scale)
+
+    renderTaskSheetTitle(workbook, sheet, fullTitle, rowNum = 0, dates(taskSheet).length)
     renderTaskSheetFieldNames(workbook, sheet, ds, interval, rowNum = 1)
     val rowNum = renderContent(workbook, sheet, taskSheet, interval, 2)
     renderSummary(workbook, sheet, rowNum, ds.length + 1)
@@ -157,8 +161,7 @@ object ExcelExport {
       out.flush()
       new ByteArrayInputStream(out.toByteArray)
     }
-    val fileName = s"tasksheet_${date.getYear}-${date.getMonthOfYear}_${user.map(u => "_" + u.firstName.toLowerCase + u.lastName.toLowerCase).getOrElse("")}.xls"
-    (contentStream, fileName)
+    (contentStream, fullTitle.toLowerCase.replace(" ", "") + ".xls")
   }
 
   def using[A, B <: {def close(): Unit}] (closeable: B) (f: B => A): A = try { f(closeable) } finally { closeable.close() }

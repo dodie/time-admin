@@ -5,6 +5,7 @@ import code.model.User
 import code.service.ReportService
 import code.snippet.Params.{parseInterval, thisMonth}
 import code.snippet.mixin.DateFunctions
+import code.util.TaskSheetUtils
 import net.liftweb.util.BindHelpers.strToCssBindPromoter
 import net.liftweb.http.S
 import com.github.nscala_time.time.Imports._
@@ -29,6 +30,11 @@ class TasksheetSnippet extends DateFunctions {
 
   def tasksheetSummaryExportLink(in: NodeSeq): NodeSeq = {
     ("a [href]" #> s"/export/tasksheetSummary?intervalStart=${S.param("intervalStart").getOrElse(LocalDate.now().toString)}&intervalEnd=${S.param("intervalEnd").getOrElse(LocalDate.now().toString)}&user=${S.param("user").getOrElse("-1").toLong}").apply(in)
+  }
+
+  def title(in: NodeSeq): NodeSeq = {
+    val (interval, scale) = parseInterval(S) getOrElse thisMonth()
+    <span>{TaskSheetUtils.title(interval, scale)}</span>
   }
 
   def tasksheet(in: NodeSeq): NodeSeq = {
