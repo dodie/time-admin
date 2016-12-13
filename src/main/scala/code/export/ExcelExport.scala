@@ -21,7 +21,6 @@ import org.apache.poi.ss.usermodel.Font
 import org.apache.poi.ss.util.CellRangeAddress
 import code.service.ReportService
 import code.service.ReportService.TaskSheet
-import code.util.TaskSheetUtils
 import code.util.TaskSheetUtils._
 import com.github.nscala_time.time.Imports._
 import net.liftweb.common.Box
@@ -102,39 +101,6 @@ object ExcelExport {
     val name = "timesheet_" + TimeUtils.currentYear(offset.toInt) + "-" + (TimeUtils.currentMonth(offset.toInt) + 1) + ".xls";
 
     (contentStream, name)
-  }
-
-  def exportTasksheetSummary(user: Box[User], intervalStart: DateTime, intervalEnd: DateTime): (InputStream, String) = {
-
-    val workbook = new HSSFWorkbook
-    val sheet = workbook.createSheet("Tasksheet")
-
-    val interval = new Interval(
-      new YearMonth(intervalStart).toInterval.start,
-      new YearMonth(intervalEnd).toInterval.end
-    )
-    val start = interval.getStart
-    val end = interval.getEnd.minusMonths(1)
-
-    val taskSheet = ReportService.taskSheetData(interval, d => new YearMonth(d), user)
-
-    val ds = dates(taskSheet)
-
-    val title = start.getYear + "." + start.getMonthOfYear + " - " + end.getYear + "." + end.getMonthOfYear
-    renderTaskSheetTitle(workbook, sheet, title, rowNum = 0, dates(taskSheet).length)
-    renderTaskSheetFieldNames(workbook, sheet, ds, interval, rowNum = 1)
-    val rowNum = renderContent(workbook, sheet, taskSheet, interval, 2)
-    renderSummary(workbook, sheet, rowNum, ds.length + 1)
-
-    sheet.createFreezePane(1, 2)
-
-    val contentStream = using(new ByteArrayOutputStream()) { out =>
-      workbook.write(out)
-      out.flush()
-      new ByteArrayInputStream(out.toByteArray)
-    }
-    val fileName = s"tasksheet_${start.getYear}-${start.getMonthOfYear}_${end.getYear}-${end.getMonthOfYear}${user.map(u => "_" + u.firstName.toLowerCase + u.lastName.toLowerCase).getOrElse("")}.xls"
-    (contentStream, fileName)
   }
 
   def exportTasksheet(interval: Interval, scale: LocalDate => ReadablePartial, user: Box[User]): (InputStream, String) = {

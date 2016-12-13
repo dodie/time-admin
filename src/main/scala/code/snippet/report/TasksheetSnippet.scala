@@ -29,10 +29,6 @@ class TasksheetSnippet extends DateFunctions {
     ("a [href]" #> s"/export/tasksheet?intervalStart=${S.param("intervalStart").getOrElse(LocalDate.now().toString)}&intervalEnd=${S.param("intervalEnd").getOrElse(LocalDate.now().toString)}&user=${S.param("user").getOrElse("-1").toLong}").apply(in)
   }
 
-  def tasksheetSummaryExportLink(in: NodeSeq): NodeSeq = {
-    ("a [href]" #> s"/export/tasksheetSummary?intervalStart=${S.param("intervalStart").getOrElse(LocalDate.now().toString)}&intervalEnd=${S.param("intervalEnd").getOrElse(LocalDate.now().toString)}&user=${S.param("user").getOrElse("-1").toLong}").apply(in)
-  }
-
   def title(in: NodeSeq): NodeSeq = {
     val (interval, scale) = parseInterval(S) getOrElse thisMonth()
     <span>{TaskSheetUtils.title(interval, scale)}</span>
@@ -43,28 +39,6 @@ class TasksheetSnippet extends DateFunctions {
     val user = User.currentUser filter nonAdmin or parseUser(S)
 
     renderTaskSheet(interval, scale, user)(in)
-  }
-
-  def tasksheetSummary(in: NodeSeq): NodeSeq = {
-    val interval = try {
-      val intervalStart = S.param("intervalStart").map(s => DateTime.parse(s))
-      val intervalEnd = S.param("intervalEnd").map(s => DateTime.parse(s))
-
-      new Interval(
-        new YearMonth(intervalStart.getOrElse(DateTime.now())).toInterval.start,
-        new YearMonth(intervalEnd.getOrElse(DateTime.now())).toInterval.end
-      )
-    } catch {
-      case e: Exception => new Interval(
-          new YearMonth(DateTime.now()).toInterval.start,
-          new YearMonth(DateTime.now()).toInterval.end
-        )
-    }
-
-    val userId = S.param("user").getOrElse("-1").toLong
-    val user = User.findByKey(userId)
-
-    renderTaskSheet(interval, d => new YearMonth(d), user)(in)
   }
 
   def renderTaskSheet[D <: ReadablePartial](i: Interval, f: LocalDate => D, u: Box[User]): CssSel = {

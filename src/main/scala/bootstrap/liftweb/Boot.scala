@@ -107,7 +107,6 @@ class Boot {
       Menu(S ? "page.tasksheet") / "report" / "tasksheet" >> If(clientUser _, S ? "no_permission"),
 
       // admin pages
-      Menu(S ? "page.tasksheet.summary") / "report" / "tasksheetsummary" >> If(adminUser _, S ? "no_permission"),
       Menu(S ? "page.projects") / "admin" / "projects" >> If(adminUser _, S ? "no_permission"),
       Menu(S ? "page.users") / "admin" / "users" >> If(adminUser _, S ? "no_permission"),
       Menu(S ? "page.edituser") / "admin" / "user" >> If(adminUser _, S ? "no_permission") >> Hidden,
@@ -176,28 +175,6 @@ class Boot {
                 "Content-Type" -> "application/vnd.ms-excel",
                 "Content-Disposition" -> ("attachment; filename=\"" + fileName + "\"")
                 ), Nil, 200)
-          }
-        }
-
-      case Req("export" :: "tasksheetSummary" :: Nil, "", GetRequest) =>
-        () => {
-          // access control
-          if (!adminUser) {
-            Full(RedirectResponse("/"))
-          } else {
-            for {
-              (contentStream, fileName) <- tryo(ExcelExport.exportTasksheetSummary(
-                S.param("user").flatMap(id => User.findByKey(id.toLong)),
-                S.param("intervalStart").orElse(Full("")).map(s => DateTime.parse(s)).get,
-                S.param("intervalEnd").orElse(Full("")).map(s => DateTime.parse(s)).get
-              ))
-              if null ne contentStream
-            } yield StreamingResponse(contentStream, () =>
-              contentStream.close,
-              contentStream.available,
-              List(
-                "Content-Type" -> "application/vnd.ms-excel",
-                "Content-Disposition" -> ("attachment; filename=\"" + fileName + "\"")), Nil, 200)
           }
         }
 

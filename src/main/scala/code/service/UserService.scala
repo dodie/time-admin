@@ -3,9 +3,6 @@ package code.service
 import code.model.{Role, User, UserRoles}
 import net.liftweb.mapper.By
 
-/**
-  * Created by suliatis on 13/12/16.
-  */
 object UserService {
   def nonAdmin(u: User): Boolean = {
     val admin = Role.find(By(Role.name, "admin"))
