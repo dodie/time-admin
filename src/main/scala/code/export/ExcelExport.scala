@@ -108,7 +108,6 @@ object ExcelExport {
     val sheet = workbook.createSheet("Tasksheet")
 
     val taskSheet = ReportService.taskSheetData(interval, scale, User.currentUser)
-    val date = interval.start
 
     val ds = dates(taskSheet)
 

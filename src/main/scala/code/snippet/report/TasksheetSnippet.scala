@@ -26,7 +26,7 @@ class TasksheetSnippet extends DateFunctions {
    * Tasksheet download link.
    */
   def tasksheetExportLink(in: NodeSeq): NodeSeq = {
-    ("a [href]" #> s"/export/tasksheet?intervalStart=${S.param("intervalStart").getOrElse(LocalDate.now().toString)}&intervalEnd=${S.param("intervalEnd").getOrElse(LocalDate.now().toString)}&user=${S.param("user").getOrElse("-1").toLong}").apply(in)
+    ("a [href]" #> s"/export/tasksheet?intervalStart=${S.param("intervalStart").getOrElse(LocalDate.now().toString)}&intervalEnd=${S.param("intervalEnd").getOrElse(LocalDate.now().toString)}${S.param("user").map("&user=" + _).getOrElse("")}").apply(in)
   }
 
   def title(in: NodeSeq): NodeSeq = {
