@@ -2,8 +2,9 @@ package code.snippet
 
 import scala.xml.NodeSeq
 import code.model.User
-import code.service.ReportService
-import code.snippet.Params.{parseInterval, thisMonth}
+import code.service.UserService.nonAdmin
+import code.service.{ReportService, UserService}
+import code.snippet.Params.{parseInterval, parseUser, thisMonth}
 import code.snippet.mixin.DateFunctions
 import code.util.TaskSheetUtils
 import net.liftweb.util.BindHelpers.strToCssBindPromoter
@@ -39,7 +40,7 @@ class TasksheetSnippet extends DateFunctions {
 
   def tasksheet(in: NodeSeq): NodeSeq = {
     val (interval, scale) = parseInterval(S) getOrElse thisMonth
-    val user = Params.parseUser(S)
+    val user = User.currentUser filter nonAdmin or parseUser(S)
 
     renderTaskSheet(interval, scale, user)(in)
   }

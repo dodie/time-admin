@@ -16,8 +16,10 @@ import net.liftweb.http.provider._
 import net.liftweb.http._
 import java.util.Locale
 
+import code.service.UserService
+import code.service.UserService.nonAdmin
 import code.snippet.Params
-import code.snippet.Params.{parseInterval, thisMonth}
+import code.snippet.Params.{parseInterval, parseUser, thisMonth}
 import com.github.nscala_time.time.Imports.YearMonth
 import net.liftweb.util.ControlHelpers.tryo
 import org.joda.time.DateTime
@@ -210,7 +212,7 @@ class Boot {
             for {
               (contentStream, fileName) <- {
                 val (interval, scale) = parseInterval(S) getOrElse thisMonth()
-                val user = Params.parseUser(S)
+                val user = User.currentUser filter nonAdmin or parseUser(S)
                 tryo(ExcelExport.exportTasksheet(interval, scale, user))
               }
               if null ne contentStream

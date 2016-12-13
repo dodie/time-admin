@@ -2,20 +2,17 @@ package code
 package snippet
 
 import _root_.scala.xml.NodeSeq
-import _root_.net.liftweb.util.{BindHelpers, CssSel, Helpers}
+import _root_.net.liftweb.util.{CssSel, Helpers}
 import code.model._
 import net.liftweb.mapper.By
 import net.liftweb.common.Full
-import net.liftweb.http.js.JsCmds
 import net.liftweb.http.S
 import Helpers._
-import java.util.Date
-import java.util.Random
 import java.text.Collator
 
+import code.service.UserService.nonAdmin
 import code.snippet.Params.parseUser
 
-import scala.xml._
 import net.liftweb.util.BindHelpers.strToCssBindPromoter
 
 /**
@@ -91,7 +88,7 @@ class UsersSnippet {
   }
 
   def selectUser(in: NodeSeq): NodeSeq =
-    User.currentUser filter isClient map { _ =>
+    User.currentUser filter nonAdmin map { _ =>
       "select [style]" #> "display:none;" & "option" #> ""
     } getOrElse {
       "select" #> ("option" #> (everybody :: {
@@ -100,14 +97,6 @@ class UsersSnippet {
         }
       }))
     } apply in
-
-  private def isClient(u: User): Boolean = {
-    val admin = Role.find(By(Role.name, "admin"))
-    val client = Role.find(By(Role.name, "client"))
-    UserRoles.findAll(By(UserRoles.role, admin), By(UserRoles.user, u)).isEmpty &&
-    UserRoles.findAll(By(UserRoles.role, client), By(UserRoles.user, u)).nonEmpty
-
-  }
 
   private def option(u: User, selected: Boolean): CssSel = {
     val css = "option *" #> u.niceName & "option [value]" #> u.id.get
