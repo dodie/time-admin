@@ -190,7 +190,7 @@ class Boot {
               (contentStream, fileName) <- {
                 val (interval, scale) = parseInterval(S) getOrElse thisMonth()
                 val user = User.currentUser filter nonAdmin or parseUser(S)
-                tryo(ExcelExport.exportTasksheet(interval, scale, user))
+                tryo(ExcelExport2.tasksheet(interval, scale, user))
               }
               if null ne contentStream
             } yield StreamingResponse(contentStream, () =>
