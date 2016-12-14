@@ -1,5 +1,6 @@
 package bootstrap.liftweb
 
+import java.io.{ByteArrayInputStream, ByteArrayOutputStream, InputStream}
 import java.net.URI
 
 import net.liftweb._
@@ -11,18 +12,16 @@ import Loc._
 import mapper._
 import code.model._
 import code.export.{ExcelExport, ExcelExport2}
-import code.commons.TimeUtils
 import net.liftweb.http.provider._
 import net.liftweb.http._
 import java.util.Locale
 
-import code.service.UserService
 import code.service.UserService.nonAdmin
-import code.snippet.Params
 import code.snippet.Params.{parseInterval, parseUser, thisMonth}
-import com.github.nscala_time.time.Imports.YearMonth
+import code.util.IO.{using, xlsxResponse}
 import net.liftweb.util.ControlHelpers.tryo
-import org.joda.time.DateTime
+
+
 
 /**
  * Allows the application to modify lift's environment based on the configuration.
@@ -185,20 +184,17 @@ class Boot {
           if (!clientUser) {
             Full(RedirectResponse("/"))
           } else {
+            val (interval, scale) = parseInterval(S) getOrElse thisMonth()
+            val user = User.currentUser filter nonAdmin or parseUser(S)
+            val (xlsx, name) = ExcelExport2.tasksheet(interval, scale, user)
 
-            for {
-              (contentStream, fileName) <- {
-                val (interval, scale) = parseInterval(S) getOrElse thisMonth()
-                val user = User.currentUser filter nonAdmin or parseUser(S)
-                tryo(ExcelExport2.tasksheet(interval, scale, user))
-              }
-              if null ne contentStream
-            } yield StreamingResponse(contentStream, () =>
-              contentStream.close,
-              contentStream.available,
-              List(
-                "Content-Type" -> "application/vnd.ms-excel",
-                "Content-Disposition" -> ("attachment; filename=\"" + fileName + "\"")), Nil, 200)
+            val contentStream = using(new ByteArrayOutputStream()) { out =>
+              xlsx.write(out)
+              out.flush()
+              new ByteArrayInputStream(out.toByteArray)
+            }
+
+            Full(xlsxResponse(contentStream, s"tasksheet_${name.toLowerCase.replace(" ", "")}.xlsx"))
           }
         }
     }

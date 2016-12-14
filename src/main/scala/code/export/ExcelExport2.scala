@@ -1,23 +1,22 @@
 package code.export
 
-import java.io.{ByteArrayInputStream, ByteArrayOutputStream, InputStream}
-
 import code.model.User
 import code.service.ReportService
 import code.util.TaskSheetUtils._
 import com.norbitltd.spoiwo.model.enums.CellHorizontalAlignment.{Center, Right}
 import com.norbitltd.spoiwo.model.{CellStyle, _}
-import com.norbitltd.spoiwo.model.enums.{CellFill, CellStyleInheritance}
-import com.norbitltd.spoiwo.natures.xlsx.Model2XlsxConversions.XlsxSheet
+import com.norbitltd.spoiwo.model.enums.CellFill
 import net.liftweb.http.S
 import org.joda.time.ReadablePartial
 import com.github.nscala_time.time.Imports._
 import com.norbitltd.spoiwo.model.enums.CellBorderStyle.{Medium, Thin}
 import net.liftweb.common.Box
+import com.norbitltd.spoiwo.natures.xlsx.Model2XlsxConversions.XlsxSheet
+import org.apache.poi.xssf.usermodel.XSSFWorkbook
 
 object ExcelExport2 {
 
-  def tasksheet(interval: Interval, scale: LocalDate => ReadablePartial, user: Box[User]): (InputStream, String) = {
+  def tasksheet(interval: Interval, scale: LocalDate => ReadablePartial, user: Box[User]): (XSSFWorkbook, String) = {
     val taskSheet = ReportService.taskSheetData(interval, scale, User.currentUser)
 
     val ds = dates(taskSheet)
@@ -28,30 +27,23 @@ object ExcelExport2 {
 
     val columnWith = 0 -> (ds.length + 1)
 
-    val workbook = Sheet(
+    val xlsx = Sheet(
       name = fullTitle,
       rows =
         Row(main(fullTitle)) ::
-        Row(taskTitle :: (ds.map(d => header(d.toString)) :+ sumTitle)) :: {
+          Row(taskTitle :: (ds.map(d => header(d.toString)) :+ sumTitle)) :: {
           ts.map { t =>
             Row(Cell(t.name) :: (ds.map { d => value(duration(taskSheet, d, t).minutes) } :+ value(sumByTasks(taskSheet)(t).minutes)))
           } :+
-          Row(sumFooter :: (ds.map { d => footer(sumByDates(taskSheet)(d).minutes) } :+ footer(sum(taskSheet).minutes)))
+            Row(sumFooter :: (ds.map { d => footer(sumByDates(taskSheet)(d).minutes) } :+ footer(sum(taskSheet).minutes)))
         },
       columns = autoSizedColumns(range(columnWith)),
       mergedRegions = List(CellRange(0 -> 0, columnWith)),
       paneAction = FreezePane(1, 2)
     ).convertAsXlsx()
 
-    val contentStream = using(new ByteArrayOutputStream()) { out =>
-      workbook.write(out)
-      out.flush()
-      new ByteArrayInputStream(out.toByteArray)
-    }
-
-    (contentStream, s"tasksheet_${fullTitle.toLowerCase.replace(" ", "")}.xls")
+    (xlsx, s"tasksheet_${fullTitle.toLowerCase.replace(" ", "")}.xlsx")
   }
-
 
   def taskTitle: Cell = header(S.?("export.tasksheet.project_identifier"))
 
@@ -68,8 +60,6 @@ object ExcelExport2 {
   def footer[T: CellValueType](t: T): Cell = Cell(value = t, style = bold.withBorders(CellBorders().withTopStyle(Thin)))
 
   def autoSizedColumns(range: Range): List[Column] = (for (i <- range) yield Column(index = i, autoSized = true)).toList
-
-  def using[A, B <: {def close(): Unit}] (closeable: B) (f: B => A): A = try { f(closeable) } finally { closeable.close() }
 
   def range(p: (Int, Int)): Range = p match { case (start, end) => start to end }
 
