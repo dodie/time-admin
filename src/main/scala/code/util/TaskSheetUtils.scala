@@ -10,6 +10,7 @@ import scala.util.Try
 
 object TaskSheetUtils {
 
+  @deprecated("Use duration instead")
   def formattedDurationInMinutes[D <: ReadablePartial](ts: TaskSheet[D], d: D, t: TaskSheetItem): String =
     ts.get(d).flatMap(_.get(t)).map(_.minutes.toString).getOrElse("")
 

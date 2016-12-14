@@ -2,8 +2,9 @@ package code.export
 
 import code.model.User
 import code.service.ReportService
+import code.util.TaskSheetUtils
 import code.util.TaskSheetUtils._
-import com.norbitltd.spoiwo.model.enums.CellHorizontalAlignment.{Center, Right}
+import com.norbitltd.spoiwo.model.enums.CellHorizontalAlignment.Center
 import com.norbitltd.spoiwo.model.{CellStyle, _}
 import com.norbitltd.spoiwo.model.enums.CellFill
 import net.liftweb.http.S
@@ -33,7 +34,9 @@ object ExcelExport2 {
         Row(main(fullTitle)) ::
           Row(taskTitle :: (ds.map(d => header(d.toString)) :+ sumTitle)) :: {
           ts.map { t =>
-            Row(Cell(t.name) :: (ds.map { d => value(duration(taskSheet, d, t).minutes) } :+ value(sumByTasks(taskSheet)(t).minutes)))
+            Row(Cell(t.name) :: (ds.map { d =>
+              value(duration(taskSheet, d, t).minutes).withStyle(if (isWeekend(interval, d)) weekend else bold)
+            } :+ value(sumByTasks(taskSheet)(t).minutes)))
           } :+
             Row(sumFooter :: (ds.map { d => footer(sumByDates(taskSheet)(d).minutes) } :+ footer(sum(taskSheet).minutes)))
         },
@@ -55,7 +58,7 @@ object ExcelExport2 {
 
   def header[T: CellValueType](t: T): Cell = Cell(value = t, style = bold.withBorders(CellBorders().withBottomStyle(Medium)))
 
-  def value[T: CellValueType](t: T): Cell = Cell(value = t, style = bold.withHorizontalAlignment(Right))
+  def value[T: CellValueType](t: T): Cell = Cell(value = t, style = bold)
 
   def footer[T: CellValueType](t: T): Cell = Cell(value = t, style = bold.withBorders(CellBorders().withTopStyle(Thin)))
 
@@ -63,13 +66,11 @@ object ExcelExport2 {
 
   def range(p: (Int, Int)): Range = p match { case (start, end) => start to end }
 
-  private lazy val weekend = CellStyle(font = Font(bold = true), fillPattern = CellFill.Solid, fillForegroundColor = Color.LightGreen)
+  def isWeekend(i: Interval, d: ReadablePartial): Boolean =
+    Some(d).filter(hasDayFieldType).flatMap(mapToDateTime(i, _)).exists(TaskSheetUtils.isWeekend)
+
+  private lazy val weekend = CellStyle(font = Font(bold = true), fillPattern = CellFill.Solid, fillForegroundColor = Color(221, 221, 221))
 
   private lazy val bold: CellStyle = CellStyle(font = Font(bold = true))
 
-  private lazy val header = bold.withBorders(CellBorders().withStyle(Thin))
-
-  private lazy val weekendHeader = weekend.defaultWith(header)
-
-  private lazy val footer = header
 }
