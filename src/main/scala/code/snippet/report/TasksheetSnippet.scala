@@ -55,7 +55,7 @@ class TasksheetSnippet extends DateFunctions {
         ".TaskRow" #> tasks(taskSheet).map { t =>
           ".taskFullName *" #> t.name & ".taskFullName [title]" #> t.name &
             ".dailyData" #> dates(taskSheet)
-              .map(d => ".dailyData *" #> formattedDurationInMinutes(taskSheet, d, t) & formatData(i, d)) &
+              .map(d => ".dailyData *" #> duration(taskSheet, d, t).minutes.toString & formatData(i, d)) &
             ".taskSum *" #> sumByTasks(taskSheet)(t).minutes
         } &
         ".dailySum" #> dates(taskSheet).map(d => ".dailySum *" #> sumByDates(taskSheet)(d).minutes) &

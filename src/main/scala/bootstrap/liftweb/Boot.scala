@@ -11,7 +11,7 @@ import sitemap._
 import Loc._
 import mapper._
 import code.model._
-import code.export.{ExcelExport, ExcelExport2}
+import code.export.{ExcelExport, TaskSheetExport}
 import net.liftweb.http.provider._
 import net.liftweb.http._
 import java.util.Locale
@@ -164,16 +164,14 @@ class Boot {
           if (!clientUser) {
             Full(RedirectResponse("/"))
           } else {
-            for {
-              (contentStream, fileName) <- tryo(ExcelExport.exportTimesheet(User.currentUser.openOrThrowException("No user found!"), offset.toInt))
-              if null ne contentStream
-            } yield StreamingResponse(contentStream, () =>
+            val (contentStream, fileName) = ExcelExport.exportTimesheet(User.currentUser.openOrThrowException("No user found!"), offset.toInt)
+            Full(StreamingResponse(contentStream, () =>
               contentStream.close,
               contentStream.available,
               List(
                 "Content-Type" -> "application/vnd.ms-excel",
                 "Content-Disposition" -> ("attachment; filename=\"" + fileName + "\"")
-                ), Nil, 200)
+                ), Nil, 200))
           }
         }
 
@@ -186,7 +184,7 @@ class Boot {
           } else {
             val (interval, scale) = parseInterval(S) getOrElse thisMonth()
             val user = User.currentUser filter nonAdmin or parseUser(S)
-            val (xlsx, name) = ExcelExport2.tasksheet(interval, scale, user)
+            val (xlsx, name) = TaskSheetExport.workbook(interval, scale, user)
 
             val contentStream = using(new ByteArrayOutputStream()) { out =>
               xlsx.write(out)

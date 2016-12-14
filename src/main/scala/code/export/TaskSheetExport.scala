@@ -15,9 +15,9 @@ import net.liftweb.common.Box
 import com.norbitltd.spoiwo.natures.xlsx.Model2XlsxConversions.XlsxSheet
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
 
-object ExcelExport2 {
+object TaskSheetExport {
 
-  def tasksheet(interval: Interval, scale: LocalDate => ReadablePartial, user: Box[User]): (XSSFWorkbook, String) = {
+  def workbook(interval: Interval, scale: LocalDate => ReadablePartial, user: Box[User]): (XSSFWorkbook, String) = {
     val taskSheet = ReportService.taskSheetData(interval, scale, User.currentUser)
 
     val ds = dates(taskSheet)
