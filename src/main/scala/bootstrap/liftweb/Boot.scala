@@ -1,5 +1,6 @@
 package bootstrap.liftweb
 
+import java.io.{ByteArrayInputStream, ByteArrayOutputStream, InputStream}
 import java.net.URI
 
 import net.liftweb._
@@ -10,19 +11,17 @@ import sitemap._
 import Loc._
 import mapper._
 import code.model._
-import code.export.ExcelExport
-import code.commons.TimeUtils
+import code.export.{ExcelExport, TaskSheetExport}
 import net.liftweb.http.provider._
 import net.liftweb.http._
 import java.util.Locale
 
-import code.service.UserService
 import code.service.UserService.nonAdmin
-import code.snippet.Params
 import code.snippet.Params.{parseInterval, parseUser, thisMonth}
-import com.github.nscala_time.time.Imports.YearMonth
+import code.util.IO.{using, xlsxResponse}
 import net.liftweb.util.ControlHelpers.tryo
-import org.joda.time.DateTime
+
+
 
 /**
  * Allows the application to modify lift's environment based on the configuration.
@@ -165,16 +164,14 @@ class Boot {
           if (!clientUser) {
             Full(RedirectResponse("/"))
           } else {
-            for {
-              (contentStream, fileName) <- tryo(ExcelExport.exportTimesheet(User.currentUser.openOrThrowException("No user found!"), offset.toInt))
-              if null ne contentStream
-            } yield StreamingResponse(contentStream, () =>
+            val (contentStream, fileName) = ExcelExport.exportTimesheet(User.currentUser.openOrThrowException("No user found!"), offset.toInt)
+            Full(StreamingResponse(contentStream, () =>
               contentStream.close,
               contentStream.available,
               List(
                 "Content-Type" -> "application/vnd.ms-excel",
                 "Content-Disposition" -> ("attachment; filename=\"" + fileName + "\"")
-                ), Nil, 200)
+                ), Nil, 200))
           }
         }
 
@@ -185,20 +182,17 @@ class Boot {
           if (!clientUser) {
             Full(RedirectResponse("/"))
           } else {
+            val (interval, scale) = parseInterval(S) getOrElse thisMonth()
+            val user = User.currentUser filter nonAdmin or parseUser(S)
+            val (xlsx, name) = TaskSheetExport.workbook(interval, scale, user)
 
-            for {
-              (contentStream, fileName) <- {
-                val (interval, scale) = parseInterval(S) getOrElse thisMonth()
-                val user = User.currentUser filter nonAdmin or parseUser(S)
-                tryo(ExcelExport.exportTasksheet(interval, scale, user))
-              }
-              if null ne contentStream
-            } yield StreamingResponse(contentStream, () =>
-              contentStream.close,
-              contentStream.available,
-              List(
-                "Content-Type" -> "application/vnd.ms-excel",
-                "Content-Disposition" -> ("attachment; filename=\"" + fileName + "\"")), Nil, 200)
+            val contentStream = using(new ByteArrayOutputStream()) { out =>
+              xlsx.write(out)
+              out.flush()
+              new ByteArrayInputStream(out.toByteArray)
+            }
+
+            Full(xlsxResponse(contentStream, s"tasksheet_${name.toLowerCase.replace(" ", "")}.xlsx"))
           }
         }
     }
