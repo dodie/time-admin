@@ -192,7 +192,7 @@ class Boot {
               new ByteArrayInputStream(out.toByteArray)
             }
 
-            Full(xlsxResponse(contentStream, s"tasksheet_${name.toLowerCase.replace(" ", "")}.xlsx"))
+            Full(xlsxResponse(contentStream, name.toLowerCase.replace(" ", "")))
           }
         }
     }
