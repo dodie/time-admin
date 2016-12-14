@@ -29,6 +29,8 @@ object ExcelExport2 {
     val userName = user.map(u => s"${u.lastName} ${u.firstName} ").getOrElse("")
     val fullTitle = userName + title(interval, scale)
 
+    val columnWith = 0 -> (ds.length + 1)
+
     val workbook = Sheet(
       name = fullTitle,
       rows =
@@ -39,7 +41,8 @@ object ExcelExport2 {
           } :+
           Row(sumFooter :: (ds.map { d => footer(sumByDates(taskSheet)(d).minutes) } :+ footer(sum(taskSheet).minutes)))
         },
-      mergedRegions = List(CellRange(0 -> 0, 0 -> (ds.length + 1))),
+      columns = autoSizedColumns(range(columnWith)),
+      mergedRegions = List(CellRange(0 -> 0, columnWith)),
       paneAction = FreezePane(1, 2)
     ).convertAsXlsx()
 
@@ -67,7 +70,11 @@ object ExcelExport2 {
 
   def footer[T: CellValueType](t: T): Cell = Cell(value = t, style = bold.withBorders(CellBorders().withTopStyle(CellBorderStyle.Thin)))
 
+  def autoSizedColumns(range: Range): List[Column] = (for (i <- range) yield Column(index = i, autoSized = true)).toList
+
   def using[A, B <: {def close(): Unit}] (closeable: B) (f: B => A): A = try { f(closeable) } finally { closeable.close() }
+
+  def range(p: (Int, Int)): Range = p match { case (start, end) => start to end }
 
   private lazy val weekend = CellStyle(font = Font(bold = true), fillPattern = CellFill.Solid, fillForegroundColor = Color.LightGreen)
 
