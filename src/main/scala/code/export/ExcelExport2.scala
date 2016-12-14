@@ -39,7 +39,8 @@ object ExcelExport2 {
           } :+
           Row(sumFooter :: (ds.map { d => footer(sumByDates(taskSheet)(d).minutes) } :+ footer(sum(taskSheet).minutes)))
         },
-      mergedRegions = List(CellRange(0 -> 0, 0 -> (ds.length + 1)))
+      mergedRegions = List(CellRange(0 -> 0, 0 -> (ds.length + 1))),
+      paneAction = FreezePane(1, 2)
     ).convertAsXlsx()
 
     val contentStream = using(new ByteArrayOutputStream()) { out =>
