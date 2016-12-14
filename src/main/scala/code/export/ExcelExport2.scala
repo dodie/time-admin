@@ -4,20 +4,17 @@ import java.io.{ByteArrayInputStream, ByteArrayOutputStream, InputStream}
 
 import code.model.User
 import code.service.ReportService
-import code.util.TaskSheetUtils
 import code.util.TaskSheetUtils._
 import com.norbitltd.spoiwo.model.enums.CellHorizontalAlignment.{Center, Right}
 import com.norbitltd.spoiwo.model.{CellStyle, _}
-import com.norbitltd.spoiwo.model.enums.{CellBorderStyle, CellFill, CellHorizontalAlignment}
+import com.norbitltd.spoiwo.model.enums.{CellFill, CellStyleInheritance}
 import com.norbitltd.spoiwo.natures.xlsx.Model2XlsxConversions.XlsxSheet
 import net.liftweb.http.S
-import org.joda.time.{DateTime, ReadablePartial}
+import org.joda.time.ReadablePartial
 import com.github.nscala_time.time.Imports._
+import com.norbitltd.spoiwo.model.enums.CellBorderStyle.{Medium, Thin}
 import net.liftweb.common.Box
 
-/**
-  * Created by suliatis on 23/11/16.
-  */
 object ExcelExport2 {
 
   def tasksheet(interval: Interval, scale: LocalDate => ReadablePartial, user: Box[User]): (InputStream, String) = {
@@ -64,11 +61,11 @@ object ExcelExport2 {
 
   def main[T: CellValueType](t: T): Cell = Cell(value = t, style = bold.withHorizontalAlignment(Center))
 
-  def header[T: CellValueType](t: T): Cell = Cell(value = t, style = bold.withBorders(CellBorders().withBottomStyle(CellBorderStyle.Medium)))
+  def header[T: CellValueType](t: T): Cell = Cell(value = t, style = bold.withBorders(CellBorders().withBottomStyle(Medium)))
 
-  def value[T: CellValueType](t: T): Cell = Cell(value = t, style = bold)
+  def value[T: CellValueType](t: T): Cell = Cell(value = t, style = bold.withHorizontalAlignment(Right))
 
-  def footer[T: CellValueType](t: T): Cell = Cell(value = t, style = bold.withBorders(CellBorders().withTopStyle(CellBorderStyle.Thin)))
+  def footer[T: CellValueType](t: T): Cell = Cell(value = t, style = bold.withBorders(CellBorders().withTopStyle(Thin)))
 
   def autoSizedColumns(range: Range): List[Column] = (for (i <- range) yield Column(index = i, autoSized = true)).toList
 
@@ -80,9 +77,7 @@ object ExcelExport2 {
 
   private lazy val bold: CellStyle = CellStyle(font = Font(bold = true))
 
-  private lazy val centeredBold = bold.withHorizontalAlignment(horizontalAlignment = Center)
-
-  private lazy val header = bold.withBorders(CellBorders().withStyle(CellBorderStyle.Thin))
+  private lazy val header = bold.withBorders(CellBorders().withStyle(Thin))
 
   private lazy val weekendHeader = weekend.defaultWith(header)
 
