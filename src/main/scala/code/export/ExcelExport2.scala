@@ -21,7 +21,7 @@ import net.liftweb.common.Box
 object ExcelExport2 {
 
   def tasksheet(interval: Interval, scale: LocalDate => ReadablePartial, user: Box[User]): (InputStream, String) = {
-    val taskSheet = ReportService.taskSheetData(interval, d => d, User.currentUser)
+    val taskSheet = ReportService.taskSheetData(interval, scale, User.currentUser)
 
     val ds = dates(taskSheet)
     val ts = tasks(taskSheet)
