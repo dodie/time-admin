@@ -45,6 +45,7 @@ libraryDependencies ++= {
     "com.h2database"              % "h2"                        % "1.3.167",
     "postgresql"                  % "postgresql"                % "8.4-701.jdbc4",
     "com.github.nscala-time"      %% "nscala-time"              % "2.14.0",
-    "com.norbitltd"               % "spoiwo_2.11"               % "1.1.1"
+    "com.norbitltd"               % "spoiwo_2.11"               % "1.1.1",
+    "org.apache.poi"              % "ooxml-schemas"             % "1.3"
   )
 }
