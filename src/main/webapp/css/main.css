@@ -628,6 +628,7 @@ form.button {
 .taskName_info {
 	cursor: pointer;
 	display: inline-block;
+	max-width: 80%;
 }
 
 .tasksTaskDescription {
