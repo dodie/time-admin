@@ -45,7 +45,7 @@ object ReportService {
    * and returns data that can be used in timesheets.
    * @return a sequence of (dayOfMonth: String, arriveTime: String, leaveTime: String) tuples. Arrive and leave time strings are in hh:mm format.
    */
-  def getTimesheetData(offset: Int) = {
+  def getTimesheetData(offset: Int): Seq[(String,String,String,Double)] = {
     val formatter = new DecimalFormat("#.#")
 
     // calculate first and last days of the month
@@ -97,8 +97,8 @@ object ReportService {
         }
 
         val sum = (arrive, leave) match {
-          case (Right(arriveTime), Right(leaveTime)) => formatter.format((leaveTime - arriveTime) / (1000D * 60D * 60D))
-          case _ => "-"
+          case (Right(arriveTime), Right(leaveTime)) => (leaveTime - arriveTime) / (1000D * 60D * 60D)
+          case _ => 0.0d
         }
 
         (day, transform(arrive), transform(leave), sum)

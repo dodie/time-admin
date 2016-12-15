@@ -34,10 +34,10 @@ class TimesheetSnippet extends DateFunctions {
             ".day *" #> row._1 &
               ".from *" #> row._2 &
               ".to *" #> row._3 &
-              ".sum *" #> row._4
+              ".sum *" #> f"${row._4}%1.1f"
           }
         ) &
-        ".sumtotal *" #> timesheetData.map(row => Try(row._4.toDouble).getOrElse(0.0d)).sum
+        ".sumtotal *" #> f"${timesheetData.map(row => Try(row._4.toDouble).getOrElse(0.0d)).sum}%1.1f"
       ).apply(in)
     } else {
       <lift:embed what="no_data"/>
