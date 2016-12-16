@@ -130,16 +130,35 @@ trait DateFunctions {
   }
 
   def selectedMonthInterval(in: NodeSeq): NodeSeq = {
-    <div style="display:inline;" class="monthSelector">
-      <input type="hidden" id="intervalStart" name="intervalStart" value={S.param("intervalStart").getOrElse(TimeUtils.format(ISO_DATE_FORMAT, TimeUtils.currentMonthStartInMs(0)))}/>
-      <input type="hidden" id="intervalEnd" name="intervalEnd" value={S.param("intervalEnd").getOrElse(TimeUtils.format(ISO_DATE_FORMAT, TimeUtils.currentMonthStartInMs(0)))}/>
-      <div autocomplete="off" type="text" value={S.param("intervalStart").getOrElse(TimeUtils.format(ISO_DATE_FORMAT, TimeUtils.currentMonthStartInMs(0)))} id="intervalStartSelector" onchange="$(this).closest('form').submit();"></div>
-      <span> - </span>
-      <div autocomplete="off" type="text" value={S.param("intervalEnd").getOrElse(TimeUtils.format(ISO_DATE_FORMAT, TimeUtils.currentMonthStartInMs(0)))} id="intervalEndSelector" onchange="$(this).closest('form').submit();"></div>
-      <script>
-        $('#intervalStartSelector').datepicker({ monthIntervalSelectorConfiguration("intervalStartSelector", "intervalStart") });
-        $('#intervalEndSelector').datepicker({ monthIntervalSelectorConfiguration("intervalEndSelector", "intervalEnd") });
-      </script>
+    <div class="date-range-container">
+      <span class="date-range-input">
+        <span class="date-range-input-display-from" data-value="2016. 05."></span> <span class="date-range-input-display-to" data-value="2016. 07."></span>
+        <input class="date-range-input-field" type="hidden" value="2016-05;2016-07"/>
+      </span>
+
+      <div class="date-range-input-popup date-range-input-popup-template">
+        <div class="year-selector">
+          <div class="previous-year"></div>
+          <div class="current-year" data-year=""></div>
+          <div class="next-year"></div>
+        </div>
+        <div class="month-selector">
+          <div class="month" data-month="1">Jan</div>
+          <div class="month" data-month="2">Feb</div>
+          <div class="month" data-month="3">Mar</div>
+          <div class="month" data-month="4">Ápr</div>
+          <div class="month" data-month="5">Máj</div>
+          <div class="month" data-month="6">Jún</div>
+          <div class="month" data-month="7">Júl</div>
+          <div class="month" data-month="8">Aug</div>
+          <div class="month" data-month="9">Sze</div>
+          <div class="month" data-month="10">Okt</div>
+          <div class="month" data-month="11">Nov</div>
+          <div class="month" data-month="12">Dec</div>
+        </div>
+      </div>
+
+      <script src="/js/date-range.js"></script>
     </div>
   }
 
