@@ -5,11 +5,8 @@
 }
 
 .date-range-input {
-    display: inline-block;
-    padding: 5px;
-    border-radius: 2px;
-    border: 1px solid #ccc;
-    cursor: pointer; }
+    min-width: 200px;
+    text-align: center; }
 .date-range-input .date-range-input-display-from::after {
     content: attr(data-value); }
 .date-range-input .date-range-input-display-to:not([data-value=""])::before {
