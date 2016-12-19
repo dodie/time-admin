@@ -197,32 +197,9 @@ input[type="text"] {
 	text-align: center;
 }
 
-.DefaultUserWarning {
-	font-weight: bold;
-	color: red;
-	font-size: 18px;
-	text-align: center;
-	padding-bottom: 25px;
-	padding-top: 10px;
-}
-
 .logo {
 	padding: 5px;
 	padding-right: 26px;
-}
-
-/* LoginBox, and user bar */
-.login-error {
-	text-align: center;
-	color: red;
-	padding-top: 5px;
-	font-weight: bold;
-}
-
-.login-error ul {
-	list-style-type: none;
-	margin: 0;
-	padding: 0;
 }
 
 .OfftimeOffsetInput {
@@ -232,6 +209,15 @@ input[type="text"] {
 
 .day-pager-holder {
 	margin-top: 10px;
+}
+
+.alert {
+	max-width: 350px;
+	margin: 0 auto;
+}
+
+.alert ul {
+	list-style-type: none;
 }
 
 /*------

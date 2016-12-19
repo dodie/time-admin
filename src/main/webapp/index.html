@@ -2,17 +2,20 @@
 	<div id="login-screen" class="root">
 		<div class="content loginScreen">
 			<div class="mainContent">
-				<div class="lift:usersSnippet.checkAndWarnDefaultUser DefaultUserWarning">
+				<div class="alert alert-info lift:usersSnippet.checkAndWarnDefaultUser">
 					<lift:loc>default_user_warning</lift:loc>
 				</div>
+
 				<div>
 					<div class="lift:usersSnippet.loginBox">
 						<span>Hello <span class="UserName"></span>!</span>
 					</div>
 				</div>
-				<lift:Msgs>
-					<lift:error_class>login-error</lift:error_class>
-				</lift:Msgs>
+
+				<div class="alert alert-danger alert-dismissable" role="alert">
+					<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+					<lift:Msgs><lift:error_class>login-error</lift:error_class></lift:Msgs>
+				</div>
 			</div>
 		</div>
 	</div>
