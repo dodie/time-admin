@@ -4,19 +4,21 @@ package mixin
 
 import java.util.Date
 
-import code.commons.TimeUtils.{ ISO_DATE_FORMAT, parse, deltaInDays }
+import code.commons.TimeUtils.{ISO_DATE_FORMAT, deltaInDays, monthNamesShort, parse}
 
 import scala.xml.NodeSeq
 import scala.xml.Text
-
 import code.commons.TimeUtils
 import net.liftweb.common.Box.box2Option
 import net.liftweb.http.S
 import net.liftweb.util.Helpers.AttrBindParam
 import net.liftweb.util.Helpers
-
 import net.liftweb.http.js._
 import JE._
+import code.snippet.Params.{parseMonths, thisMonth}
+import net.liftweb.util.BindHelpers.strToCssBindPromoter
+import org.joda.time.YearMonth
+import org.joda.time.format.DateTimeFormat
 
 trait DateFunctions {
 
@@ -79,7 +81,7 @@ trait DateFunctions {
       "maxDate" -> 0,
       "firstDay" -> 1,
       "monthNames" -> JsArray(TimeUtils.monthNames.map(x => Str(x))),
-      "monthNamesShort" -> JsArray(TimeUtils.monthNamesShort.map(x => Str(x))),
+      "monthNamesShort" -> JsArray(monthNamesShort.map(x => Str(x))),
       "dayNames" -> JsArray(TimeUtils.dayNames.map(x => Str(x))),
       "dayNamesMin" -> JsArray(TimeUtils.dayNamesShort.map(x => Str(x))),
       "dayNamesShort" -> JsArray(TimeUtils.dayNamesShort.map(x => Str(x))),
@@ -108,7 +110,7 @@ trait DateFunctions {
       "maxDate" -> 0,
       "firstDay" -> 1,
       "monthNames" -> JsArray(TimeUtils.monthNames.map(x => Str(x))),
-      "monthNamesShort" -> JsArray(TimeUtils.monthNamesShort.map(x => Str(x))),
+      "monthNamesShort" -> JsArray(monthNamesShort.map(x => Str(x))),
       "dayNames" -> JsArray(TimeUtils.dayNames.map(x => Str(x))),
       "dayNamesMin" -> JsArray(TimeUtils.dayNamesShort.map(x => Str(x))),
       "dayNamesShort" -> JsArray(TimeUtils.dayNamesShort.map(x => Str(x))),
@@ -130,10 +132,25 @@ trait DateFunctions {
   }
 
   def selectedMonthInterval(in: NodeSeq): NodeSeq = {
+    val months = parseMonths(S) getOrElse List(YearMonth.now())
+    val pattern = DateTimeFormat.forPattern("yyyy. MM.")
+
+    val map =
+      ".date-range-input-field [value]" #> { months mkString ";" } &
+      ".date-range-input-display-from [data-value]" #> { months.headOption map pattern.print getOrElse "" } &
+      ".date-range-input-display-to [data-value]" #> { months.tail.headOption map pattern.print getOrElse "" } &
+      ".month-selector" #> { ".month " #> { for (i <- 1 to 12) yield {
+        ".month [data-month]" #> i & ".month *" #> monthNamesShort(i - 1)
+      }}}
+
+    map(dateRangeTemplate)
+  }
+
+  private def dateRangeTemplate: NodeSeq =
     <div class="date-range-container">
       <span class="date-range-input">
-        <span class="date-range-input-display-from" data-value="2016. 05."></span> <span class="date-range-input-display-to" data-value="2016. 07."></span>
-        <input name="interval" class="date-range-input-field" type="hidden" value="2016-05;2016-07"/>
+        <span class="date-range-input-display-from" data-value=""></span> <span class="date-range-input-display-to" data-value=""></span>
+        <input name="interval" class="date-range-input-field" type="hidden" value=""/>
       </span>
 
       <div class="date-range-input-popup date-range-input-popup-template">
@@ -143,24 +160,12 @@ trait DateFunctions {
           <div class="next-year"></div>
         </div>
         <div class="month-selector">
-          <div class="month" data-month="1">Jan</div>
-          <div class="month" data-month="2">Feb</div>
-          <div class="month" data-month="3">Mar</div>
-          <div class="month" data-month="4">Ápr</div>
-          <div class="month" data-month="5">Máj</div>
-          <div class="month" data-month="6">Jún</div>
-          <div class="month" data-month="7">Júl</div>
-          <div class="month" data-month="8">Aug</div>
-          <div class="month" data-month="9">Sze</div>
-          <div class="month" data-month="10">Okt</div>
-          <div class="month" data-month="11">Nov</div>
-          <div class="month" data-month="12">Dec</div>
+          <div class="month" data-month=""></div>
         </div>
       </div>
 
       <script src="/js/date-range.js"></script>
     </div>
-  }
 
   /**
    * Current date as text.
