@@ -2,10 +2,15 @@
 	<div>
 		<div style="text-align: right; padding-right: 10px;">
 			<form>
-				<select class="form-control lift:usersSnippet.selectUser" style="display:inline;width:auto;" onchange="$(this).closest('form').submit();" name="user">
+				<select class="form-control lift:usersSnippet.selectUser" style="display:inline;width:auto;" name="user">
 					<option value="id" class="lift:usersSnippet.selectUser">user name</option>
 				</select>
+
 				<span class="lift:tasksheetSnippet.selectedMonthInterval"></span>
+
+				<button type="submit" class="btn btn-default" aria-label="Refresh">
+					<span class="glyphicon glyphicon-refresh" aria-hidden="true"></span>
+				</button>
 			</form>
 		</div>
 		<h1>
