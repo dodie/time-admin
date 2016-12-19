@@ -133,7 +133,7 @@ trait DateFunctions {
     <div class="date-range-container">
       <span class="date-range-input">
         <span class="date-range-input-display-from" data-value="2016. 05."></span> <span class="date-range-input-display-to" data-value="2016. 07."></span>
-        <input class="date-range-input-field" type="hidden" value="2016-05;2016-07"/>
+        <input name="interval" class="date-range-input-field" type="hidden" value="2016-05;2016-07"/>
       </span>
 
       <div class="date-range-input-popup date-range-input-popup-template">
@@ -160,31 +160,6 @@ trait DateFunctions {
 
       <script src="/js/date-range.js"></script>
     </div>
-  }
-
-  private def monthIntervalSelectorConfiguration(name: String, valueName: String) = {
-    JsObj(
-      "dateFormat" -> "yy-mm-dd",
-      "maxDate" -> (if (valueName == "intervalStart") S.param("intervalEnd").getOrElse(TimeUtils.format(ISO_DATE_FORMAT, TimeUtils.currentMonthStartInMs(0))) else "2200-01-01").toString,
-      "minDate" -> (if (valueName == "intervalEnd") S.param("intervalStart").getOrElse(TimeUtils.format(ISO_DATE_FORMAT, TimeUtils.currentMonthStartInMs(0))) else "1900-01-01").toString,
-      "firstDay" -> 1,
-      "monthNames" -> JsArray(TimeUtils.monthNames.map(x => Str(x))),
-      "monthNamesShort" -> JsArray(TimeUtils.monthNamesShort.map(x => Str(x))),
-      "nextText" -> S.?("button.next"),
-      "prevText" -> S.?("button.previous"),
-      "changeMonth" -> true,
-      "changeYear" -> true,
-      "defaultDate" -> JsRaw("new Date('" + S.param(valueName).getOrElse(TimeUtils.format(ISO_DATE_FORMAT, TimeUtils.currentMonthStartInMs(0))) + "')"),
-      "onChangeMonthYear" -> JsRaw(s"""
-				function(year, month, inst) {
-					if(month < 10) {
-						month = "0" + month
-					}
-					document.getElementById('$valueName').value = year + "-" + month + "-01";
-					$$(document.getElementById('$name')).closest('form').submit();
-				}
-        """)
-    ).toString
   }
 
   /**
