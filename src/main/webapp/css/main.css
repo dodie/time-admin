@@ -211,12 +211,8 @@ input[type="text"] {
 	margin-top: 10px;
 }
 
-.alert {
-	max-width: 350px;
-	margin: 0 auto;
-}
+.alert.alert-main {
 
-.alert ul {
 	list-style-type: none;
 }
 

@@ -19,6 +19,7 @@ import java.util.Locale
 import code.service.UserService.nonAdmin
 import code.snippet.Params.{parseInterval, parseUser, thisMonth}
 import code.util.IO.{using, xlsxResponse}
+import net.liftweb.http.js.JE
 import net.liftweb.util.ControlHelpers.tryo
 
 
@@ -196,5 +197,30 @@ class Boot {
           }
         }
     }
+
+    val jsNotice =
+      """$('#lift__noticesContainer___notice ul')
+        |.addClass("alert alert-success alert-main alert-dismissible")
+        |.prepend('<button type="button" class="close" data-dismiss="alert">&times;</button>')""".stripMargin
+
+    val jsWarning =
+      """$('#lift__noticesContainer___warning ul')
+        |.addClass("alert alert-warning alert-main alert-dismissible")
+        |.prepend('<button type="button" class="close" data-dismiss="alert">&times;</button>')""".stripMargin
+
+    val jsError =
+      """$('#lift__noticesContainer___error ul')
+        |.addClass("alert alert-danger alert-main alert-dismissible")
+        |.prepend('<button type="button" class="close" data-dismiss="alert">&times;</button>')""".stripMargin
+
+    LiftRules.noticesEffects.default.set(
+      Vendor.valToVendor((notice, _) =>
+        notice.map(_.title) match {
+          case Full("Notice") => Full(JE.JsRaw(jsNotice).cmd)
+          case Full("Warning") => Full(JE.JsRaw(jsWarning).cmd)
+          case Full("Error") => Full(JE.JsRaw(jsError).cmd)
+          case _ => Full(JE.JsRaw(jsNotice).cmd)
+        }
+      ))
   }
 }
