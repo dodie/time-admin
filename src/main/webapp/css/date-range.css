@@ -1,0 +1,273 @@
+@charset "UTF-8";
+
+.date-range-container {
+    display: inline-block;
+}
+
+.date-range-input {
+    display: inline-block;
+    padding: 5px;
+    border-radius: 2px;
+    border: 1px solid #ccc;
+    cursor: pointer; }
+.date-range-input .date-range-input-display-from::after {
+    content: attr(data-value); }
+.date-range-input .date-range-input-display-to:not([data-value=""])::before {
+    content: " - "; }
+.date-range-input .date-range-input-display-to::after {
+    content: attr(data-value); }
+
+.date-range-input-popup {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    overflow: hidden;
+    position: absolute;
+    background: #fff;
+    border: 1px solid #ddd;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+    border-radius: 3px;
+    -webkit-animation-duration: 0.3s;
+    animation-duration: 0.3s;
+    -webkit-animation-timing-function: cubic-bezier(0, 0, 0, 1), ease;
+    animation-timing-function: cubic-bezier(0, 0, 0, 1), ease;
+    -webkit-animation-name: dateRangeInputPopupAppear, dateRangeInputFadeIn;
+    animation-name: dateRangeInputPopupAppear, dateRangeInputFadeIn; }
+.date-range-input-popup.date-range-input-popup-template {
+    display: none; }
+.date-range-input-popup .year-selector {
+    -webkit-animation-duration: 0.3s;
+    animation-duration: 0.3s;
+    -webkit-animation-timing-function: cubic-bezier(0, 0, 0, 1);
+    animation-timing-function: cubic-bezier(0, 0, 0, 1);
+    -webkit-animation-name: dateRangeInputYearSelectorAppear;
+    animation-name: dateRangeInputYearSelectorAppear;
+    line-height: 50px;
+    position: relative;
+    text-align: center; }
+.date-range-input-popup .year-selector > * {
+    float: left; }
+.date-range-input-popup .year-selector::before {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    height: 1px;
+    background-color: #eee;
+    left: 10px;
+    right: 10px; }
+.date-range-input-popup .year-selector::after {
+    display: table;
+    clear: both;
+    content: ""; }
+.date-range-input-popup .year-selector .previous-year, .date-range-input-popup .year-selector .next-year {
+    width: 40px;
+    cursor: pointer;
+    -webkit-transition: 0.3s cubic-bezier(0.3, 0, 0.3, 1) background-color;
+    transition: 0.3s cubic-bezier(0.3, 0, 0.3, 1) background-color; }
+.date-range-input-popup .year-selector .previous-year:hover:active, .date-range-input-popup .year-selector .next-year:hover:active {
+    background-color: #eee;
+    -webkit-transition-duration: 0s;
+    transition-duration: 0s; }
+.date-range-input-popup .year-selector .previous-year::after {
+    content: "➤";
+    -webkit-transform: scaleX(-1);
+    -ms-transform: scaleX(-1);
+    transform: scaleX(-1);
+    display: block; }
+.date-range-input-popup .year-selector .next-year::after {
+    content: "➤";
+    display: block; }
+.date-range-input-popup .year-selector .current-year {
+    width: 140px;
+    font-size: 18px; }
+.date-range-input-popup .year-selector .current-year::after {
+    content: attr(data-year); }
+.date-range-input-popup .month-selector {
+    padding: 10px;
+    width: 200px;
+    box-sizing: content-box;
+    position: relative; }
+.date-range-input-popup .month-selector::after {
+    content: "";
+    display: table;
+    clear: both; }
+.date-range-input-popup .month-selector .month {
+    -webkit-animation-name: dateRangeInputMonthSelectorAppearFromBottom, dateRangeInputFadeIn;
+    animation-name: dateRangeInputMonthSelectorAppearFromBottom, dateRangeInputFadeIn;
+    -webkit-animation-duration: 0.3s;
+    animation-duration: 0.3s;
+    -webkit-animation-timing-function: cubic-bezier(0, 0, 0, 1), ease;
+    animation-timing-function: cubic-bezier(0, 0, 0, 1), ease;
+    -webkit-animation-fill-mode: forwards;
+    animation-fill-mode: forwards;
+    opacity: 0;
+    -webkit-transform: translateY(0);
+    -ms-transform: translateY(0);
+    transform: translateY(0); }
+.date-range-input-popup .month-selector .month[data-month="1"] {
+    -webkit-animation-delay: 0.0125s;
+    animation-delay: 0.0125s; }
+.date-range-input-popup .month-selector .month[data-month="2"] {
+    -webkit-animation-delay: 0.025s;
+    animation-delay: 0.025s; }
+.date-range-input-popup .month-selector .month[data-month="3"] {
+    -webkit-animation-delay: 0.0375s;
+    animation-delay: 0.0375s; }
+.date-range-input-popup .month-selector .month[data-month="4"] {
+    -webkit-animation-delay: 0.05s;
+    animation-delay: 0.05s; }
+.date-range-input-popup .month-selector .month[data-month="5"] {
+    -webkit-animation-delay: 0.0625s;
+    animation-delay: 0.0625s; }
+.date-range-input-popup .month-selector .month[data-month="6"] {
+    -webkit-animation-delay: 0.075s;
+    animation-delay: 0.075s; }
+.date-range-input-popup .month-selector .month[data-month="7"] {
+    -webkit-animation-delay: 0.0875s;
+    animation-delay: 0.0875s; }
+.date-range-input-popup .month-selector .month[data-month="8"] {
+    -webkit-animation-delay: 0.1s;
+    animation-delay: 0.1s; }
+.date-range-input-popup .month-selector .month[data-month="9"] {
+    -webkit-animation-delay: 0.1125s;
+    animation-delay: 0.1125s; }
+.date-range-input-popup .month-selector .month[data-month="10"] {
+    -webkit-animation-delay: 0.125s;
+    animation-delay: 0.125s; }
+.date-range-input-popup .month-selector .month[data-month="11"] {
+    -webkit-animation-delay: 0.1375s;
+    animation-delay: 0.1375s; }
+.date-range-input-popup .month-selector .month[data-month="12"] {
+    -webkit-animation-delay: 0.15s;
+    animation-delay: 0.15s; }
+.date-range-input-popup .month-selector[data-direction="top"] .month {
+    -webkit-animation-name: dateRangeInputMonthSelectorAppearFromTop, dateRangeInputFadeIn;
+    animation-name: dateRangeInputMonthSelectorAppearFromTop, dateRangeInputFadeIn; }
+.date-range-input-popup .month-selector .month {
+    float: left;
+    width: 50px;
+    text-align: center;
+    line-height: 50px;
+    position: relative;
+    z-index: 0;
+    cursor: pointer;
+    background-color: #fff; }
+.date-range-input-popup .month-selector .month::after {
+    z-index: -2;
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 1px;
+    top: 10%;
+    bottom: 10%;
+    -webkit-transform: scale(0.75);
+    -ms-transform: scale(0.75);
+    transform: scale(0.75);
+    -webkit-transition: 0.3s ease background-color, 0.3s ease border-radius, 0.3s cubic-bezier(0, 0, 0, 1) -webkit-transform;
+    transition: 0.3s ease background-color, 0.3s ease border-radius, 0.3s cubic-bezier(0, 0, 0, 1) -webkit-transform;
+    transition: 0.3s ease background-color, 0.3s ease border-radius, 0.3s cubic-bezier(0, 0, 0, 1) transform;
+    transition: 0.3s ease background-color, 0.3s ease border-radius, 0.3s cubic-bezier(0, 0, 0, 1) transform, 0.3s cubic-bezier(0, 0, 0, 1) -webkit-transform; }
+.date-range-input-popup .month-selector .month:not(.selection-cont):not(.selection-hard):hover::after {
+    background-color: #eee;
+    -webkit-transform: scale(1);
+    -ms-transform: scale(1);
+    transform: scale(1); }
+.date-range-input-popup .month-selector .month.selection-hard::after {
+    -webkit-transform: scale(1);
+    -ms-transform: scale(1);
+    transform: scale(1);
+    background-color: #97ceff; }
+.date-range-input-popup .month-selector .month.selection-begin::after {
+    border-top-left-radius: 3px;
+    border-bottom-left-radius: 3px; }
+.date-range-input-popup .month-selector .month.selection-end::after {
+    border-top-right-radius: 3px;
+    border-bottom-right-radius: 3px; }
+.date-range-input-popup .month-selector .month.selection-cont::after {
+    background-color: #cce7ff;
+    -webkit-transform: scale(1);
+    -ms-transform: scale(1);
+    transform: scale(1); }
+.date-range-input-popup.selection-hovering .month-selector .month.selection-hard::after {
+    background-color: #c0e1ff; }
+.date-range-input-popup.selection-hovering .month-selector .month.selection-cont::after {
+    background-color: #e6f3ff; }
+
+@-webkit-keyframes dateRangeInputYearSelectorAppear {
+    0% {
+        -webkit-transform: translateY(50%);
+        transform: translateY(50%); }
+    100% {
+        -webkit-transform: translateY(0);
+        transform: translateY(0); } }
+
+@keyframes dateRangeInputYearSelectorAppear {
+    0% {
+        -webkit-transform: translateY(50%);
+        transform: translateY(50%); }
+    100% {
+        -webkit-transform: translateY(0);
+        transform: translateY(0); } }
+
+@-webkit-keyframes dateRangeInputMonthSelectorAppearFromBottom {
+    0% {
+        -webkit-transform: translateY(100%);
+        transform: translateY(100%); }
+    100% {
+        -webkit-transform: translateY(0);
+        transform: translateY(0); } }
+
+@keyframes dateRangeInputMonthSelectorAppearFromBottom {
+    0% {
+        -webkit-transform: translateY(100%);
+        transform: translateY(100%); }
+    100% {
+        -webkit-transform: translateY(0);
+        transform: translateY(0); } }
+
+@-webkit-keyframes dateRangeInputMonthSelectorAppearFromTop {
+    0% {
+        -webkit-transform: translateY(-100%);
+        transform: translateY(-100%); }
+    100% {
+        -webkit-transform: translateY(0);
+        transform: translateY(0); } }
+
+@keyframes dateRangeInputMonthSelectorAppearFromTop {
+    0% {
+        -webkit-transform: translateY(-100%);
+        transform: translateY(-100%); }
+    100% {
+        -webkit-transform: translateY(0);
+        transform: translateY(0); } }
+
+@-webkit-keyframes dateRangeInputPopupAppear {
+    0% {
+        -webkit-transform: translateY(10%);
+        transform: translateY(10%); }
+    100% {
+        -webkit-transform: translateY(0);
+        transform: translateY(0); } }
+
+@keyframes dateRangeInputPopupAppear {
+    0% {
+        -webkit-transform: translateY(10%);
+        transform: translateY(10%); }
+    100% {
+        -webkit-transform: translateY(0);
+        transform: translateY(0); } }
+
+@-webkit-keyframes dateRangeInputFadeIn {
+    0% {
+        opacity: 0; }
+    100% {
+        opacity: 1; } }
+
+@keyframes dateRangeInputFadeIn {
+    0% {
+        opacity: 0; }
+    100% {
+        opacity: 1; } }
+
+/*# sourceMappingURL=style.css.map */

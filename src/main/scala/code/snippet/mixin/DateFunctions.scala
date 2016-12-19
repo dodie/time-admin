@@ -4,19 +4,19 @@ package mixin
 
 import java.util.Date
 
-import code.commons.TimeUtils.{ ISO_DATE_FORMAT, parse, deltaInDays }
-
-import scala.xml.NodeSeq
-import scala.xml.Text
-
 import code.commons.TimeUtils
+import code.commons.TimeUtils.{ISO_DATE_FORMAT, deltaInDays, monthNamesShort, parse}
+import code.snippet.Params.parseMonths
 import net.liftweb.common.Box.box2Option
 import net.liftweb.http.S
-import net.liftweb.util.Helpers.AttrBindParam
+import net.liftweb.http.js.JE._
+import net.liftweb.util.BindHelpers.strToCssBindPromoter
 import net.liftweb.util.Helpers
+import net.liftweb.util.Helpers.AttrBindParam
+import org.joda.time.YearMonth
+import org.joda.time.format.DateTimeFormat
 
-import net.liftweb.http.js._
-import JE._
+import scala.xml.{NodeSeq, Text}
 
 trait DateFunctions {
 
@@ -79,7 +79,7 @@ trait DateFunctions {
       "maxDate" -> 0,
       "firstDay" -> 1,
       "monthNames" -> JsArray(TimeUtils.monthNames.map(x => Str(x))),
-      "monthNamesShort" -> JsArray(TimeUtils.monthNamesShort.map(x => Str(x))),
+      "monthNamesShort" -> JsArray(monthNamesShort.map(x => Str(x))),
       "dayNames" -> JsArray(TimeUtils.dayNames.map(x => Str(x))),
       "dayNamesMin" -> JsArray(TimeUtils.dayNamesShort.map(x => Str(x))),
       "dayNamesShort" -> JsArray(TimeUtils.dayNamesShort.map(x => Str(x))),
@@ -108,7 +108,7 @@ trait DateFunctions {
       "maxDate" -> 0,
       "firstDay" -> 1,
       "monthNames" -> JsArray(TimeUtils.monthNames.map(x => Str(x))),
-      "monthNamesShort" -> JsArray(TimeUtils.monthNamesShort.map(x => Str(x))),
+      "monthNamesShort" -> JsArray(monthNamesShort.map(x => Str(x))),
       "dayNames" -> JsArray(TimeUtils.dayNames.map(x => Str(x))),
       "dayNamesMin" -> JsArray(TimeUtils.dayNamesShort.map(x => Str(x))),
       "dayNamesShort" -> JsArray(TimeUtils.dayNamesShort.map(x => Str(x))),
@@ -129,43 +129,19 @@ trait DateFunctions {
     ).toString
   }
 
-  def selectedMonthInterval(in: NodeSeq): NodeSeq = {
-    <div style="display:inline;" class="monthSelector">
-      <input type="hidden" id="intervalStart" name="intervalStart" value={S.param("intervalStart").getOrElse(TimeUtils.format(ISO_DATE_FORMAT, TimeUtils.currentMonthStartInMs(0)))}/>
-      <input type="hidden" id="intervalEnd" name="intervalEnd" value={S.param("intervalEnd").getOrElse(TimeUtils.format(ISO_DATE_FORMAT, TimeUtils.currentMonthStartInMs(0)))}/>
-      <div autocomplete="off" type="text" value={S.param("intervalStart").getOrElse(TimeUtils.format(ISO_DATE_FORMAT, TimeUtils.currentMonthStartInMs(0)))} id="intervalStartSelector" onchange="$(this).closest('form').submit();"></div>
-      <span> - </span>
-      <div autocomplete="off" type="text" value={S.param("intervalEnd").getOrElse(TimeUtils.format(ISO_DATE_FORMAT, TimeUtils.currentMonthStartInMs(0)))} id="intervalEndSelector" onchange="$(this).closest('form').submit();"></div>
-      <script>
-        $('#intervalStartSelector').datepicker({ monthIntervalSelectorConfiguration("intervalStartSelector", "intervalStart") });
-        $('#intervalEndSelector').datepicker({ monthIntervalSelectorConfiguration("intervalEndSelector", "intervalEnd") });
-      </script>
-    </div>
-  }
+  def monthIntervalPicker(in: NodeSeq): NodeSeq = {
+    val months = parseMonths(S) getOrElse List(YearMonth.now())
+    val pattern = DateTimeFormat.forPattern("yyyy. MM.")
 
-  private def monthIntervalSelectorConfiguration(name: String, valueName: String) = {
-    JsObj(
-      "dateFormat" -> "yy-mm-dd",
-      "maxDate" -> (if (valueName == "intervalStart") S.param("intervalEnd").getOrElse(TimeUtils.format(ISO_DATE_FORMAT, TimeUtils.currentMonthStartInMs(0))) else "2200-01-01").toString,
-      "minDate" -> (if (valueName == "intervalEnd") S.param("intervalStart").getOrElse(TimeUtils.format(ISO_DATE_FORMAT, TimeUtils.currentMonthStartInMs(0))) else "1900-01-01").toString,
-      "firstDay" -> 1,
-      "monthNames" -> JsArray(TimeUtils.monthNames.map(x => Str(x))),
-      "monthNamesShort" -> JsArray(TimeUtils.monthNamesShort.map(x => Str(x))),
-      "nextText" -> S.?("button.next"),
-      "prevText" -> S.?("button.previous"),
-      "changeMonth" -> true,
-      "changeYear" -> true,
-      "defaultDate" -> JsRaw("new Date('" + S.param(valueName).getOrElse(TimeUtils.format(ISO_DATE_FORMAT, TimeUtils.currentMonthStartInMs(0))) + "')"),
-      "onChangeMonthYear" -> JsRaw(s"""
-				function(year, month, inst) {
-					if(month < 10) {
-						month = "0" + month
-					}
-					document.getElementById('$valueName').value = year + "-" + month + "-01";
-					$$(document.getElementById('$name')).closest('form').submit();
-				}
-        """)
-    ).toString
+    val map =
+      ".date-range-input-field [value]" #> { months mkString ";" } &
+      ".date-range-input-display-from [data-value]" #> { months.headOption map pattern.print getOrElse "" } &
+      ".date-range-input-display-to [data-value]" #> { months.tail.headOption map pattern.print getOrElse "" } &
+      ".month-selector" #> { ".month " #> { for (i <- 1 to 12) yield {
+        ".month [data-month]" #> i & ".month *" #> monthNamesShort(i - 1)
+      }}}
+
+    map(in)
   }
 
   /**

@@ -2,7 +2,7 @@ package code.snippet
 
 import code.model.User
 import com.github.nscala_time.time.Imports._
-import net.liftweb.common.Box
+import net.liftweb.common.{Box, Empty, Full}
 import net.liftweb.http.S
 import net.liftweb.util.ControlHelpers.tryo
 import org.joda.time.ReadablePartial
@@ -10,16 +10,23 @@ import org.joda.time.LocalDate
 
 object Params {
 
+  def parseMonths(s: S): Box[List[YearMonth]] =
+    s.param("interval") map { _.split(";") map YearMonth.parse toList }
+
   def parseInterval(s: S): Box[(Interval, LocalDate => ReadablePartial)] = tryo {
-    for {
-      start <- s.param("intervalStart").map(d => YearMonth.parse(d))
-      end <- s.param("intervalEnd").map(d => YearMonth.parse(d))
-    } yield between(start, end)
+    parseMonths(s) flatMap {
+      case start :: end :: _ => Full(between(start, end))
+      case start :: _ => Full(oneMonth(start))
+      case _ => Empty
+    }
   } flatMap identity
 
   private def between(start: YearMonth, end: YearMonth): (Interval, LocalDate => ReadablePartial) =
-    if (start.year == end.year && start.monthOfYear == end.monthOfYear) (start.toInterval, identity)
-    else (new Interval(start.toInterval.start, end.toInterval.end), d => new YearMonth(d))
+    if (start.year == end.year && start.monthOfYear == end.monthOfYear) oneMonth(start)
+    else new Interval(start.toInterval.start, end.toInterval.end) -> (d => new YearMonth(d))
+
+  private def oneMonth(start: YearMonth): (Interval, LocalDate => ReadablePartial) =
+    start.toInterval -> identity
 
   def thisMonth(): (Interval, LocalDate => ReadablePartial) = (YearMonth.now().toInterval, identity)
 
