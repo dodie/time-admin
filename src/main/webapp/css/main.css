@@ -784,20 +784,29 @@ form.button {
 	cursor: pointer;
 }
 
-/* TaskSheet */
-.tasksheetTable {
-	width: 100%;
-	min-width: 1185px;
-	border: 1px solid darkGray;
-	border-collapse: collapse;
-	table-layout: fixed;
-	text-align:center;
+/* Table */
+.table {
 	font-family: monospace;
 }
 
-.timesheetTable {
-	margin: 10px auto;
+.table thead tr {
+	border-bottom: 2px solid #ddd;
 }
+
+.table tfoot tr {
+	border-top: 2px solid #ddd;
+	font-weight: bold;
+}
+
+.table th {
+	white-space: nowrap;
+}
+
+.table td {
+	min-width: 60px;
+}
+
+/* time sheet */
 
 .timesheetTable .QuickHelp {
 	background: transparent;
@@ -810,13 +819,9 @@ form.button {
 	width: 200px;
 }
 
-.timesheetTable th {
-	white-space: nowrap;
-}
-
-.timesheetTable .table-footer{
-	border-top: 2px solid black;
-	font-weight: bold;
+.timesheetTable {
+	table-layout: fixed;
+	font-family: monospace;
 }
 
 .diagramholder > div {
@@ -829,58 +834,22 @@ form.button {
 	text-align: center;
 }
 
-.tasksheetTable th {
+/* task sheet */
+.tasksheetTable th, .tasksheetTable td  {
 	text-align: center;
-}
-
-.tasksheetTable th.taskname {
-	width:160px;
+	vertical-align: middle;
 }
 
 .tasksheetTable td.taskFullName{
-	font-style:italic;
-	overflow:hidden;
-	text-align:left;
-	text-overflow: ellipsis;
-}
-
-.tasksheetTable td {
-	padding: 5px;
-	border: 1px solid darkGray;
+	text-align: left;
 }
 
 .tasksheetTable .colWeekend {
-	background: #DADADA;
+	background: #DDD;
 }
 
-.tasksheetTable .taskSum {
-	background: rgb(250,250,210);
-}
-
-.tasksheetTable tr td:last-child {
+.tasksheetTable tr td:last-child, .tasksheetTable tr th:last-child {
 	border-left: 2px solid black;
-}
-
-.tasksheetTable .rowSum {
-	border-top: 2px solid black;
-}
-
-/* Timesheet */
-.timesheetTable {
-	border: 1px solid darkGray;
-	border-collapse: collapse;
-	table-layout: fixed;
-	font-family: monospace;
-}
-
-.timesheetTable td {
-	padding: 5px;
-	border: 1px solid darkGray;
-}
-
-.timesheetTable th {
-	padding: 5px;
-	border-bottom: 2px solid black;
 }
 
 /* Felhasznaloi beallitasok */

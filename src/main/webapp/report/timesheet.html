@@ -16,27 +16,33 @@
 		<div class="lift:timesheetSnippet.timesheet container">
 			<div class="row">
 				<div class="col-md-6 sheetholder" id="timesheet-holder">
-					<table class="timesheetTable table table-striped">
-						<tr>
-							<th><lift:loc>timesheet.date</lift:loc></th>
-							<th><lift:loc>timesheet.arrival</lift:loc></th>
-							<th><lift:loc>timesheet.leave</lift:loc>
-								<sup><span class="lift:help.quickHelp">help.timesheet</span></sup>
-							</th>
-							<th><lift:loc>timesheet.time_sum_hour</lift:loc></th>
-						</tr>
-						<tr class="item">
-							<td class="day"></td>
-							<td class="from"></td>
-							<td class="to"></td>
-							<td class="sum"></td>
-						</tr>
-						<tr class="table-footer">
-							<td>Σ</td>
-							<td></td>
-							<td></td>
-							<td class="sumtotal"></td>
-						</tr>
+					<table class="timesheetTable table table-bordered">
+						<thead>
+							<tr>
+								<th><lift:loc>timesheet.date</lift:loc></th>
+								<th><lift:loc>timesheet.arrival</lift:loc></th>
+								<th><lift:loc>timesheet.leave</lift:loc>
+									<sup><span class="lift:help.quickHelp">help.timesheet</span></sup>
+								</th>
+								<th><lift:loc>timesheet.time_sum_hour</lift:loc></th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr class="item">
+								<td class="day"></td>
+								<td class="from"></td>
+								<td class="to"></td>
+								<td class="sum"></td>
+							</tr>
+						</tbody>
+						<tfoot>
+							<tr class="table-footer">
+								<td>Σ</td>
+								<td></td>
+								<td></td>
+								<td class="sumtotal"></td>
+							</tr>
+						</tfoot>
 					</table>
 				</div>
 

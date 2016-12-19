@@ -36,28 +36,29 @@
 				<span class="glyphicon glyphicon-download-alt" aria-hidden="true"></span>
 			</a>
 			<lift:loc>tasksheet.title</lift:loc> - <span class="lift:tasksheetSnippet.title"></span></h1>
-		<div class="sheetholder">
-			<table class="lift:tasksheetSnippet.tasksheet tasksheetTable table table-striped">
-				<colgroup>
-					<col class="colTasks" />
-					<col class="colDays" />
-					<col class="colSum" />
-				</colgroup>
-				<tr>
-					<th class="taskname"><lift:loc>tasksheet.task</lift:loc></th>
-					<th class="dayHeader"></th>
-					<th> &sum; </th>
-				</tr>
-				<tr class="TaskRow">
-					<td class="taskFullName"></td>
-					<td class="dailyData"></td>
-					<td class="taskSum"></td>
-				</tr>
-				<tr class="rowSum">
-					<td>&sum;</td>
-					<td class="dailySum"></td>
-					<td class="totalSum"></td>
-				</tr>
+		<div class="sheetholder table-responsive">
+			<table class="lift:tasksheetSnippet.tasksheet tasksheetTable table table-bordered">
+				<thead>
+					<tr>
+						<th class="taskname"><lift:loc>tasksheet.task</lift:loc></th>
+						<th class="dayHeader"></th>
+						<th> &sum; </th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr class="TaskRow">
+						<td class="taskFullName"></td>
+						<td class="dailyData"></td>
+						<td class="taskSum"></td>
+					</tr>
+				</tbody>
+				<tfoot>
+					<tr class="rowSum">
+						<td>&sum;</td>
+						<td class="dailySum"></td>
+						<td class="totalSum"></td>
+					</tr>
+				</tfoot>
 			</table>
 		</div>
 	</div>
