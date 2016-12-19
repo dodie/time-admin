@@ -4,21 +4,19 @@ package mixin
 
 import java.util.Date
 
-import code.commons.TimeUtils.{ISO_DATE_FORMAT, deltaInDays, monthNamesShort, parse}
-
-import scala.xml.NodeSeq
-import scala.xml.Text
 import code.commons.TimeUtils
+import code.commons.TimeUtils.{ISO_DATE_FORMAT, deltaInDays, monthNamesShort, parse}
+import code.snippet.Params.parseMonths
 import net.liftweb.common.Box.box2Option
 import net.liftweb.http.S
-import net.liftweb.util.Helpers.AttrBindParam
-import net.liftweb.util.Helpers
-import net.liftweb.http.js._
-import JE._
-import code.snippet.Params.{parseMonths, thisMonth}
+import net.liftweb.http.js.JE._
 import net.liftweb.util.BindHelpers.strToCssBindPromoter
+import net.liftweb.util.Helpers
+import net.liftweb.util.Helpers.AttrBindParam
 import org.joda.time.YearMonth
 import org.joda.time.format.DateTimeFormat
+
+import scala.xml.{NodeSeq, Text}
 
 trait DateFunctions {
 
@@ -131,7 +129,7 @@ trait DateFunctions {
     ).toString
   }
 
-  def selectedMonthInterval(in: NodeSeq): NodeSeq = {
+  def monthIntervalPicker(in: NodeSeq): NodeSeq = {
     val months = parseMonths(S) getOrElse List(YearMonth.now())
     val pattern = DateTimeFormat.forPattern("yyyy. MM.")
 
@@ -143,29 +141,8 @@ trait DateFunctions {
         ".month [data-month]" #> i & ".month *" #> monthNamesShort(i - 1)
       }}}
 
-    map(dateRangeTemplate)
+    map(in)
   }
-
-  private def dateRangeTemplate: NodeSeq =
-    <div class="date-range-container">
-      <span class="date-range-input">
-        <span class="date-range-input-display-from" data-value=""></span> <span class="date-range-input-display-to" data-value=""></span>
-        <input name="interval" class="date-range-input-field" type="hidden" value=""/>
-      </span>
-
-      <div class="date-range-input-popup date-range-input-popup-template">
-        <div class="year-selector">
-          <div class="previous-year"></div>
-          <div class="current-year" data-year=""></div>
-          <div class="next-year"></div>
-        </div>
-        <div class="month-selector">
-          <div class="month" data-month=""></div>
-        </div>
-      </div>
-
-      <script src="/js/date-range.js"></script>
-    </div>
 
   /**
    * Current date as text.

@@ -23,7 +23,7 @@ object Params {
 
   private def between(start: YearMonth, end: YearMonth): (Interval, LocalDate => ReadablePartial) =
     if (start.year == end.year && start.monthOfYear == end.monthOfYear) oneMonth(start)
-    else (new Interval(start.toInterval.start, end.toInterval.end), d => new YearMonth(d))
+    else new Interval(start.toInterval.start, end.toInterval.end) -> (d => new YearMonth(d))
 
   private def oneMonth(start: YearMonth): (Interval, LocalDate => ReadablePartial) =
     start.toInterval -> identity
