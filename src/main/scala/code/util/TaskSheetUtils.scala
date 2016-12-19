@@ -44,7 +44,7 @@ object TaskSheetUtils {
 
   def title(interval: Interval, scale: LocalDate => ReadablePartial): String = {
     val now = LocalDate.now()
-    if (scale(now) == now) s"${interval.start.getYear}.${interval.start.getMonthOfYear}"
+    if (scale(now) == now) f"${interval.start.getYear}.${interval.start.getMonthOfYear}%02d"
     else f"${interval.start.getYear}.${interval.start.getMonthOfYear}%02d - ${interval.end.minusDays(1).getYear}.${interval.end.minusDays(1).getMonthOfYear}%02d"
   }
 }
