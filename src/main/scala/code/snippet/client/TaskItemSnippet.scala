@@ -122,7 +122,7 @@ class TaskItemSnippet extends DateFunctions {
               taskItemDto.project match {
                 case Some(project) => {
                   var bgColor = ProjectService.getRootProject(project).color.get
-                  if (bgColor.length == 7) {
+                  if (bgColor != null && bgColor.length == 7) {
                     val (red, green, blue) = (Integer.valueOf(bgColor.substring(1, 3), 16),
                                               Integer.valueOf(bgColor.substring(3, 5), 16),
                                               Integer.valueOf(bgColor.substring(5, 7), 16))
