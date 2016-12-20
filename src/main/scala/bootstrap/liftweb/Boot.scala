@@ -183,8 +183,8 @@ class Boot {
           if (!clientUser) {
             Full(RedirectResponse("/"))
           } else {
-            val (interval, scale) = parseInterval(S) getOrElse thisMonth()
-            val user = User.currentUser filter nonAdmin or parseUser(S)
+            val (interval, scale) = parseInterval() getOrElse thisMonth()
+            val user = User.currentUser filter nonAdmin or parseUser()
             val (xlsx, name) = TaskSheetExport.workbook(interval, scale, user)
 
             val contentStream = using(new ByteArrayOutputStream()) { out =>

@@ -1,19 +1,20 @@
 package code.snippet
 
-import scala.xml.NodeSeq
 import code.model.User
+import code.service.ReportService
 import code.service.UserService.nonAdmin
-import code.service.{ReportService, UserService}
 import code.snippet.Params.{parseInterval, parseMonths, parseUser, thisMonth}
 import code.snippet.mixin.DateFunctions
 import code.util.TaskSheetUtils
-import net.liftweb.util.BindHelpers.strToCssBindPromoter
-import net.liftweb.http.S
+import code.util.TaskSheetUtils._
 import com.github.nscala_time.time.Imports._
 import net.liftweb.common.Box
+import net.liftweb.http.S
+import net.liftweb.util.BindHelpers.strToCssBindPromoter
 import net.liftweb.util.CssSel
 import org.joda.time.{ReadablePartial, YearMonth}
-import code.util.TaskSheetUtils._
+
+import scala.xml.NodeSeq
 
 
 /**
@@ -26,19 +27,19 @@ class TasksheetSnippet extends DateFunctions {
    * Tasksheet download link.
    */
   def tasksheetExportLink(in: NodeSeq): NodeSeq = {
-    val params = "interval" -> (parseMonths(S) getOrElse List(YearMonth.now()) mkString ";") ::
+    val params = "interval" -> (parseMonths() getOrElse List(YearMonth.now()) mkString ";") ::
       (S.param("user") map (u => List("user" -> u)) getOrElse Nil)
     ("a [href]" #> s"/export/tasksheet?${ params map { case (k, v) => k + "=" + v } mkString "&" }").apply(in)
   }
 
   def title(in: NodeSeq): NodeSeq = {
-    val (interval, scale) = parseInterval(S) getOrElse thisMonth()
+    val (interval, scale) = parseInterval() getOrElse thisMonth()
     <span>{TaskSheetUtils.title(interval, scale)}</span>
   }
 
   def tasksheet(in: NodeSeq): NodeSeq = {
-    val (interval, scale) = parseInterval(S) getOrElse thisMonth
-    val user = User.currentUser filter nonAdmin or parseUser(S)
+    val (interval, scale) = parseInterval() getOrElse thisMonth
+    val user = User.currentUser filter nonAdmin or parseUser()
 
     renderTaskSheet(interval, scale, user)(in)
   }

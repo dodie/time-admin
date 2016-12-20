@@ -130,7 +130,7 @@ trait DateFunctions {
   }
 
   def monthIntervalPicker(in: NodeSeq): NodeSeq = {
-    val months = parseMonths(S) getOrElse List(YearMonth.now())
+    val months = parseMonths() getOrElse List(YearMonth.now())
     val pattern = DateTimeFormat.forPattern("yyyy. MM.")
 
     val map =

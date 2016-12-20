@@ -93,7 +93,7 @@ class UsersSnippet {
     } getOrElse {
       "select" #> ("option" #> (everybody :: {
         User.findAll() sortWith niceName map { u =>
-          option(u, selected = parseUser(S).exists(_.id.get == u.id.get))
+          option(u, selected = parseUser().exists(_.id.get == u.id.get))
         }
       }))
     } apply in
