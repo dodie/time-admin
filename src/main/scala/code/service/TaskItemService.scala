@@ -4,9 +4,7 @@ package service
 import scala.collection.mutable.ListBuffer
 import org.joda.time.{DateTime, Interval}
 import code.commons.TimeUtils
-import code.model.TaskItem
-import code.model.User
-import code.model.Project
+import code.model.{Project, Task, TaskItem, User}
 import net.liftweb.common.Box.box2Option
 import net.liftweb.common.{Box, Full}
 import net.liftweb.mapper._
@@ -81,11 +79,13 @@ object TaskItemService {
       taskItemDtos.reverse.toList.filter(item => item.duration != 0 || item.taskItem.task.get == 0)
     }
 
-    val taskItemsForPeriod =
-      TaskItem.findAll(OrderBy(TaskItem.start, Ascending),
+    val taskItemsForPeriod = TaskItem.findAll(
+        OrderBy(TaskItem.start, Ascending),
         user.map(u => By(TaskItem.user, u)).getOrElse(alwaysTrue),
         By_<(TaskItem.start, interval.endMillis),
-        By_>=(TaskItem.start, interval.startMillis))
+        By_>=(TaskItem.start, interval.startMillis),
+        PreCache(TaskItem.task)
+      )
 
     val users = user.map(List(_)).getOrElse(User.findAll)
 
@@ -306,11 +306,11 @@ object TaskItemService {
  * The duration can be derived from the entry's and the following entry's start time.
  */
 case class TaskItemWithDuration(taskItem: TaskItem, var duration: Long) {
-  val task = TaskService.getTask(taskItem.task.get)
-  val project = if (!task.isEmpty) Some(Project.findByKey(task.get.parent.get).get) else None
+  val task = taskItem.task.obj toOption
+  val project = task flatMap (_.parent.obj)
 
-  val taskName = if (!task.isEmpty) Some(task.get.name.get) else None
-  val projectName = if (!project.isEmpty) Some(ProjectService.getDisplayName(project.get)) else None
+  val taskName = task map (_.name.get)
+  val projectName = project map ProjectService.getDisplayName
 
   val timeString = TimeUtils.format(TimeUtils.TIME_FORMAT, taskItem.start.get)
 
