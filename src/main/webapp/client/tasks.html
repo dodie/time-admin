@@ -13,14 +13,14 @@
 		<div class="container">
 			<div class="date-selectors">
 				<span class="statusBarItem">
-					<a data-tab-aware="" class="btn btn-default btn-xs lift:taskItemSnippet.pagingPrev" paging:url="">&#9664;</a>
+					<a class="btn btn-default btn-xs lift:taskItemSnippet.pagingPrev" paging:url="">&#9664;</a>
 				</span>
 				<span class="lift:taskItemSnippet.selectedDay"></span>
 				<span class="statusBarItem">
-					<a data-tab-aware="" class="btn btn-default btn-xs lift:taskItemSnippet.pagingNext" paging:url="">&#9654;</a>
+					<a class="btn btn-default btn-xs lift:taskItemSnippet.pagingNext" paging:url="">&#9654;</a>
 				</span>
 				<span class="statusBarItem">
-					<a data-tab-aware="" paging:url="" class="btn btn-default btn-xs lift:taskItemSnippet.pagingCurrent">
+					<a paging:url="" class="btn btn-default btn-xs lift:taskItemSnippet.pagingCurrent">
 						<span class="glyphicon glyphicon-calendar" aria-hidden="true"></span>
 					</a>
 				</span>
@@ -72,7 +72,7 @@
 												<input type="hidden" name="taskitemid" value=""/>
 												<input type="hidden" name="taskid" value=""/>
 												<input type="hidden" name="time" value=""/>
-												<a href="#" onclick="var form = $(this).closest('form')[0]; setTaskItemEditorPopup(form.taskitemid.value, form.time.value, form.taskid.value); $('.modal').modal();" class="btn btn-default btn-xs">
+												<a onclick="var form = $(this).closest('form')[0]; setTaskItemEditorPopup(form.taskitemid.value, form.time.value, form.taskid.value); $('.modal').modal();" class="btn btn-default btn-xs">
 													<span class="glyphicon glyphicon-pencil" aria-hidden="true"></span>
 												</a>
 											</form>
