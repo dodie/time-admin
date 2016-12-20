@@ -14,7 +14,7 @@ import org.joda.time.ReadablePartial
 object TaskSheetExport {
 
   def workbook(interval: Interval, scale: LocalDate => ReadablePartial, user: Box[User]): (XSSFWorkbook, String) = {
-    val taskSheet = ReportService.taskSheetData(interval, scale, User.currentUser)
+    val taskSheet = ReportService.taskSheetData(interval, scale, user)
 
     val ds = dates(taskSheet)
     val ts = tasks(taskSheet)
