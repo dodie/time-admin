@@ -4,7 +4,7 @@ import scala.xml.NodeSeq
 import code.model.User
 import code.service.UserService.nonAdmin
 import code.service.{ReportService, UserService}
-import code.snippet.Params.{parseInterval, parseUser, thisMonth}
+import code.snippet.Params.{parseInterval, parseMonths, parseUser, thisMonth}
 import code.snippet.mixin.DateFunctions
 import code.util.TaskSheetUtils
 import net.liftweb.util.BindHelpers.strToCssBindPromoter
@@ -12,7 +12,7 @@ import net.liftweb.http.S
 import com.github.nscala_time.time.Imports._
 import net.liftweb.common.Box
 import net.liftweb.util.CssSel
-import org.joda.time.ReadablePartial
+import org.joda.time.{ReadablePartial, YearMonth}
 import code.util.TaskSheetUtils._
 
 
@@ -26,13 +26,8 @@ class TasksheetSnippet extends DateFunctions {
    * Tasksheet download link.
    */
   def tasksheetExportLink(in: NodeSeq): NodeSeq = {
-    S.param("user").map("&user=" + _).getOrElse("")
-
-    val params = List(
-      "intervalStart" -> S.param("intervalStart").getOrElse(LocalDate.now().toString),
-      "intervalEnd" -> S.param("intervalEnd").getOrElse(LocalDate.now().toString)
-    ) ::: (S.param("user") map (u => List("user" -> u)) getOrElse Nil)
-
+    val params = "interval" -> (parseMonths(S) getOrElse List(YearMonth.now()) mkString ";") ::
+      (S.param("user") map (u => List("user" -> u)) getOrElse Nil)
     ("a [href]" #> s"/export/tasksheet?${ params map { case (k, v) => k + "=" + v } mkString "&" }").apply(in)
   }
 
