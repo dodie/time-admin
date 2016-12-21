@@ -18,7 +18,7 @@ import com.github.nscala_time.time.Imports._
 import scala.collection.immutable.Seq
 import code.util.ListToFoldedMap._
 
-import scala.annotation.tailrec
+import scala.language.postfixOps
 
 /**
  * Reponsible for creating report data.
@@ -115,7 +115,7 @@ object ReportService {
   def taskSheetData[D <: ReadablePartial](i: Interval, f: LocalDate => D, u: Box[User]): TaskSheet[D] = {
     val ps = Project.findAll
 
-    dates(i, f).map(d => (d, activeTaskItems(TimeUtils.intervalFrom(d), u, ps).map(t => taskSheetItemWithDuration(t, ps))))
+    dates(i, f).map(d => (d, getTaskItems(TimeUtils.intervalFrom(d), u).filter(_.taskName.exists(_ != "")).map(t => taskSheetItemWithDuration(t, ps))))
       .foldedMap(Nil: List[(TaskSheetItem,Duration)])(_ ::: _)
       .mapValues(_.foldedMap(Duration.ZERO)(_ + _))
   }
@@ -129,11 +129,8 @@ object ReportService {
 
     } map (i.start.toLocalDate.plusDays(_)) toList
 
-  def activeTaskItems(i: Interval, u: Box[User], ps: List[Project]): List[TaskItemWithDuration] =
-    getTaskItems(i, u) filter (active_?(_, ps))
-
-  def active_?(twid: TaskItemWithDuration, ps: List[Project]): Boolean =
-    twid.task exists (t => path(List(t), t.parent.box, ps) exists (_.active.get))
+  def taskItemsExceptPause(i: Interval, u: Box[User]): List[TaskItemWithDuration] =
+    getTaskItems(i, u) filter (_.taskName exists (_ != ""))
 
   def taskSheetItemWithDuration(t: TaskItemWithDuration, ps: List[Project]): (TaskSheetItem, Duration) = {
     val id = t.task map (_.id.get) getOrElse 0L
