@@ -11,6 +11,7 @@ import org.joda.time.{DateTime, Duration, _}
 import code.commons.TimeUtils
 import net.liftweb.http.S
 import code.model.{Project, User}
+import code.service.HierarchicalItemService.path
 import code.service.TaskItemService.getTaskItems
 import com.github.nscala_time.time.Imports._
 
@@ -129,19 +130,16 @@ object ReportService {
     } map (i.start.toLocalDate.plusDays(_)) toList
 
   def activeTaskItems(i: Interval, u: Box[User], ps: List[Project]): List[TaskItemWithDuration] =
-    getTaskItems(i, u) filter (t => path(Nil, t.task flatMap (_.parent.box), ps) exists (_.active.get))
+    getTaskItems(i, u) filter (active_?(_, ps))
+
+  def active_?(twid: TaskItemWithDuration, ps: List[Project]): Boolean =
+    twid.task exists (t => path(List(t), t.parent.box, ps) exists (_.active.get))
 
   def taskSheetItemWithDuration(t: TaskItemWithDuration, ps: List[Project]): (TaskSheetItem, Duration) = {
     val id = t.task map (_.id.get) getOrElse 0L
-    val name = t.task map (t => path(Nil, t.parent.box, ps) :+ t) getOrElse Nil map (_.name) mkString " - "
+    val name = t.task map (t => path(List(t), t.parent.box, ps)) getOrElse Nil map (_.name) mkString " - "
     (new TaskSheetItem(id, name), new Duration(t.duration))
   }
-
-  def path(z: List[Project], pid: Box[Long], ps: List[Project]): List[Project] =
-    (for {
-      id <- pid
-      p <- ps find (_.id.get == id)
-    } yield path(p :: z, p.parent.box, ps)) getOrElse z
 
   /**
    * Aggregates the given TaskItem DTOs.
