@@ -122,11 +122,16 @@
 											<input type="hidden" name="selecttaskid" task:taskid=""/>
 											<input class="newTaskItemInput" type="text" name="timeoffset" task:placeholder="" value="" autocomplete="off" onfocus="this.value='';" onclick="arguments[0].stopPropagation();" onkeypress="return submitOnEnter(this, event)"/>
 											<div class="taskColorIndicator" task:colorindicator="" task:onrowclick="">-&gt;</div>
-											<div class="taskName_info" task:onrowclick=""><span class="tasksProjectName"><task:projectname/></span>-<span class="tasksTaskName"><task:taskname/></span> <span class="tasksTaskDescription"><task:taskdescription/></span></div>
-											<span style="display:none;" class="newtaskholder">
+											<div class="taskName_info">
+												<span class="tasksProjectName" task:onrowclick=""><task:projectname/></span>
 												-
-												<input type="text" name="newtaskname" onkeypress="return submitOnEnter(this, event)"/>
-											</span>
+												<span class="tasksTaskName" task:onrowclick=""><task:taskname/></span>
+												<span style="display:none;" class="newtaskholder">
+													-
+													<input type="text" name="newtaskname" onkeypress="return submitOnEnter(this, event)"/>
+												</span>
+												<span class="tasksTaskDescription"><task:taskdescription/></span>
+											</div>
 										</form>
 										<a class="specify-subtask" onclick="toggleSubtaskCreatorForm(this);">
 											<span data-open>+ <lift:loc>tasks.new</lift:loc></span>

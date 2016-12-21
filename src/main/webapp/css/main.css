@@ -608,9 +608,23 @@ form.button {
 }
 
 .taskName_info {
-	cursor: pointer;
 	display: inline-block;
 	max-width: 80%;
+}
+
+.taskName_info .tasksProjectName {
+	cursor: pointer;
+}
+
+.taskName_info .tasksTaskName {
+	cursor: pointer;
+}
+
+.taskName_info input[name='newtaskname'] {
+	line-height: 15px;
+	padding: 0;
+	height: 19px;
+	border: 1px solid #ddd;
 }
 
 .tasksTaskDescription {
