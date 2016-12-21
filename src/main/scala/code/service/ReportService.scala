@@ -7,7 +7,7 @@ import java.text.DecimalFormat
 
 import scala.collection.mutable.ListBuffer
 import net.liftweb.common._
-import org.joda.time.{Duration, DateTime, _}
+import org.joda.time.{DateTime, Duration, _}
 import code.commons.TimeUtils
 import net.liftweb.http.S
 import code.model.{Project, User}
@@ -15,8 +15,9 @@ import code.service.TaskItemService.getTaskItems
 import com.github.nscala_time.time.Imports._
 
 import scala.collection.immutable.Seq
-
 import code.util.ListToFoldedMap._
+
+import scala.annotation.tailrec
 
 /**
  * Reponsible for creating report data.
@@ -110,10 +111,13 @@ object ReportService {
 
   type TaskSheet[D <: ReadablePartial] = Map[D, Map[TaskSheetItem,Duration]]
 
-  def taskSheetData[D <: ReadablePartial](i: Interval, f: LocalDate => D, u: Box[User]): TaskSheet[D] =
-    dates(i, f).map(d => (d, activeTaskItems(TimeUtils.intervalFrom(d), u).map(t => taskSheetItemWithDuration(t))))
+  def taskSheetData[D <: ReadablePartial](i: Interval, f: LocalDate => D, u: Box[User]): TaskSheet[D] = {
+    val ps = Project.findAll
+
+    dates(i, f).map(d => (d, activeTaskItems(TimeUtils.intervalFrom(d), u, ps).map(t => taskSheetItemWithDuration(t, ps))))
       .foldedMap(Nil: List[(TaskSheetItem,Duration)])(_ ::: _)
       .mapValues(_.foldedMap(Duration.ZERO)(_ + _))
+  }
 
   def dates[D <: ReadablePartial](i: Interval, f: LocalDate => D): List[D] = days(i).map(f).distinct
 
@@ -124,10 +128,20 @@ object ReportService {
 
     } map (i.start.toLocalDate.plusDays(_)) toList
 
-  def activeTaskItems(i: Interval, u: Box[User]): List[TaskItemWithDuration] =
-    getTaskItems(i, u).filter(_.project.exists(_.active.get))
+  def activeTaskItems(i: Interval, u: Box[User], ps: List[Project]): List[TaskItemWithDuration] =
+    getTaskItems(i, u) filter (t => path(Nil, t.task flatMap (_.parent.box), ps) exists (_.active.get))
 
-  def taskSheetItemWithDuration(t: TaskItemWithDuration): (TaskSheetItem, Duration) = (TaskSheetItem(t), new Duration(t.duration))
+  def taskSheetItemWithDuration(t: TaskItemWithDuration, ps: List[Project]): (TaskSheetItem, Duration) = {
+    val id = t.task map (_.id.get) getOrElse 0L
+    val name = t.task map (t => path(Nil, t.parent.box, ps) :+ t) getOrElse Nil map (_.name) mkString " - "
+    (new TaskSheetItem(id, name), new Duration(t.duration))
+  }
+
+  def path(z: List[Project], pid: Box[Long], ps: List[Project]): List[Project] =
+    (for {
+      id <- pid
+      p <- ps find (_.id.get == id)
+    } yield path(p :: z, p.parent.box, ps)) getOrElse z
 
   /**
    * Aggregates the given TaskItem DTOs.

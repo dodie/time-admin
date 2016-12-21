@@ -6,7 +6,7 @@ import org.joda.time.{DateTime, Interval}
 import code.commons.TimeUtils
 import code.model.{Project, Task, TaskItem, User}
 import net.liftweb.common.Box.box2Option
-import net.liftweb.common.{Box, Full}
+import net.liftweb.common.{Box, Empty, Full}
 import net.liftweb.mapper._
 import com.github.nscala_time.time.Imports._
 
@@ -306,15 +306,13 @@ object TaskItemService {
  * The duration can be derived from the entry's and the following entry's start time.
  */
 case class TaskItemWithDuration(taskItem: TaskItem, var duration: Long) {
-  val task = taskItem.task.obj toOption
-  val project = task flatMap (_.parent.obj)
+  lazy val task = taskItem.task.obj
+  lazy val project = task flatMap (_.parent.obj)
 
-  val taskName = task map (_.name.get)
-  val projectName = project map ProjectService.getDisplayName
+  lazy val taskName = task map (_.name.get)
+  lazy val projectName = project map ProjectService.getDisplayName
 
   val timeString = TimeUtils.format(TimeUtils.TIME_FORMAT, taskItem.start.get)
 
   def durationInMinutes = (duration / 60D / 1000).toLong
 }
-
-

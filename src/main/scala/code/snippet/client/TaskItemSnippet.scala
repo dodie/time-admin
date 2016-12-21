@@ -2,6 +2,7 @@ package code
 package snippet
 
 import code.service.ProjectService
+
 import scala.xml.NodeSeq.seqToNodeSeq
 import scala.xml.NodeSeq
 import scala.xml.Text
@@ -11,6 +12,7 @@ import code.service.TaskItemWithDuration
 import code.service.TaskService
 import code.snippet.mixin.DateFunctions
 import net.liftweb.common.Box.box2Option
+import net.liftweb.common.Full
 import net.liftweb.http.S
 import net.liftweb.util.BindHelpers.strToCssBindPromoter
 import net.liftweb.util.Helpers.AttrBindParam
@@ -62,7 +64,7 @@ class TaskItemSnippet extends DateFunctions {
         val fragBarStyle = "background-color:rgba(" + red + " , " + green + " , " + blue + " ," + alpha + ");"
         val fragBarProjectStyle = {
           taskItemDto.project match {
-            case Some(project) => "background-color:" + ProjectService.getRootProject(project).color.get
+            case Full(project) => "background-color:" + ProjectService.getRootProject(project).color.get
             case _ => ""
           }
         }
@@ -120,7 +122,7 @@ class TaskItemSnippet extends DateFunctions {
             }
             val fragBarProjectStyle = {
               taskItemDto.project match {
-                case Some(project) => {
+                case Full(project) => {
                   var bgColor = ProjectService.getRootProject(project).color.get
                   if (bgColor != null && bgColor.length == 7) {
                     val (red, green, blue) = (Integer.valueOf(bgColor.substring(1, 3), 16),
