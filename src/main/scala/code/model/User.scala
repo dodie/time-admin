@@ -183,12 +183,12 @@ object User extends User with MetaMegaProtoUser[User] with ManyToMany {
         <input name="username" class="email form-control" type="email" id="inputEmail" placeholder={userNameFieldString} required="" autofocus=""/>
         <label for="inputPassword" class="sr-only">Password</label>
         <input name="password" type="password" id="inputPassword" class="password form-control" placeholder={S.?("password")} required=""/>
+        <button class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
         <div class="checkbox">
           <label>
-            <input type="checkbox" value="remember-me"/> Remember me
+            <input type="checkbox" name ="rememberme" value="remember-me" checked="true"/> {S.?("rememberme")}
           </label>
         </div>
-        <button class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
         <div class="to-registration">
           <a href="/user_mgt/sign_up">{S.?("page.registration")}</a>
         </div>
@@ -215,9 +215,8 @@ object User extends User with MetaMegaProtoUser[User] with ManyToMany {
 
             logUserIn(user, () => {
               S.notice(S.?("logged.in"))
-
               preLoginState()
-
+              S.param("rememberme") foreach {_ => ExtSession.userDidLogin(user)}
               S.redirectTo(redir)
             })
           }
@@ -241,7 +240,6 @@ object User extends User with MetaMegaProtoUser[User] with ManyToMany {
 
   object roles extends MappedManyToMany(UserRoles, UserRoles.user, UserRoles.role, Role)
 
-  onLogIn = List(ExtSession.userDidLogin(_))
   onLogOut = List(ExtSession.userDidLogout(_))
 }
 
