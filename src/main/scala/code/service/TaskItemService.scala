@@ -4,6 +4,7 @@ package service
 import scala.collection.mutable.ListBuffer
 import org.joda.time.{DateTime, Interval}
 import code.commons.TimeUtils
+import code.model.mixin.HierarchicalItem
 import code.model.{Project, Task, TaskItem, User}
 import code.service.HierarchicalItemService.path
 import net.liftweb.common.Box.box2Option
@@ -308,9 +309,15 @@ object TaskItemService {
  * The duration can be derived from the entry's and the following entry's start time.
  */
 case class TaskItemWithDuration(taskItem: TaskItem, var duration: Long, ps: List[Project]) {
-  lazy val task = taskItem.task.obj
+  lazy val task: Box[Task] = taskItem.task.obj
 
-  lazy val fullName = task map (t => path(List(t), t.parent.box, ps)) getOrElse Nil map (_.name) mkString " - "
+  lazy val fullPath: List[HierarchicalItem[_]] = task map (t => path(List(t), t.parent.box, ps)) getOrElse Nil
+
+  lazy val fullName: String = fullPath map (_.name) mkString " - "
+
+  lazy val color: (Int,Int,Int,Int) = TaskService.getColor(fullName, task.exists(_.active.get))
+
+  lazy val baseColor: (Int,Int,Int,Int) = fullPath.lastOption map (_.color.get) flatMap { s => Option(s) filter (c => c.nonEmpty && c.length == 7) } map parseColor getOrElse (0,0,0,0)
 
   lazy val project = task flatMap (_.parent.obj)
 
@@ -320,4 +327,11 @@ case class TaskItemWithDuration(taskItem: TaskItem, var duration: Long, ps: List
   val timeString = TimeUtils.format(TimeUtils.TIME_FORMAT, taskItem.start.get)
 
   def durationInMinutes = (duration / 60D / 1000).toLong
+
+  private def parseColor(color: String): (Int,Int,Int,Int) = (
+    Integer.valueOf(color.substring(1, 3), 16),
+    Integer.valueOf(color.substring(3, 5), 16),
+    Integer.valueOf(color.substring(5, 7), 16),
+    0
+  )
 }

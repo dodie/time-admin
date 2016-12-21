@@ -60,13 +60,13 @@ class TaskItemSnippet extends DateFunctions {
     } else {
       (".item *" #> taskItems.map(taskItemDto => {
         val active = (!taskItemDto.task.isEmpty)
-        val (red, green, blue, alpha) = TaskService.getColor(taskItemDto.taskName.getOrElse(""), taskItemDto.projectName.getOrElse(""), active)
-        val fragBarStyle = "background-color:rgba(" + red + " , " + green + " , " + blue + " ," + alpha + ");"
+        val fragBarStyle = {
+          val (red, green, blue, alpha) = taskItemDto.color
+          "background-color:rgba(" + red + " , " + green + " , " + blue + " ," + alpha + ");"
+        }
         val fragBarProjectStyle = {
-          taskItemDto.project match {
-            case Full(project) => "background-color:" + ProjectService.getRootProject(project).color.get
-            case _ => ""
-          }
+          val (red, green, blue, alpha) = taskItemDto.baseColor
+          "background-color:rgba(" + red + " , " + green + " , " + blue + " ," + alpha + ");"
         }
         ".date *" #> getDateString(taskItemDto) &
         ".project *" #> taskItemDto.projectName.getOrElse("") &
@@ -115,27 +115,15 @@ class TaskItemSnippet extends DateFunctions {
 
             val fragStyle = "width:" + lengthInPercent + "%;"
             val fragBarStyle = {
-              val (red, green, blue, alpha) = TaskService.getColor(taskItemDto.taskName.getOrElse(""), taskItemDto.projectName.getOrElse(""), active)
+              val (red, green, blue, alpha) = taskItemDto.color
               val isDarkColor = (((red * 299) + (green * 587) + (blue * 114)) / 1000) < 128
-              (if (isDarkColor) "color:white; " else "color:black; ") +
-              "background-color:" + "rgba(" + red + " , " + green + " , " + blue + " , " + alpha + ");"
+              (if (isDarkColor) "color:white; " else "color:black; ") + "background-color:rgba(" + red + " , " + green + " , " + blue + " ," + alpha + ");"
             }
+
             val fragBarProjectStyle = {
-              taskItemDto.project match {
-                case Full(project) => {
-                  var bgColor = ProjectService.getRootProject(project).color.get
-                  if (bgColor != null && bgColor.length == 7) {
-                    val (red, green, blue) = (Integer.valueOf(bgColor.substring(1, 3), 16),
-                                              Integer.valueOf(bgColor.substring(3, 5), 16),
-                                              Integer.valueOf(bgColor.substring(5, 7), 16))
-                    val isDarkColor = (((red * 299) + (green * 587) + (blue * 114)) / 1000) < 128
-                    (if (isDarkColor) "color:white; " else "color:black; ") + "background-color:" + bgColor
-                  } else {
-                    ""
-                  }
-                }
-                case _ => ""
-              }
+              val (red, green, blue, alpha) = taskItemDto.baseColor
+              val isDarkColor = (((red * 299) + (green * 587) + (blue * 114)) / 1000) < 128
+              (if (isDarkColor) "color:white; " else "color:black; ") + "background-color:rgba(" + red + " , " + green + " , " + blue + " ," + alpha + ");"
             }
             val fragTextStyle = if (odd) Text("top:-80px;") else Text("top:15px;")
             val fragBarClass = if (active && last) "fragBar fragBarContinued" else if (active && !last) "fragBar" else "fragBar noborder"
