@@ -19,8 +19,8 @@ import java.util.Locale
 import code.service.UserService.nonAdmin
 import code.snippet.Params.{parseInterval, parseUser, thisMonth}
 import code.util.IO.{using, xlsxResponse}
+import net.liftweb.db.DBLogEntry
 import net.liftweb.http.js.JE
-import net.liftweb.util.ControlHelpers.tryo
 
 
 
@@ -28,7 +28,7 @@ import net.liftweb.util.ControlHelpers.tryo
  * Allows the application to modify lift's environment based on the configuration.
  * @author David Csakvari
  */
-class Boot {
+class Boot extends Loggable {
   def boot() {
     // DB config
     if (!DB.jndiJdbcConnAvailable_?) {
@@ -49,6 +49,15 @@ class Boot {
       LiftRules.unloadHooks.append(vendor.closeAllConnections_!)
 
       DB.defineConnectionManager(mapper.DefaultConnectionIdentifier, vendor)
+    }
+
+    DB.addLogFunc {
+      case (log, duration) => {
+        logger.trace("Total query time : %d ms".format(duration))
+        log.allEntries.foreach {
+          case DBLogEntry(stmt, duration) => logger.trace("  %s in %d ms".format(stmt, duration))
+        }
+      }
     }
 
     // Entities (Mapper)
