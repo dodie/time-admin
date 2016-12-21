@@ -92,9 +92,15 @@ class UsersSnippet {
       "select [style]" #> "display:none;" & "option" #> ""
     } getOrElse {
       "select" #> ("option" #> (everybody :: {
-        User.findAll() sortWith niceName map { u =>
+        val users = User.findAll
+        val userRoles = UserRoles.findAll
+        val (active, inactive) = (users sortWith niceName) partition {user => userRoles.exists(_.user == user)}
+
+        (active map { u =>
           option(u, selected = parseUser().exists(_.id.get == u.id.get))
-        }
+        }) ::: (inactive map { u =>
+          option(u, selected = parseUser().exists(_.id.get == u.id.get)) & "option [style]" #> "background:#efefef"
+        })
       }))
     } apply in
 
