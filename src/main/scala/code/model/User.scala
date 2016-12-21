@@ -25,11 +25,26 @@ object User extends User with MetaMegaProtoUser[User] with ManyToMany {
       form <- field.toForm.toList
       fieldId <- field.uniqueFieldId
     } yield {
-      <div class="form-group">
-        <label for={fieldId}>{field.displayName}</label>
-        {form.map(_.asInstanceOf[Elem]% ("class" -> "form-control"))}
-        <span><lift:Msg id={fieldId} errorClass="edit_error_class"></lift:Msg></span>
-      </div>
+      if (field == password) {
+        <div>
+          <div class="form-group">
+            <label for={fieldId}>{field.displayName}</label>
+            {form.map(e => (((e.asInstanceOf[Elem] \\ "input").head).asInstanceOf[Elem]) % ("class" -> "form-control"))}
+            <span><lift:Msg id={fieldId} errorClass="edit_error_class"></lift:Msg></span>
+          </div>
+          <div class="form-group">
+            <label for={fieldId}>{S.?("password.repeat")}</label>
+            {form.map(e => (((e.asInstanceOf[Elem] \\ "input").drop(1).head).asInstanceOf[Elem]) % ("class" -> "form-control"))}
+            <span><lift:Msg id={fieldId} errorClass="edit_error_class"></lift:Msg></span>
+          </div>
+        </div>
+      } else {
+        <div class="form-group">
+          <label for={fieldId}>{field.displayName}</label>
+          {form.map(_.asInstanceOf[Elem] % ("class" -> "form-control"))}
+          <span><lift:Msg id={fieldId} errorClass="edit_error_class"></lift:Msg></span>
+        </div>
+      }
     }
   }
 
