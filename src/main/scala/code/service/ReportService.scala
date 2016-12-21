@@ -135,7 +135,7 @@ object ReportService {
   def taskSheetItemWithDuration(t: TaskItemWithDuration, ps: List[Project]): (TaskSheetItem, Duration) = {
     val id = t.task map (_.id.get) getOrElse 0L
     val name = t.task map (t => path(List(t), t.parent.box, ps)) getOrElse Nil map (_.name) mkString " - "
-    (new TaskSheetItem(id, name), new Duration(t.duration))
+    (TaskSheetItem(id, name), new Duration(t.duration))
   }
 
   /**
