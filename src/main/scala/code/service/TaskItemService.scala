@@ -5,6 +5,7 @@ import scala.collection.mutable.ListBuffer
 import org.joda.time.{DateTime, Interval}
 import code.commons.TimeUtils
 import code.model.{Project, Task, TaskItem, User}
+import code.service.HierarchicalItemService.path
 import net.liftweb.common.Box.box2Option
 import net.liftweb.common.{Box, Empty, Full}
 import net.liftweb.mapper._
@@ -32,6 +33,7 @@ object TaskItemService {
    * The ordering is determined by the item's start time.
    */
   def getTaskItems(interval: Interval, user: Box[User] = User.currentUser): List[TaskItemWithDuration] = {
+    lazy val projects = Project.findAll
 
     def toTimeline(taskItems: List[TaskItem]): List[TaskItemWithDuration] = {
       val taskItemDtos = new ListBuffer[TaskItemWithDuration]
@@ -72,7 +74,7 @@ object TaskItemService {
           //compensate lost millisecond at the end of the day
           val duration = (if (previousTaskStart == TimeUtils.dayEndInMs(previousTaskStart)) previousTaskStart + 1 else previousTaskStart) - start
           previousTaskStart = start
-          taskItemDtos += TaskItemWithDuration(taskItem, duration)
+          taskItemDtos += TaskItemWithDuration(taskItem, duration, projects)
         }
       }
 
@@ -104,7 +106,7 @@ object TaskItemService {
 
     if (list.isEmpty) {
       // if the result is empty, then return a list that contains only a Pause item
-      List(TaskItemWithDuration(TaskItem.create.user(user).start(interval.startMillis + 1), 0))
+      List(TaskItemWithDuration(TaskItem.create.user(user).start(interval.startMillis + 1), 0, projects))
     } else {
       list
     }
@@ -305,8 +307,11 @@ object TaskItemService {
  * TaskItem wrapper/DTO, witch contains the duration value of the given entry as it is usually needed.
  * The duration can be derived from the entry's and the following entry's start time.
  */
-case class TaskItemWithDuration(taskItem: TaskItem, var duration: Long) {
+case class TaskItemWithDuration(taskItem: TaskItem, var duration: Long, ps: List[Project]) {
   lazy val task = taskItem.task.obj
+
+  lazy val fullName = task map (t => path(List(t), t.parent.box, ps)) getOrElse Nil map (_.name) mkString " - "
+
   lazy val project = task flatMap (_.parent.obj)
 
   lazy val taskName = task map (_.name.get)

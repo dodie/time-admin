@@ -132,11 +132,8 @@ object ReportService {
   def taskItemsExceptPause(i: Interval, u: Box[User]): List[TaskItemWithDuration] =
     getTaskItems(i, u) filter (_.taskName exists (_ != ""))
 
-  def taskSheetItemWithDuration(t: TaskItemWithDuration, ps: List[Project]): (TaskSheetItem, Duration) = {
-    val id = t.task map (_.id.get) getOrElse 0L
-    val name = t.task map (t => path(List(t), t.parent.box, ps)) getOrElse Nil map (_.name) mkString " - "
-    (TaskSheetItem(id, name), new Duration(t.duration))
-  }
+  def taskSheetItemWithDuration(t: TaskItemWithDuration, ps: List[Project]): (TaskSheetItem, Duration) =
+    (TaskSheetItem(t.task map (_.id.get) getOrElse 0L, t.fullName), new Duration(t.duration))
 
   /**
    * Aggregates the given TaskItem DTOs.
