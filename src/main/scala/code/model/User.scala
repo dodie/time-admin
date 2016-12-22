@@ -128,8 +128,8 @@ object User extends User with MetaMegaProtoUser[User] with ManyToMany {
       theUser.validate match {
         case Nil =>
           theUser.save
-          S.notice(S.?("profile.updated"))
-          S.redirectTo(homePage)
+          S.notice(S.?("user.profile.updated"))
+          S.redirectTo("/admin/users")
 
         case xs => S.error(xs) ; editFunc(Full(innerEdit _))
       }
