@@ -118,6 +118,29 @@ object User extends User with MetaMegaProtoUser[User] with ManyToMany {
     innerEdit
   }
 
+  def edit(user: User) = {
+    val theUser: TheUserType =
+      mutateUserOnEdit(user)
+
+    val theName = editPath.mkString("")
+
+    def testEdit() {
+      theUser.validate match {
+        case Nil =>
+          theUser.save
+          S.notice(S.?("user.profile.updated"))
+          S.redirectTo("/admin/users")
+
+        case xs => S.error(xs) ; editFunc(Full(innerEdit _))
+      }
+    }
+
+    def innerEdit = {
+      ("type=submit" #> editSubmitButton(S.?("save"), testEdit _)) apply editXhtml(theUser)
+    }
+
+    innerEdit
+  }
 
   override def changePasswordXhtml = {
     (<form class="form-user" method="post" role="form" action={S.uri}>

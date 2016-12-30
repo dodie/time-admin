@@ -9,7 +9,7 @@
 	font-weight: bold;
 }
 
-.form-user {
+.form-user, .usersPage #editor {
 	max-width: 500px;
 	margin: auto;
 }
@@ -716,28 +716,6 @@ form.button {
 /*-----
   Admin
   -----*/
-.usersPage .userName {
-	font-weight: bold;
-}
-
-.usersPage #editor input, .usersPage #editor select {
-	display: block;
-	margin-bottom: 10px;
-	width: 225px;
-}
-
-.usersPage #editor input[type='submit'] {
-	width: 50px;
-}
-
-.usersPage #editor input[type='checkbox'] {
-	width: 15px;
-}
-
-.usersPage .userTable {
-	width: 100%;
-}
-
 /*Projects*/
 .projectsPage .dropdown-menu li a {
 	color: black;
