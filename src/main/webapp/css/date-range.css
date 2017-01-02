@@ -6,7 +6,8 @@
 
 .date-range-input {
     min-width: 200px;
-    text-align: center; }
+    text-align: center;
+    cursor: pointer }
 .date-range-input .date-range-input-display-from::after {
     content: attr(data-value); }
 .date-range-input .date-range-input-display-to:not([data-value=""])::before {
