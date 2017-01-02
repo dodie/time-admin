@@ -150,7 +150,8 @@ class UsersSnippet {
 
     if (!userIdBox.isEmpty) {
       val user = User.findByKey(userIdBox.get.toLong)
-      user.get.toForm(Full("save"), "/admin/users")
+      User.edit(user.get)
+      //user.get.toForm(Full("save"), "/admin/users")
     } else {
       <lift:embed what="no_data"/>
     }

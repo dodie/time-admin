@@ -9,7 +9,7 @@
 	font-weight: bold;
 }
 
-.form-user {
+.form-user, .usersPage #editor {
 	max-width: 500px;
 	margin: auto;
 }
@@ -39,10 +39,6 @@
 	max-width: 330px;
 	padding: 15px;
 	margin: 0 auto;
-}
-
-.form-signin .checkbox label {
-	display: none;
 }
 
 .form-signin .form-signin-heading,
@@ -608,9 +604,23 @@ form.button {
 }
 
 .taskName_info {
-	cursor: pointer;
 	display: inline-block;
 	max-width: 80%;
+}
+
+.taskName_info .tasksProjectName {
+	cursor: pointer;
+}
+
+.taskName_info .tasksTaskName {
+	cursor: pointer;
+}
+
+.taskName_info input[name='newtaskname'] {
+	line-height: 15px;
+	padding: 0 3px;
+	height: 19px;
+	border: 1px solid #ddd;
 }
 
 .tasksTaskDescription {
@@ -706,28 +716,6 @@ form.button {
 /*-----
   Admin
   -----*/
-.usersPage .userName {
-	font-weight: bold;
-}
-
-.usersPage #editor input, .usersPage #editor select {
-	display: block;
-	margin-bottom: 10px;
-	width: 225px;
-}
-
-.usersPage #editor input[type='submit'] {
-	width: 50px;
-}
-
-.usersPage #editor input[type='checkbox'] {
-	width: 15px;
-}
-
-.usersPage .userTable {
-	width: 100%;
-}
-
 /*Projects*/
 .projectsPage .dropdown-menu li a {
 	color: black;
