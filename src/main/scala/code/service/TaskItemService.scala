@@ -77,7 +77,7 @@ object TaskItemService {
           //compensate lost millisecond at the end of the day
           val duration = (if (previousTaskStart == TimeUtils.dayEndInMs(previousTaskStart)) previousTaskStart + 1 else previousTaskStart) - start
           previousTaskStart = start
-          taskItemDtos += TaskItemWithDuration(taskItem, Duration.millis(duration), projects)
+          taskItemDtos += TaskItemWithDuration(taskItem, Duration.millis(duration), taskItem.task.obj map (t => path(List(t), t.parent.box, projects)) getOrElse Nil)
         }
       }
 
@@ -109,7 +109,7 @@ object TaskItemService {
 
     if (list.isEmpty) {
       // if the result is empty, then return a list that contains only a Pause item
-      List(TaskItemWithDuration(TaskItem.create.user(user).start(interval.startMillis + 1), 0 millis, projects))
+      List(TaskItemWithDuration(TaskItem.create.user(user).start(interval.startMillis + 1), 0 millis, Nil))
     } else {
       list
     }
@@ -310,30 +310,27 @@ object TaskItemService {
  * TaskItem wrapper/DTO, witch contains the duration value of the given entry as it is usually needed.
  * The duration can be derived from the entry's and the following entry's start time.
  */
-case class TaskItemWithDuration(taskItem: TaskItem, duration: Duration, ps: List[Project]) {
+case class TaskItemWithDuration(taskItem: TaskItem, duration: Duration, path: List[HierarchicalItem[_]]) {
   lazy val task: Box[Task] = taskItem.task.obj
 
-  lazy val fullPath: List[HierarchicalItem[_]] = task map (t => path(List(t), t.parent.box, ps)) getOrElse Nil
-
-  lazy val fullName: String = fullPath map (_.name) mkString "-"
+  lazy val taskName: String = task map (_.name.get) getOrElse ""
+  lazy val projectName: String = init(path) map (_.name.get) mkString "-"
+  lazy val fullName: String = path map (_.name) mkString "-"
 
   lazy val color: Color = Color.get(
     task map (_.name.get) getOrElse "",
-    fullPath match {
-      case Nil => ""
-      case path => path.init map (_.name.get) mkString "-"
-    },
+    init(path) map (_.name.get) mkString "-",
     task.exists(_.active.get)
   )
 
-  lazy val baseColor: Color = fullPath.headOption map (_.color.get) flatMap {
+  lazy val baseColor: Color = path.headOption map (_.color.get) flatMap {
     s => Option(s) filter (c => c.nonEmpty && c.length == 7)
   } map Color.parse getOrElse Color.transparent
 
-  lazy val project = task flatMap (_.parent.obj)
+  lazy val localTime: LocalTime = new DateTime(taskItem.start.get).toLocalTime
 
-  lazy val taskName = task map (_.name.get)
-  lazy val projectName = project map ProjectService.getDisplayName
-
-  val timeString = TimeUtils.format(TimeUtils.TIME_FORMAT, taskItem.start.get)
+  private def init[A](as: List[A]): List[A] = as match {
+    case Nil => Nil
+    case as => as.init
+  }
 }

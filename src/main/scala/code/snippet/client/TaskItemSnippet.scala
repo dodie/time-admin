@@ -9,6 +9,7 @@ import net.liftweb.http.S
 import net.liftweb.util.BindHelpers.strToCssBindPromoter
 import net.liftweb.util.Helpers.{AttrBindParam, strToSuperArrowAssoc}
 import net.liftweb.util.{Helpers, PCDataXmlParser}
+import org.joda.time.format.DateTimeFormat
 
 import scala.xml.NodeSeq.seqToNodeSeq
 import scala.xml.{NodeSeq, Text}
@@ -31,12 +32,10 @@ class TaskItemSnippet extends DateFunctions {
   def actualTask(in: NodeSeq): NodeSeq = {
     if (offsetInDays == 0) {
       val actualTask = taskItems.lastOption
-      val taskName = if (!actualTask.isEmpty) actualTask.get.taskName.getOrElse(S.?("tasks.pause")) else S.?("tasks.pause")
-      val projectName = if (!actualTask.isEmpty && !actualTask.get.projectName.isEmpty) actualTask.get.projectName.get + "-" else ""
-      val description = if (!actualTask.isEmpty && !actualTask.get.task.isEmpty) TaskService.getPreparedDescription(actualTask.get.task.get) else "<span></span>"
+      val description = if (actualTask.isDefined && !actualTask.get.task.isEmpty) TaskService.getPreparedDescription(actualTask.get.task.get) else "<span></span>"
 
       (
-        ".actualTaskName *" #> (projectName + taskName) &
+        ".actualTaskName *" #> (actualTask map (_.fullName) filter (_ != "") getOrElse S.?("tasks.pause")) &
         ".actualDescription *" #> PCDataXmlParser.apply(description)
       ).apply(in)
     } else {
@@ -60,8 +59,8 @@ class TaskItemSnippet extends DateFunctions {
           "background-color:rgba" + taskItemDto.baseColor.toString + ";"
         }
         ".date *" #> getDateString(taskItemDto) &
-        ".project *" #> taskItemDto.projectName.getOrElse("") &
-        ".task *" #> taskItemDto.taskName.getOrElse("") &
+        ".project *" #> taskItemDto.projectName &
+        ".task *" #> taskItemDto.taskName &
         ".taskColorIndicator [style]" #> fragBarStyle &
         ".projectColorIndicator [style]" #> fragBarProjectStyle &
         (if (active)
@@ -117,11 +116,11 @@ class TaskItemSnippet extends DateFunctions {
             val fragTextStyle = if (odd) Text("top:-80px;") else Text("top:15px;")
             val fragBarClass = if (active && last) "fragBar fragBarContinued" else if (active && !last) "fragBar" else "fragBar noborder"
 
-            ".ProjectName *" #> taskItemDto.projectName.getOrElse("") &
+            ".ProjectName *" #> taskItemDto.projectName &
             ".ProjectName [style]" #> fragBarProjectStyle &
-            ".TaskName *" #> taskItemDto.taskName.getOrElse("") &
+            ".TaskName *" #> taskItemDto.taskName &
             ".Duration *" #> (S.?("duration") + ": " + taskItemDto.duration.toStandardMinutes.getMinutes + " " + S.?("minute")) &
-            ".fragText *" #> taskItemDto.timeString &
+            ".fragText *" #> taskItemDto.localTime.toString(DateTimeFormat.forPattern("HH:mm")) &
             ".frag [style]" #> fragStyle &
             ".fragBar [style]" #> fragBarStyle &
             ".fragBar [class]" #> fragBarClass &
@@ -344,7 +343,7 @@ class TaskItemSnippet extends DateFunctions {
         S.?("tasks.to_next_day")
       }
     } else {
-      taskItemDto.timeString
+      taskItemDto.localTime.toString(DateTimeFormat.forPattern("HH:mm"))
     }
   }
 }
