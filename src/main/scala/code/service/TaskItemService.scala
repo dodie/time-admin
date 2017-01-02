@@ -313,11 +313,20 @@ case class TaskItemWithDuration(taskItem: TaskItem, var duration: Long, ps: List
 
   lazy val fullPath: List[HierarchicalItem[_]] = task map (t => path(List(t), t.parent.box, ps)) getOrElse Nil
 
-  lazy val fullName: String = fullPath map (_.name) mkString " - "
+  lazy val fullName: String = fullPath map (_.name) mkString "-"
 
-  lazy val color: (Int,Int,Int,Int) = TaskService.getColor(fullName, task.exists(_.active.get))
+  lazy val color: (Int,Int,Int,Int) = TaskService.getColor(
+    task map (_.name.get) getOrElse "",
+    fullPath match {
+      case Nil => ""
+      case path => path.init map (_.name.get) mkString "-"
+    },
+    task.exists(_.active.get)
+  )
 
-  lazy val baseColor: (Int,Int,Int,Int) = fullPath.lastOption map (_.color.get) flatMap { s => Option(s) filter (c => c.nonEmpty && c.length == 7) } map parseColor getOrElse (0,0,0,0)
+  lazy val baseColor: (Int,Int,Int,Int) = fullPath.headOption map (_.color.get) flatMap {
+    s => Option(s) filter (c => c.nonEmpty && c.length == 7)
+  } map parseColor getOrElse (0,0,0,0)
 
   lazy val project = task flatMap (_.parent.obj)
 
@@ -332,6 +341,6 @@ case class TaskItemWithDuration(taskItem: TaskItem, var duration: Long, ps: List
     Integer.valueOf(color.substring(1, 3), 16),
     Integer.valueOf(color.substring(3, 5), 16),
     Integer.valueOf(color.substring(5, 7), 16),
-    0
+    255
   )
 }
