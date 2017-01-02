@@ -83,7 +83,7 @@ class TaskItemSnippet extends DateFunctions {
       <lift:embed what="no_data"/>
     } else {
       val diagramStartTime = taskItems.head.taskItem.start.get
-      val diagramEndTime = taskItems.last.taskItem.start.get.toLong + taskItems.last.duration
+      val diagramEndTime = taskItems.last.taskItem.start.get + taskItems.last.duration.getMillis
       val diagramTotalTime = diagramEndTime - diagramStartTime
 
       var odd = true;
@@ -96,7 +96,7 @@ class TaskItemSnippet extends DateFunctions {
             odd = !odd;
 
             val lengthInPercent = {
-              val value = ((taskItemDto.duration.asInstanceOf[Double] / diagramTotalTime.asInstanceOf[Double]) * 100 * 100).asInstanceOf[Int] / 100D
+              val value = ((taskItemDto.duration.getMillis.asInstanceOf[Double] / diagramTotalTime.asInstanceOf[Double]) * 100 * 100).asInstanceOf[Int] / 100D
               if (value < 0.1D || (last && !active)) {
                 0D
               } else {
@@ -120,7 +120,7 @@ class TaskItemSnippet extends DateFunctions {
             ".ProjectName *" #> taskItemDto.projectName.getOrElse("") &
             ".ProjectName [style]" #> fragBarProjectStyle &
             ".TaskName *" #> taskItemDto.taskName.getOrElse("") &
-            ".Duration *" #> (S.?("duration") + ": " + taskItemDto.durationInMinutes + " " + S.?("minute")) &
+            ".Duration *" #> (S.?("duration") + ": " + taskItemDto.duration.toStandardMinutes.getMinutes + " " + S.?("minute")) &
             ".fragText *" #> taskItemDto.timeString &
             ".frag [style]" #> fragStyle &
             ".fragBar [style]" #> fragBarStyle &

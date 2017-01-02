@@ -146,10 +146,7 @@ object ReportService {
     val aggregatedDatas = new ListBuffer[AggregatedTaskItemData]
 
     for (aggregated <- trim(taskItemsToGroup).groupBy(_.taskItem.task.get)) {
-      var dur: Long = 0
-      for (taskItemDto <- aggregated._2) {
-        dur = dur + taskItemDto.duration
-      }
+      val duration = aggregated._2.foldLeft(Duration.ZERO)(_ + _.duration)
 
       val task = TaskService.getTask(aggregated._2.head.taskItem.task.get)
       val taskName: String = task match {
@@ -172,7 +169,7 @@ object ReportService {
         case _ => -1
       }
 
-      aggregatedDatas.append(AggregatedTaskItemData(aggregated._1, rootProjectId, dur, projectName, taskName, task.isEmpty))
+      aggregatedDatas.append(AggregatedTaskItemData(aggregated._1, rootProjectId, duration.getMillis, projectName, taskName, task.isEmpty))
     }
 
     aggregatedDatas.toList.sortBy((t: AggregatedTaskItemData) => t.projectName + t.taskName).toArray

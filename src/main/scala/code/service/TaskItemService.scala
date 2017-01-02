@@ -12,6 +12,8 @@ import net.liftweb.common.{Box, Empty, Full}
 import net.liftweb.mapper._
 import com.github.nscala_time.time.Imports._
 
+import scala.language.postfixOps
+
 /**
  * TaskItem data handling and conversion service.
  * Reponsible for task item handling.
@@ -75,7 +77,7 @@ object TaskItemService {
           //compensate lost millisecond at the end of the day
           val duration = (if (previousTaskStart == TimeUtils.dayEndInMs(previousTaskStart)) previousTaskStart + 1 else previousTaskStart) - start
           previousTaskStart = start
-          taskItemDtos += TaskItemWithDuration(taskItem, duration, projects)
+          taskItemDtos += TaskItemWithDuration(taskItem, Duration.millis(duration), projects)
         }
       }
 
@@ -107,7 +109,7 @@ object TaskItemService {
 
     if (list.isEmpty) {
       // if the result is empty, then return a list that contains only a Pause item
-      List(TaskItemWithDuration(TaskItem.create.user(user).start(interval.startMillis + 1), 0, projects))
+      List(TaskItemWithDuration(TaskItem.create.user(user).start(interval.startMillis + 1), 0 millis, projects))
     } else {
       list
     }
@@ -308,7 +310,7 @@ object TaskItemService {
  * TaskItem wrapper/DTO, witch contains the duration value of the given entry as it is usually needed.
  * The duration can be derived from the entry's and the following entry's start time.
  */
-case class TaskItemWithDuration(taskItem: TaskItem, var duration: Long, ps: List[Project]) {
+case class TaskItemWithDuration(taskItem: TaskItem, duration: Duration, ps: List[Project]) {
   lazy val task: Box[Task] = taskItem.task.obj
 
   lazy val fullPath: List[HierarchicalItem[_]] = task map (t => path(List(t), t.parent.box, ps)) getOrElse Nil
@@ -334,6 +336,4 @@ case class TaskItemWithDuration(taskItem: TaskItem, var duration: Long, ps: List
   lazy val projectName = project map ProjectService.getDisplayName
 
   val timeString = TimeUtils.format(TimeUtils.TIME_FORMAT, taskItem.start.get)
-
-  def durationInMinutes = (duration / 60D / 1000).toLong
 }
