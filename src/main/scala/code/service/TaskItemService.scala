@@ -315,7 +315,7 @@ case class TaskItemWithDuration(taskItem: TaskItem, var duration: Long, ps: List
 
   lazy val fullName: String = fullPath map (_.name) mkString "-"
 
-  lazy val color: (Int,Int,Int,Int) = TaskService.getColor(
+  lazy val color: Color = Color.get(
     task map (_.name.get) getOrElse "",
     fullPath match {
       case Nil => ""
@@ -324,9 +324,9 @@ case class TaskItemWithDuration(taskItem: TaskItem, var duration: Long, ps: List
     task.exists(_.active.get)
   )
 
-  lazy val baseColor: (Int,Int,Int,Int) = fullPath.headOption map (_.color.get) flatMap {
+  lazy val baseColor: Color = fullPath.headOption map (_.color.get) flatMap {
     s => Option(s) filter (c => c.nonEmpty && c.length == 7)
-  } map parseColor getOrElse (0,0,0,0)
+  } map Color.parse getOrElse Color.transparent
 
   lazy val project = task flatMap (_.parent.obj)
 
@@ -336,11 +336,4 @@ case class TaskItemWithDuration(taskItem: TaskItem, var duration: Long, ps: List
   val timeString = TimeUtils.format(TimeUtils.TIME_FORMAT, taskItem.start.get)
 
   def durationInMinutes = (duration / 60D / 1000).toLong
-
-  private def parseColor(color: String): (Int,Int,Int,Int) = (
-    Integer.valueOf(color.substring(1, 3), 16),
-    Integer.valueOf(color.substring(3, 5), 16),
-    Integer.valueOf(color.substring(5, 7), 16),
-    255
-  )
 }

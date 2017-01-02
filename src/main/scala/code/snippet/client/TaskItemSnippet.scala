@@ -1,24 +1,17 @@
 package code
 package snippet
 
-import code.service.ProjectService
-
-import scala.xml.NodeSeq.seqToNodeSeq
-import scala.xml.NodeSeq
-import scala.xml.Text
 import code.commons.TimeUtils
-import code.service.TaskItemService
-import code.service.TaskItemWithDuration
-import code.service.TaskService
+import code.service._
 import code.snippet.mixin.DateFunctions
 import net.liftweb.common.Box.box2Option
-import net.liftweb.common.Full
 import net.liftweb.http.S
 import net.liftweb.util.BindHelpers.strToCssBindPromoter
-import net.liftweb.util.Helpers.AttrBindParam
-import net.liftweb.util.Helpers
-import net.liftweb.util.PCDataXmlParser
-import net.liftweb.util.Helpers.strToSuperArrowAssoc
+import net.liftweb.util.Helpers.{AttrBindParam, strToSuperArrowAssoc}
+import net.liftweb.util.{Helpers, PCDataXmlParser}
+
+import scala.xml.NodeSeq.seqToNodeSeq
+import scala.xml.{NodeSeq, Text}
 
 /**
  * Task item editing and listing.
@@ -61,12 +54,10 @@ class TaskItemSnippet extends DateFunctions {
       (".item *" #> taskItems.map(taskItemDto => {
         val active = (!taskItemDto.task.isEmpty)
         val fragBarStyle = {
-          val (red, green, blue, alpha) = taskItemDto.color
-          "background-color:rgba(" + red + " , " + green + " , " + blue + " ," + alpha + ");"
+          "background-color:rgba" + taskItemDto.color.toString + ";"
         }
         val fragBarProjectStyle = {
-          val (red, green, blue, alpha) = taskItemDto.baseColor
-          "background-color:rgba(" + red + " , " + green + " , " + blue + " ," + alpha + ");"
+          "background-color:rgba" + taskItemDto.baseColor.toString + ";"
         }
         ".date *" #> getDateString(taskItemDto) &
         ".project *" #> taskItemDto.projectName.getOrElse("") &
@@ -115,15 +106,13 @@ class TaskItemSnippet extends DateFunctions {
 
             val fragStyle = "width:" + lengthInPercent + "%;"
             val fragBarStyle = {
-              val (red, green, blue, alpha) = taskItemDto.color
-              val isDarkColor = (((red * 299) + (green * 587) + (blue * 114)) / 1000) < 128
-              (if (isDarkColor) "color:white; " else "color:black; ") + "background-color:rgba(" + red + " , " + green + " , " + blue + " ," + alpha + ");"
+              val color = taskItemDto.color
+              (if (color.isDark) "color:white; " else "color:black; ") + "background-color:rgba" + color.toString + ";"
             }
 
             val fragBarProjectStyle = {
-              val (red, green, blue, alpha) = taskItemDto.baseColor
-              val isDarkColor = (((red * 299) + (green * 587) + (blue * 114)) / 1000) < 128
-              (if (isDarkColor) "color:white; " else "color:black; ") + "background-color:rgba(" + red + " , " + green + " , " + blue + " ," + alpha + ");"
+              val color = taskItemDto.baseColor
+              (if (color.isDark) "color:white; " else "color:black; ") + "background-color:rgba" + color.toString + ";"
             }
             val fragTextStyle = if (odd) Text("top:-80px;") else Text("top:15px;")
             val fragBarClass = if (active && last) "fragBar fragBarContinued" else if (active && !last) "fragBar" else "fragBar noborder"
@@ -155,8 +144,7 @@ class TaskItemSnippet extends DateFunctions {
     } else {
       tasks.toSeq.flatMap(
         showTaskData => {
-          val (red, green, blue, alpha) = TaskService.getColor(showTaskData.task.name.get, showTaskData.projectName, true)
-          val name = showTaskData.projectName + "-" + showTaskData.task.name.get
+          val color = Color.get(showTaskData.task.name.get, showTaskData.projectName, true)
 
           val taskStyleClass = if (showTaskData.task.specifiable.get) {
             Text("hiddenTask specifiable-task");
@@ -170,7 +158,7 @@ class TaskItemSnippet extends DateFunctions {
               if (offsetInDays == 0) Text("hh:mm")
               else Text("hh:mm"), "placeholder"),
             AttrBindParam("colorindicator",
-              Text("background-color: rgba(" + red + "," + green + "," + blue + " , " + alpha + ")"),
+              Text("background-color:rgba" + color.toString),
               "style"),
             AttrBindParam("projectcolorindicator",
               Text("background-color:" + ProjectService.getRootProject(showTaskData.rootProject).color.get),

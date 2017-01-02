@@ -3,14 +3,12 @@ package service
 
 import java.util.Random
 import java.text.Collator
+
 import scala.collection.mutable.ListBuffer
 import scala.util.Sorting
 import code.model.TaskItem
 import code.model.Project
 import code.model.Task
-import code.model.UserPreference
-import net.liftweb.common.Box.box2Option
-import net.liftweb.common.Box
 import net.liftweb.mapper.MappedField.mapToType
 import net.liftweb.mapper.MappedForeignKey.getObj
 import net.liftweb.mapper.By
