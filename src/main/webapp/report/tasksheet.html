@@ -36,7 +36,7 @@
 				<span class="glyphicon glyphicon-download-alt" aria-hidden="true"></span>
 			</a>
 			<lift:loc>tasksheet.title</lift:loc> - <span class="lift:tasksheetSnippet.title"></span></h1>
-		<div class="sheetholder table-responsive">
+		<div class="sheetholder">
 			<table class="lift:tasksheetSnippet.tasksheet tasksheetTable table table-bordered">
 				<thead>
 					<tr>
@@ -45,13 +45,6 @@
 						<th> &sum; </th>
 					</tr>
 				</thead>
-				<tbody>
-					<tr class="TaskRow">
-						<td class="taskFullName"></td>
-						<td class="dailyData"></td>
-						<td class="taskSum"></td>
-					</tr>
-				</tbody>
 				<tfoot>
 					<tr class="rowSum">
 						<td>&sum;</td>
@@ -59,7 +52,29 @@
 						<td class="totalSum"></td>
 					</tr>
 				</tfoot>
+				<tbody>
+					<tr class="TaskRow">
+						<td class="taskFullName"></td>
+						<td class="dailyData"></td>
+						<td class="taskSum"></td>
+					</tr>
+				</tbody>
 			</table>
 		</div>
 	</div>
+	<script>
+		$(document).ready( function () {
+			$('.tasksheetTable').DataTable({
+				paging: false,
+				searching: false,
+				ordering: false,
+				scrollX: true,
+				info: false,
+				fixedColumns: {
+					leftColumns: 1
+				},
+				fixedHeader: true
+			});
+		} );
+	</script>
 </lift:surround>
