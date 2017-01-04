@@ -786,6 +786,12 @@ form.button {
 	font-weight: bold;
 }
 
+
+.table tr.rowSum td {
+	border-top: 2px solid #ddd;
+	font-weight: bold;
+}
+
 .table th {
 	white-space: nowrap;
 }
