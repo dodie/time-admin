@@ -794,6 +794,16 @@ form.button {
 	min-width: 60px;
 }
 
+/* Data Table glitches */
+
+.dataTables_scrollBody thead tr {
+    height: 0 !important;
+}
+
+.DTFC_LeftBodyLiner thead tr {
+    height: 0 !important;
+}
+
 /* time sheet */
 
 .timesheetTable .QuickHelp {
