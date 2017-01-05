@@ -29,3 +29,4 @@ src/main/resources/props/**
 projectFilesBackup
 .ensime
 .ensime_cache
+/src/main/resources/props/suliatis.props
