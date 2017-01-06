@@ -839,6 +839,10 @@ form.button {
 }
 
 /* task sheet */
+.sheetholder {
+	width: 99%;
+}
+
 .tasksheetTable th, .tasksheetTable td  {
 	text-align: center;
 	vertical-align: middle;
