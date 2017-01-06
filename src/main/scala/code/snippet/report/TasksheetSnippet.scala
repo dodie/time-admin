@@ -52,7 +52,8 @@ class TasksheetSnippet extends DateFunctions {
           ".taskFullName *" #> t.name & ".taskFullName [title]" #> t.name &
             ".dailyData" #> dates(taskSheet)
               .map(d => ".dailyData *" #> duration(taskSheet, d, t).minutes.toString & formatData(i, d)) &
-            ".taskSum *" #> sumByTasks(taskSheet)(t).minutes
+            ".taskSum *" #> sumByTasks(taskSheet)(t).minutes &
+            ".taskRatio *" #> f"${ratioByTask(taskSheet)(t)}%1.2f"
         } &
         ".dailySum" #> dates(taskSheet).map(d => ".dailySum *" #> sumByDates(taskSheet)(d).minutes) &
         ".totalSum *" #> sum(taskSheet).minutes & ".totalSum [title]" #> sum(taskSheet).hours
