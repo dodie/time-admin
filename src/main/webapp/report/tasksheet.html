@@ -36,7 +36,7 @@
 				<span class="glyphicon glyphicon-download-alt" aria-hidden="true"></span>
 			</a>
 			<lift:loc>tasksheet.title</lift:loc> - <span class="lift:tasksheetSnippet.title"></span></h1>
-		<div class="sheetholder table-responsive">
+		<div class="sheetholder">
 			<table class="lift:tasksheetSnippet.tasksheet tasksheetTable table table-bordered">
 				<thead>
 					<tr>
@@ -51,15 +51,27 @@
 						<td class="dailyData"></td>
 						<td class="taskSum"></td>
 					</tr>
-				</tbody>
-				<tfoot>
 					<tr class="rowSum">
 						<td>&sum;</td>
 						<td class="dailySum"></td>
 						<td class="totalSum"></td>
 					</tr>
-				</tfoot>
+				</tbody>
 			</table>
 		</div>
 	</div>
+	<script>
+		$(document).ready( function () {
+			$('.tasksheetTable').DataTable({
+				paging: false,
+				searching: false,
+				ordering: false,
+				info: false,
+				scrollX: true,
+				scrollY: '75vh',
+				scrollCollapse: true,
+				fixedColumns: true
+			});
+		} );
+	</script>
 </lift:surround>
