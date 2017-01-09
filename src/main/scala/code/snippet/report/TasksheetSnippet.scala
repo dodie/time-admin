@@ -92,6 +92,6 @@ class TasksheetSnippet extends DateFunctions {
   }
 
   object Durations {
-    val empty = new Durations(Map.empty[Nothing, Map[TaskSheetItem, Duration]])
+    val empty = new Durations(Map.empty[ReadablePartial, Map[TaskSheetItem, Duration]])
   }
 }
