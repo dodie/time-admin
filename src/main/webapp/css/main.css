@@ -836,7 +836,7 @@ form.button {
 	background: #DDD;
 }
 
-.tasksheetTable tr td:nth-last-child(2), .tasksheetTable tr th:nth-last-child(2){
+.tasksheetTable tr td:last-child, .tasksheetTable tr th:last-child {
 	border-left: 2px solid black;
 }
 
