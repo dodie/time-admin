@@ -75,11 +75,11 @@ class TasksheetSnippet extends DateFunctions {
       .getOrElse("colWeekday")
 
   object dimensions {
-    val minutes = ("minutes", "Minutes", (d: Duration) => d.minutes.toString)
-    val hours = ("hours", "Hours", (d: Duration) => f"${d.minutes / 60.0d}%1.2f")
-    val mandays = ("mandays", "Man-days", (d: Duration) => f"${(d.minutes / 60.0d) / 8.0d}%1.2f")
+    val minutes = ("minutes", S.?("dimensions.minutes"), (d: Duration) => d.minutes.toString)
+    val hours = ("hours", S.?("dimensions.hours"), (d: Duration) => f"${d.minutes / 60.0d}%1.2f")
+    val manDays = ("manDays", S.?("dimensions.manDays"), (d: Duration) => f"${(d.minutes / 60.0d) / 8.0d}%1.2f")
 
-    val all = List(minutes, hours, mandays)
+    val all = List(minutes, hours, manDays)
 
     def print(d: Duration): String = {
       (S.param("dimension") flatMap (s => all find (_._1 == s) map (_._3)) getOrElse minutes._3)(d)
