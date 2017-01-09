@@ -8,7 +8,7 @@ import code.snippet.mixin.DateFunctions
 import code.util.TaskSheetUtils
 import code.util.TaskSheetUtils._
 import com.github.nscala_time.time.Imports._
-import net.liftweb.common.Box
+import net.liftweb.common.{Box, Full}
 import net.liftweb.http.S
 import net.liftweb.util.BindHelpers.strToCssBindPromoter
 import net.liftweb.util.CssSel
@@ -37,6 +37,13 @@ class TasksheetSnippet extends DateFunctions {
     <span>{TaskSheetUtils.title(interval, scale)}</span>
   }
 
+  def dimensionSelector(in: NodeSeq): NodeSeq = {
+    ("select" #> ("option" #> (dimensions.all map { case (value, text, _) =>
+      val option = "option *" #> text & "option [value]" #> value
+      if (S.param("dimension").exists(_ == value)) option & "option [selected]" #> true else option
+    }))) apply in
+  }
+
   def tasksheet(in: NodeSeq): NodeSeq = {
     val (interval, scale) = parseInterval() getOrElse thisMonth
     val user = User.currentUser filter nonAdmin or parseUser()
@@ -51,12 +58,12 @@ class TasksheetSnippet extends DateFunctions {
         ".TaskRow" #> tasks(taskSheet).map { t =>
           ".taskFullName *" #> t.name & ".taskFullName [title]" #> t.name &
             ".dailyData" #> dates(taskSheet)
-              .map(d => ".dailyData *" #> duration(taskSheet, d, t).minutes.toString & formatData(i, d)) &
-            ".taskSum *" #> sumByTasks(taskSheet)(t).minutes &
+              .map(d => ".dailyData *" #> dimensions.print(duration(taskSheet, d, t)) & formatData(i, d)) &
+            ".taskSum *" #> dimensions.print(sumByTasks(taskSheet)(t)) &
             ".taskRatio *" #> f"${ratioByTask(taskSheet)(t)}%1.2f"
         } &
-        ".dailySum" #> dates(taskSheet).map(d => ".dailySum *" #> sumByDates(taskSheet)(d).minutes) &
-        ".totalSum *" #> sum(taskSheet).minutes & ".totalSum [title]" #> sum(taskSheet).hours
+        ".dailySum" #> dates(taskSheet).map(d => ".dailySum *" #> dimensions.print(sumByDates(taskSheet)(d))) &
+        ".totalSum *" #> dimensions.print(sum(taskSheet))
   }
 
   def formatData[D <: ReadablePartial](i: Interval, d: D): CssSel =
@@ -66,4 +73,16 @@ class TasksheetSnippet extends DateFunctions {
       .filter(isWeekend)
       .map(_ => "colWeekend")
       .getOrElse("colWeekday")
+
+  object dimensions {
+    val minutes = ("minutes", "Minutes", (d: Duration) => d.minutes.toString)
+    val hours = ("hours", "Hours", (d: Duration) => f"${d.minutes / 60.0d}%1.2f")
+    val mandays = ("mandays", "Man-days", (d: Duration) => f"${(d.minutes / 60.0d) / 8.0d}%1.2f")
+
+    val all = List(minutes, hours, mandays)
+
+    def print(d: Duration): String = {
+      (S.param("dimension") flatMap (s => all find (_._1 == s) map (_._3)) getOrElse minutes._3)(d)
+    }
+  }
 }
