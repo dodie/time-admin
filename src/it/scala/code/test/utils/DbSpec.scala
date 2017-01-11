@@ -10,6 +10,17 @@ import org.specs2.mutable.BeforeAfter
 
 trait DbSpec extends BeforeAfter {
   override def before: Unit = {
+    Db.init
+  }
+
+  override def after: Unit = {
+    Db.clear
+  }
+}
+
+object Db {
+
+  def init: Unit = {
     import bootstrap.liftweb._
     val boot = new Boot
     boot.boot()
@@ -32,7 +43,7 @@ trait DbSpec extends BeforeAfter {
     Schemifier.schemify(true, Schemifier.infoF _, ExtSession)
   }
 
-  override def after: Unit = {
+  def clear: Unit = {
     User.bulkDelete_!!(mapper.DefaultConnectionIdentifier)
     Project.bulkDelete_!!(mapper.DefaultConnectionIdentifier)
     Role.bulkDelete_!!(mapper.DefaultConnectionIdentifier)

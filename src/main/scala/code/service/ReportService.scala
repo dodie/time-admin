@@ -7,7 +7,7 @@ import java.text.DecimalFormat
 
 import scala.collection.mutable.ListBuffer
 import net.liftweb.common._
-import org.joda.time.{Duration, DateTime, _}
+import org.joda.time.{DateTime, Duration, Interval, _}
 import code.commons.TimeUtils
 import net.liftweb.http.S
 import code.model.{Project, User}
@@ -15,7 +15,6 @@ import code.service.TaskItemService.getTaskItems
 import com.github.nscala_time.time.Imports._
 
 import scala.collection.immutable.Seq
-
 import code.util.ListToFoldedMap._
 
 /**
@@ -111,7 +110,9 @@ object ReportService {
   type TaskSheet[D <: ReadablePartial] = Map[D, Map[TaskSheetItem,Duration]]
 
   def taskSheetData[D <: ReadablePartial](i: Interval, f: LocalDate => D, u: Box[User]): TaskSheet[D] =
-    dates(i, f).map(d => (d, activeTaskItems(TimeUtils.intervalFrom(d), u).map(t => taskSheetItemWithDuration(t))))
+    dates(i, f)
+      .map(d => (d, activeTaskItems(intervalFrom(d), u)
+        .map(t => taskSheetItemWithDuration(t))))
       .foldedMap(Nil: List[(TaskSheetItem,Duration)])(_ ::: _)
       .mapValues(_.foldedMap(Duration.ZERO)(_ + _))
 
@@ -126,6 +127,10 @@ object ReportService {
 
   def activeTaskItems(i: Interval, u: Box[User]): List[TaskItemWithDuration] =
     getTaskItems(i, u).filter(_.project.exists(_.active.get))
+
+  def intervalFrom[D <: ReadablePartial](d: D): Interval = d match {
+    case d: { def toInterval: Interval } => d.toInterval
+  }
 
   def taskSheetItemWithDuration(t: TaskItemWithDuration): (TaskSheetItem, Duration) = (TaskSheetItem(t), new Duration(t.duration))
 
