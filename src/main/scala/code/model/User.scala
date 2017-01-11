@@ -272,6 +272,50 @@ object User extends User with MetaMegaProtoUser[User] with ManyToMany {
     bind(loginXhtml)
   }
 
+  override def passwordResetXhtml = {
+    (<form class="form-user" method="post" role="form" action={S.uri}>
+        <h1>{ S.?("reset.your.password") }</h1>
+        <div class="form-group">
+          <label>{S.?("enter.your.new.password")}</label>
+          <input type="password" class="form-control" />
+        </div>
+        <div class="form-group">
+          <label>{ S.?("repeat.your.new.password") }</label>
+          <input type="password" class="form-control" />
+        </div>
+        <div class="form-group">
+          <input class="btn btn-primary" type="submit" />
+        </div>
+     </form>)
+  }
+
+  // Why do I need to copy-paste this to enable validation?
+  override def passwordReset(id: String) =
+  findUserByUniqueId(id) match {
+    case Full(user) =>
+      def finishSet() {
+        user.validate match {
+          case Nil => S.notice(S.?("password.changed"))
+            user.resetUniqueId().save
+            logUserIn(user, () => S.redirectTo(homePage))
+
+          case xs => S.error(xs)
+        }
+      }
+
+      val passwordInput = SHtml.password_*("",
+        (p: List[String]) => user.setPasswordFromListString(p))
+
+
+      val bind = {
+        "type=password" #> passwordInput &
+        "type=submit" #> resetPasswordSubmitButton(S.?("set.password"), finishSet _)
+      }
+
+      bind(passwordResetXhtml)
+    case _ => S.error(S.?("password.link.invalid")); S.redirectTo(homePage)
+  }
+
   override def fieldOrder = List(id, firstName, lastName, email, locale, timezone, password)
 
   override def skipEmailValidation = true

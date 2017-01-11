@@ -21,3 +21,11 @@ export.excel.timesheet_template = docs/exceltemplate/timesheet_template.xls
 
 # Optional - Mantis bug view URL.
 #mantis.bugs.view.url = http://<host_of_mantis>/view.php?id=
+
+# Mail Configuration
+#mail.smtp.host = localhost
+#mail.smtp.port = 22
+#mail.smtp.auth = false
+#mail.smtp.user = user@domain
+#mail.smtp.pass = 1234
+

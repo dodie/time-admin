@@ -11,6 +11,7 @@ import sitemap._
 import Loc._
 import mapper._
 import code.model._
+import code.service.SmtpMailer
 import code.export.{ExcelExport, TaskSheetExport}
 import net.liftweb.http.provider._
 import net.liftweb.http._
@@ -155,6 +156,8 @@ class Boot {
 
     // Make a transaction span the whole HTTP request
     S.addAround(DB.buildLoanWrapper)
+
+    SmtpMailer.init
 
     // REST API
     LiftRules.dispatch.append {
