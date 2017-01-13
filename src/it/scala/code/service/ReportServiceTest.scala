@@ -1,12 +1,12 @@
 package code.service
 
 import code.model.{Project, Task, TaskItem, User}
-import code.test.utils.BaseContext
+import code.test.utils.BaseSuite
 import code.util.TaskSheetUtils.{dates, sum, tasks}
 import net.liftweb.mapper.By
 import org.joda.time.{DateTime, LocalDate, YearMonth}
 
-class ReportServiceTest extends BaseContext {
+class ReportServiceTest extends BaseSuite {
 
   describe("Task sheet data for default user and single day") {
     lazy val ts = ReportService.taskSheetData(

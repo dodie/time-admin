@@ -7,7 +7,7 @@ import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, FunSpec, Matchers}
 /**
   * Created by suliatis on 1/12/17.
   */
-trait BaseContext extends FunSpec with Matchers with BeforeAndAfter with BeforeAndAfterAll {
+trait BaseSuite extends FunSpec with Matchers with BeforeAndAfter with BeforeAndAfterAll {
   private val givenFunctionAtomic = new AtomicReference[Option[() => Any]](None)
 
   override def beforeAll(): Unit = {

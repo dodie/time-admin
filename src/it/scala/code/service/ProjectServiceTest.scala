@@ -1,10 +1,10 @@
 package code.service
 
 import code.model.Project
-import code.test.utils.BaseContext
+import code.test.utils.BaseSuite
 import net.liftweb.mapper.By
 
-class ProjectServiceTest extends BaseContext {
+class ProjectServiceTest extends BaseSuite {
 
   it("Display name of the top level project") {
     assert(ProjectService.getDisplayName(project("top")) == "top")
