@@ -6,24 +6,59 @@ import net.liftweb.db.StandardDBVendor
 import net.liftweb.http.LiftRules
 import net.liftweb.mapper
 import net.liftweb.mapper.{DB, Schemifier}
-import org.specs2.mutable.BeforeAfter
+import org.specs2.execute.{AsResult, Result}
+import org.specs2.mutable.{BeforeAfter, Specification}
+import org.specs2.specification._
 
 trait DbSpec extends BeforeAfter {
   override def before: Unit = {
     Db.init
+
+    given
   }
+
+  def given: Unit = {}
 
   override def after: Unit = {
     Db.clear
   }
 }
 
+trait DbSpecEach extends BeforeAfterEach {
+  override def before: Unit = {
+    Db.init
+
+    given
+  }
+
+  def given: Unit = {}
+
+  override def after: Unit = {
+    Db.clear
+  }
+}
+
+trait DbAroundEach extends AroundEach {
+
+  override def around[R: AsResult](r: => R): Result = {
+    Db.init
+    given
+    try AsResult(r)
+    finally Db.clear
+  }
+
+  def given: Unit = {}
+}
+
+trait DbSpecification extends Specification {
+  override def map(fs: => Fragments): Fragments = step(Db.init) ^ step(given) ^ fs ^ step(Db.clear)
+
+  def given: Unit = {}
+}
+
 object Db {
 
   def init: Unit = {
-    import bootstrap.liftweb._
-    val boot = new Boot
-    boot.boot()
 
     val vendor = new StandardDBVendor(
       "org.h2.Driver",

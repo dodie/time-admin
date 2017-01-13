@@ -1,105 +1,94 @@
 package code.service
 
 import code.model.{Project, Task, TaskItem, User}
-import code.test.utils.DbSpec
+import code.test.utils.BaseContext
 import code.util.TaskSheetUtils.{dates, sum, tasks}
 import net.liftweb.mapper.By
 import org.joda.time.{DateTime, LocalDate, YearMonth}
-import org.specs2.mutable.Specification
 
-class ReportServiceTest extends Specification with DbSpec {
+class ReportServiceTest extends BaseContext {
 
-
-  "Task sheet data for default user and single day" >> {
-    givenSomeTaskItem
-
+  describe("Task sheet data for default user and single day") {
     val ts = ReportService.taskSheetData(
       new LocalDate(2016, 1, 30).toInterval(),
       d => d,
       User.find(By(User.email, "default@tar.hu"))
     )
 
-    "the summary should be 8 hours" >> {
-      sum(ts).getStandardHours must_== 8L
+    it("the summary should be 8 hours") {
+      sum(ts).getStandardHours should be (8L)
     }
 
-    "should contain all tasks for the interval" >> {
-      tasks(ts) map (_.name) must contain (exactly ("p1-t1", "p1-t2", "p1-p11-t3"))
+    it("should contain all tasks for the interval") {
+      tasks(ts) map (_.name) should contain theSameElementsAs List("p1-t1", "p1-t2", "p1-p11-t3")
     }
 
-    "should contain all dates for the interval" >> {
-      dates(ts) must contain (exactly (new LocalDate(2016, 1, 30)))
+    it("should contain all dates for the interval") {
+      dates(ts) should contain theSameElementsAs List(new LocalDate(2016, 1, 30))
     }
   }
 
-  "Task sheet data for default user and overflowed day" >> {
-    givenSomeTaskItem
-
+  describe("Task sheet data for default user and overflowed day") {
     val ts = ReportService.taskSheetData(
       new LocalDate(2016, 1, 31).toInterval(),
       d => d,
       User.find(By(User.email, "default@tar.hu"))
     )
 
-    "the summary should be 8 and a half hours" >> {
-      sum(ts).getStandardMinutes must_== (8L * 60L + 30L)
+    it("the summary should be 8 and a half hours") {
+      sum(ts).getStandardMinutes should be (8L * 60L + 30L)
     }
 
-    "should contain all tasks for the interval" >> {
-      tasks(ts) map (_.name) must contain (exactly ("p1-t1", "p1-t2", "p1-p11-t3", "p2-t7"))
+    it("should contain all tasks for the interval") {
+      tasks(ts) map (_.name) should contain theSameElementsAs List("p1-t1", "p1-t2", "p1-p11-t3", "p2-t7")
     }
 
-    "should contain all dates for the interval" >> {
-      dates(ts) must contain (exactly (new LocalDate(2016, 1, 31)))
+    it("should contain all dates for the interval") {
+      dates(ts) should contain theSameElementsAs List(new LocalDate(2016, 1, 31))
     }
   }
 
-  "Task sheet data for default user and day with slipped tasks" >> {
-    givenSomeTaskItem
-
+  describe("Task sheet data for default user and day with slipped tasks") {
     val ts = ReportService.taskSheetData(
       new LocalDate(2016, 2, 1).toInterval(),
       d => d,
       User.find(By(User.email, "default@tar.hu"))
     )
 
-    "the summary should be 8 and a half hours" >> {
-      sum(ts).getStandardMinutes must_== (8L * 60L + 30L)
+    it("the summary should be 8 and a half hours") {
+      sum(ts).getStandardMinutes should be (8L * 60L + 30L)
     }
 
-    "should contain all tasks for the interval" >> {
-      tasks(ts) map (_.name) must contain (exactly ("p2-t7", "p1-p12-t4", "p2-t5", "p2-t6"))
+    it("should contain all tasks for the interval") {
+      tasks(ts) map (_.name) should contain theSameElementsAs List("p2-t7", "p1-p12-t4", "p2-t5", "p2-t6")
     }
 
-    "should contain all dates for the interval" >> {
-      dates(ts) must contain (exactly (new LocalDate(2016, 2, 1)))
+    it("should contain all dates for the interval") {
+      dates(ts) should contain theSameElementsAs List(new LocalDate(2016, 2, 1))
     }
   }
 
-  "Task sheet data for default user and single month" >> {
-    givenSomeTaskItem
-
+  describe("Task sheet data for default user and single month") {
     val ts = ReportService.taskSheetData(
       new YearMonth(2016, 1).toInterval(),
       d => d,
       User.find(By(User.email, "default@tar.hu"))
     )
 
-    "the summary should be 16 and a half hours" >> {
-      sum(ts).getStandardMinutes must_== (16L * 60L + 30L)
+    it("the summary should be 16 and a half hours") {
+      sum(ts).getStandardMinutes should be (16L * 60L + 30L)
     }
 
-    "should contain all tasks for the interval" >> {
-      tasks(ts) map (_.name) must contain (exactly ("p1-t1", "p1-t2", "p1-p11-t3", "p2-t7"))
+    it("should contain all tasks for the interval") {
+      tasks(ts) map (_.name) should contain theSameElementsAs List("p1-t1", "p1-t2", "p1-p11-t3", "p2-t7")
     }
 
-    "should contain all dates for the interval" >> {
-      dates(ts) must containTheSameElementsAs (Stream.iterate(new LocalDate(2016, 1, 1))(_.plusDays(1)).take(31))
+    it("should contain all dates for the interval") {
+      dates(ts) should contain theSameElementsAs Stream.iterate(new LocalDate(2016, 1, 1))(_.plusDays(1)).take(31)
     }
   }
 
-
-  def givenSomeTaskItem: Unit = {
+  given {
     val u1 = User.create
       .firstName("DEFAULT")
       .lastName("DEFAULT")
