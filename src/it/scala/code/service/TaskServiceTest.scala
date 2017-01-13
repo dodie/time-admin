@@ -1,12 +1,8 @@
 package code.service
 
-import code.model.Project
-import code.model.Task
-import code.model.TaskItem
-import code.test.utils.{BaseSuite, DbSpec}
-import net.liftweb.common.Box
+import code.model.{Project, Task, TaskItem}
+import code.test.utils.BaseSuite
 import net.liftweb.mapper.By
-import org.scalatest.{FunSpec, FunSuite}
 
 class TaskServiceTest extends BaseSuite {
 
