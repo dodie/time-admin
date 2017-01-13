@@ -2,17 +2,20 @@ package code.test.utils
 
 import java.util.concurrent.atomic.AtomicReference
 
-import org.scalatest.{BeforeAndAfter, FunSpec, Matchers}
+import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, FunSpec, Matchers}
 
 /**
   * Created by suliatis on 1/12/17.
   */
-trait BaseContext extends FunSpec with Matchers with BeforeAndAfter {
+trait BaseContext extends FunSpec with Matchers with BeforeAndAfter with BeforeAndAfterAll {
   private val givenFunctionAtomic = new AtomicReference[Option[() => Any]](None)
 
-  before {
-    println("before")
+  override def beforeAll(): Unit = {
     Db.init
+  }
+
+  before {
+    Db.clear
     givenFunctionAtomic.get match {
       case Some(f) => f()
       case None =>
@@ -24,7 +27,6 @@ trait BaseContext extends FunSpec with Matchers with BeforeAndAfter {
   }
 
   after {
-    println("after")
     Db.clear
   }
 }

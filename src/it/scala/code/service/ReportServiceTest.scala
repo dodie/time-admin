@@ -9,7 +9,7 @@ import org.joda.time.{DateTime, LocalDate, YearMonth}
 class ReportServiceTest extends BaseContext {
 
   describe("Task sheet data for default user and single day") {
-    val ts = ReportService.taskSheetData(
+    lazy val ts = ReportService.taskSheetData(
       new LocalDate(2016, 1, 30).toInterval(),
       d => d,
       User.find(By(User.email, "default@tar.hu"))
@@ -29,7 +29,7 @@ class ReportServiceTest extends BaseContext {
   }
 
   describe("Task sheet data for default user and overflowed day") {
-    val ts = ReportService.taskSheetData(
+    lazy val ts = ReportService.taskSheetData(
       new LocalDate(2016, 1, 31).toInterval(),
       d => d,
       User.find(By(User.email, "default@tar.hu"))
@@ -49,7 +49,7 @@ class ReportServiceTest extends BaseContext {
   }
 
   describe("Task sheet data for default user and day with slipped tasks") {
-    val ts = ReportService.taskSheetData(
+    lazy val ts = ReportService.taskSheetData(
       new LocalDate(2016, 2, 1).toInterval(),
       d => d,
       User.find(By(User.email, "default@tar.hu"))
@@ -69,7 +69,7 @@ class ReportServiceTest extends BaseContext {
   }
 
   describe("Task sheet data for default user and single month") {
-    val ts = ReportService.taskSheetData(
+    lazy val ts = ReportService.taskSheetData(
       new YearMonth(2016, 1).toInterval(),
       d => d,
       User.find(By(User.email, "default@tar.hu"))
