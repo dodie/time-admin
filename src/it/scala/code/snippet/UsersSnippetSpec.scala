@@ -1,12 +1,10 @@
 package code.snippet
 
 import code.model.User
-import net.liftweb.http.{ S, LiftSession }
-import net.liftweb.mapper.BaseMetaMapper
-import net.liftweb.util._
 import net.liftweb.common._
-import org.scalatest.FlatSpec
-import org.scalatest._
+import net.liftweb.http.{LiftSession, S}
+import net.liftweb.util._
+import org.scalatest.{FlatSpec, _}
 
 class UsersSnippetSpec extends FlatSpec with Matchers {
 
