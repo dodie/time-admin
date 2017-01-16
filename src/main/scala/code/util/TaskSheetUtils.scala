@@ -28,6 +28,11 @@ object TaskSheetUtils {
   def sum[D <: ReadablePartial](ts: TaskSheet[D]): Duration =
     sumByDates(ts).values.foldLeft(Duration.millis(0))(_ + _)
 
+  def ratioByTask[D <: ReadablePartial](ts: TaskSheet[D]): Map[TaskSheetItem, Double] = {
+    val s = sum(ts).getMillis
+    sumByTasks(ts).mapValues(d => (d.getMillis * 100.0d) / s)
+  }
+
   def mapToDateTime[D <: ReadablePartial](i: Interval, d: D): Option[DateTime] =
     List(d.toDateTime(i.start), d.toDateTime(i.end)).find(i.contains(_))
 

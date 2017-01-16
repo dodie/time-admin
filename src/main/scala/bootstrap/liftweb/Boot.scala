@@ -11,6 +11,7 @@ import sitemap._
 import Loc._
 import mapper._
 import code.model._
+import code.service.SmtpMailer
 import code.export.{ExcelExport, TaskSheetExport}
 import net.liftweb.http.provider._
 import net.liftweb.http._
@@ -165,6 +166,8 @@ class Boot extends Loggable {
     // Make a transaction span the whole HTTP request
     S.addAround(DB.buildLoanWrapper)
 
+    SmtpMailer.init
+
     // REST API
     LiftRules.dispatch.append {
       // personal timesheet export
@@ -192,8 +195,8 @@ class Boot extends Loggable {
           if (!clientUser) {
             Full(RedirectResponse("/"))
           } else {
-            val (interval, scale) = parseInterval(S) getOrElse thisMonth()
-            val user = User.currentUser filter nonAdmin or parseUser(S)
+            val (interval, scale) = parseInterval() getOrElse thisMonth()
+            val user = User.currentUser filter nonAdmin or parseUser()
             val (xlsx, name) = TaskSheetExport.workbook(interval, scale, user)
 
             val contentStream = using(new ByteArrayOutputStream()) { out =>

@@ -1,5 +1,9 @@
 $(function(){
 	var hash = window.location.hash;
+	if (!hash && localStorage.getItem('nav-tab')) {
+		hash = localStorage.getItem('nav-tab');
+	}
+
 	hash && $('ul.nav a[href="' + hash + '"]').tab('show');
 
 	$('.nav-tabs a').click(function (e) {
@@ -7,18 +11,13 @@ $(function(){
 		var scrollmem = $('body').scrollTop() || $('html').scrollTop();
 		window.location.hash = this.hash;
 		$('html,body').scrollTop(scrollmem);
+		localStorage.setItem('nav-tab', this.hash);
 	});
 
 	window.onhashchange = function() {
 		var hash = window.location.hash;
 		hash && $('ul.nav a[href="' + hash + '"]').tab('show');
 	}
-
-	$("*[data-tab-aware]").each(function() {
-		$(this).click(function() {
-			this.href = this.href + window.location.hash;
-		});
-	});
 
 	$("#content").show();
 });

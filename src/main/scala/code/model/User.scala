@@ -25,11 +25,26 @@ object User extends User with MetaMegaProtoUser[User] with ManyToMany {
       form <- field.toForm.toList
       fieldId <- field.uniqueFieldId
     } yield {
-      <div class="form-group">
-        <label for={fieldId}>{field.displayName}</label>
-        {form.map(_.asInstanceOf[Elem]% ("class" -> "form-control"))}
-        <span><lift:Msg id={fieldId} errorClass="edit_error_class"></lift:Msg></span>
-      </div>
+      if (field == password) {
+        <div>
+          <div class="form-group">
+            <label for={fieldId}>{field.displayName}</label>
+            {form.map(e => (((e.asInstanceOf[Elem] \\ "input").head).asInstanceOf[Elem]) % ("class" -> "form-control"))}
+            <span><lift:Msg id={fieldId} errorClass="edit_error_class"></lift:Msg></span>
+          </div>
+          <div class="form-group">
+            <label for={fieldId}>{S.?("password.repeat")}</label>
+            {form.map(e => (((e.asInstanceOf[Elem] \\ "input").drop(1).head).asInstanceOf[Elem]) % ("class" -> "form-control"))}
+            <span><lift:Msg id={fieldId} errorClass="edit_error_class"></lift:Msg></span>
+          </div>
+        </div>
+      } else {
+        <div class="form-group">
+          <label for={fieldId}>{field.displayName}</label>
+          {form.map(_.asInstanceOf[Elem] % ("class" -> "form-control"))}
+          <span><lift:Msg id={fieldId} errorClass="edit_error_class"></lift:Msg></span>
+        </div>
+      }
     }
   }
 
@@ -103,6 +118,29 @@ object User extends User with MetaMegaProtoUser[User] with ManyToMany {
     innerEdit
   }
 
+  def edit(user: User) = {
+    val theUser: TheUserType =
+      mutateUserOnEdit(user)
+
+    val theName = editPath.mkString("")
+
+    def testEdit() {
+      theUser.validate match {
+        case Nil =>
+          theUser.save
+          S.notice(S.?("user.profile.updated"))
+          S.redirectTo("/admin/users")
+
+        case xs => S.error(xs) ; editFunc(Full(innerEdit _))
+      }
+    }
+
+    def innerEdit = {
+      ("type=submit" #> editSubmitButton(S.?("save"), testEdit _)) apply editXhtml(theUser)
+    }
+
+    innerEdit
+  }
 
   override def changePasswordXhtml = {
     (<form class="form-user" method="post" role="form" action={S.uri}>
@@ -183,12 +221,12 @@ object User extends User with MetaMegaProtoUser[User] with ManyToMany {
         <input name="username" class="email form-control" type="email" id="inputEmail" placeholder={userNameFieldString} required="" autofocus=""/>
         <label for="inputPassword" class="sr-only">Password</label>
         <input name="password" type="password" id="inputPassword" class="password form-control" placeholder={S.?("password")} required=""/>
+        <button class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
         <div class="checkbox">
           <label>
-            <input type="checkbox" value="remember-me"/> Remember me
+            <input type="checkbox" name ="rememberme" value="remember-me" checked="true"/> {S.?("rememberme")}
           </label>
         </div>
-        <button class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
         <div class="to-registration">
           <a href="/user_mgt/sign_up">{S.?("page.registration")}</a>
         </div>
@@ -215,9 +253,8 @@ object User extends User with MetaMegaProtoUser[User] with ManyToMany {
 
             logUserIn(user, () => {
               S.notice(S.?("logged.in"))
-
               preLoginState()
-
+              S.param("rememberme") foreach {_ => ExtSession.userDidLogin(user)}
               S.redirectTo(redir)
             })
           }
@@ -235,13 +272,56 @@ object User extends User with MetaMegaProtoUser[User] with ManyToMany {
     bind(loginXhtml)
   }
 
+  override def passwordResetXhtml = {
+    (<form class="form-user" method="post" role="form" action={S.uri}>
+        <h1>{ S.?("reset.your.password") }</h1>
+        <div class="form-group">
+          <label>{S.?("enter.your.new.password")}</label>
+          <input type="password" class="form-control" />
+        </div>
+        <div class="form-group">
+          <label>{ S.?("repeat.your.new.password") }</label>
+          <input type="password" class="form-control" />
+        </div>
+        <div class="form-group">
+          <input class="btn btn-primary" type="submit" />
+        </div>
+     </form>)
+  }
+
+  // Why do I need to copy-paste this to enable validation?
+  override def passwordReset(id: String) =
+  findUserByUniqueId(id) match {
+    case Full(user) =>
+      def finishSet() {
+        user.validate match {
+          case Nil => S.notice(S.?("password.changed"))
+            user.resetUniqueId().save
+            logUserIn(user, () => S.redirectTo(homePage))
+
+          case xs => S.error(xs)
+        }
+      }
+
+      val passwordInput = SHtml.password_*("",
+        (p: List[String]) => user.setPasswordFromListString(p))
+
+
+      val bind = {
+        "type=password" #> passwordInput &
+        "type=submit" #> resetPasswordSubmitButton(S.?("set.password"), finishSet _)
+      }
+
+      bind(passwordResetXhtml)
+    case _ => S.error(S.?("password.link.invalid")); S.redirectTo(homePage)
+  }
+
   override def fieldOrder = List(id, firstName, lastName, email, locale, timezone, password)
 
   override def skipEmailValidation = true
 
   object roles extends MappedManyToMany(UserRoles, UserRoles.user, UserRoles.role, Role)
 
-  onLogIn = List(ExtSession.userDidLogin(_))
   onLogOut = List(ExtSession.userDidLogout(_))
 }
 

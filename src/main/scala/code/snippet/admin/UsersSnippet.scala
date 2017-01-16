@@ -92,9 +92,15 @@ class UsersSnippet {
       "select [style]" #> "display:none;" & "option" #> ""
     } getOrElse {
       "select" #> ("option" #> (everybody :: {
-        User.findAll() sortWith niceName map { u =>
-          option(u, selected = parseUser(S).exists(_.id.get == u.id.get))
-        }
+        val users = User.findAll
+        val userRoles = UserRoles.findAll
+        val (active, inactive) = (users sortWith niceName) partition {user => userRoles.exists(_.user == user)}
+
+        (active map { u =>
+          option(u, selected = parseUser().exists(_.id.get == u.id.get))
+        }) ::: (inactive map { u =>
+          option(u, selected = parseUser().exists(_.id.get == u.id.get)) & "option [style]" #> "background:#efefef"
+        })
       }))
     } apply in
 
@@ -144,7 +150,8 @@ class UsersSnippet {
 
     if (!userIdBox.isEmpty) {
       val user = User.findByKey(userIdBox.get.toLong)
-      user.get.toForm(Full("save"), "/admin/users")
+      User.edit(user.get)
+      //user.get.toForm(Full("save"), "/admin/users")
     } else {
       <lift:embed what="no_data"/>
     }

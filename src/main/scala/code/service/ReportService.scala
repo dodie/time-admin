@@ -7,7 +7,7 @@ import java.text.DecimalFormat
 
 import scala.collection.mutable.ListBuffer
 import net.liftweb.common._
-import org.joda.time.{DateTime, Duration, _}
+import org.joda.time.{DateTime, Duration, Interval, _}
 import code.commons.TimeUtils
 import net.liftweb.http.S
 import code.model.{Project, User}
@@ -115,7 +115,7 @@ object ReportService {
   def taskSheetData[D <: ReadablePartial](i: Interval, f: LocalDate => D, u: Box[User]): TaskSheet[D] = {
     val ps = Project.findAll
 
-    dates(i, f).map(d => (d, getTaskItems(TimeUtils.intervalFrom(d), u).filter(_.taskName.exists(_ != "")).map(t => taskSheetItemWithDuration(t, ps))))
+    dates(i, f).map(d => (d, getTaskItems(intervalFrom(d), u).filter(_.taskName.exists(_ != "")).map(t => taskSheetItemWithDuration(t, ps))))
       .foldedMap(Nil: List[(TaskSheetItem,Duration)])(_ ::: _)
       .mapValues(_.foldedMap(Duration.ZERO)(_ + _))
   }
@@ -134,6 +134,10 @@ object ReportService {
 
   def taskSheetItemWithDuration(t: TaskItemWithDuration, ps: List[Project]): (TaskSheetItem, Duration) =
     (TaskSheetItem(t.task map (_.id.get) getOrElse 0L, t.fullName), new Duration(t.duration))
+
+  def intervalFrom[D <: ReadablePartial](d: D): Interval = d match {
+    case d: { def toInterval: Interval } => d.toInterval
+  }
 
   /**
    * Aggregates the given TaskItem DTOs.

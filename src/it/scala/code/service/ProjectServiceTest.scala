@@ -1,72 +1,54 @@
 package code.service
 
 import code.model.Project
-import code.test.utils.DbSpec
-import net.liftweb.common.Box
+import code.test.utils.BaseSuite
 import net.liftweb.mapper.By
-import org.scalatest.{FunSuite, FunSpec}
 
-class ProjectServiceTest extends FunSuite with DbSpec {
+class ProjectServiceTest extends BaseSuite {
 
-  test("Display name of the top level project") {
-    givenSomeProjectData()
-
+  it("Display name of the top level project") {
     assert(ProjectService.getDisplayName(project("top")) == "top")
   }
 
-  test("Display name of the middle level project") {
-    givenSomeProjectData()
-
+  it("Display name of the middle level project") {
     assert(ProjectService.getDisplayName(project("middle")) == "top-middle")
   }
 
-  test("Display name of the bottom level project") {
-    givenSomeProjectData()
-
+  it("Display name of the bottom level project") {
     assert(ProjectService.getDisplayName(project("bottom")) == "top-middle-bottom")
   }
 
-  test("Move bottom project to any parent project") {
-    givenSomeProjectData()
-
+  it("Move bottom project to any parent project") {
     ProjectService.move(project("bottom"), project("any project"))
 
     assert(ProjectService.getDisplayName(project("bottom")) == "top-any project-bottom")
   }
 
-  test("Move bottom project to root") {
-    givenSomeProjectData()
-
+  it("Move bottom project to root") {
     ProjectService.moveToRoot(project("bottom"))
 
     assert(ProjectService.getDisplayName(project("bottom")) == "bottom")
   }
 
-  test("The top level project is not empty") {
-    givenSomeProjectData()
-
+  it("The top level project is not empty") {
     assert(!ProjectService.isEmpty(project("top")))
   }
 
-  test("The bottom level project is empty") {
-    givenSomeProjectData()
-
+  it("The bottom level project is empty") {
     assert(ProjectService.isEmpty(project("bottom")))
   }
 
-  test("Delete a bottom level project") {
-    givenSomeProjectData()
-
+  it("Delete a bottom level project") {
     assert(ProjectService.delete(project("bottom")))
   }
 
-  test("Try to delete a top level project") {
+  it("Try to delete a top level project") {
     intercept[IllegalArgumentException] {
       ProjectService.delete(project("top"))
     }
   }
 
-  def givenSomeProjectData(): Unit = {
+  given {
     Project.create.name("top").save()
     lazy val top = Project.find(By(Project.name, "top"))
     Project.create.name("any project").parent(top).save()

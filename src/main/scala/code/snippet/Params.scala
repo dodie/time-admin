@@ -10,11 +10,11 @@ import org.joda.time.LocalDate
 
 object Params {
 
-  def parseMonths(s: S): Box[List[YearMonth]] =
-    s.param("interval") map { _.split(";") map YearMonth.parse toList }
+  def parseMonths(): Box[List[YearMonth]] =
+    S.param("interval") map { _.split(";") map YearMonth.parse toList }
 
-  def parseInterval(s: S): Box[(Interval, LocalDate => ReadablePartial)] = tryo {
-    parseMonths(s) flatMap {
+  def parseInterval(): Box[(Interval, LocalDate => ReadablePartial)] = tryo {
+    parseMonths() flatMap {
       case start :: end :: _ => Full(between(start, end))
       case start :: _ => Full(oneMonth(start))
       case _ => Empty
@@ -30,6 +30,6 @@ object Params {
 
   def thisMonth(): (Interval, LocalDate => ReadablePartial) = (YearMonth.now().toInterval, identity)
 
-  def parseUser(s: S): Box[User] =
+  def parseUser(): Box[User] =
     S.param("user") map (_.toLong) or (User.currentUser map (_.id.get)) flatMap User.findByKey
 }

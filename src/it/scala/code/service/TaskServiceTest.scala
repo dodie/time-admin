@@ -1,16 +1,12 @@
 package code.service
 
-import code.model.Project
-import code.model.Task
-import code.model.TaskItem
-import code.test.utils.DbSpec
-import net.liftweb.common.Box
+import code.model.{Project, Task, TaskItem}
+import code.test.utils.BaseSuite
 import net.liftweb.mapper.By
-import org.scalatest.{FunSuite, FunSpec}
 
-class TaskServiceTest extends FunSuite with DbSpec {
+class TaskServiceTest extends BaseSuite {
 
-  test("only specifiable tasks can be specified") {
+  it("only specifiable tasks can be specified") {
     val project = Project.create.name("Any Project")
     project.save()
     val unspecifiableTask = Task.create.name("Any Task").parent(project).active(true)
@@ -21,7 +17,7 @@ class TaskServiceTest extends FunSuite with DbSpec {
     }
   }
 
-  test("specify task for the first time") {
+  it("specify task for the first time") {
     val project = Project.create.name("My Project")
     project.save()
     val genericSupportTask = Task.create.name("Support").parent(project).active(true).specifiable(true)
@@ -34,7 +30,7 @@ class TaskServiceTest extends FunSuite with DbSpec {
     assert(getProject(getProject(specificSupportTask.parent.get).parent.get) == project)
   }
 
-  test("specify multiple subtasks") {
+  it("specify multiple subtasks") {
     val project = Project.create.name("My Project")
     project.save()
     val genericSupportTask = Task.create.name("Support").parent(project).active(true).specifiable(true)
@@ -50,7 +46,7 @@ class TaskServiceTest extends FunSuite with DbSpec {
     assert(getProject(anotherSpecificSupportTask.parent.get) == getProject(specificSupportTask.parent.get))
   }
 
-  test("specify task with same name multiple times") {
+  it("specify task with same name multiple times") {
     val project = Project.create.name("My Project")
     project.save()
     val genericSupportTask = Task.create.name("Support").parent(project).active(true).specifiable(true)
@@ -67,7 +63,7 @@ class TaskServiceTest extends FunSuite with DbSpec {
     assert(specificSupportTask == accidentallyReSpecifiedSupportTask)
   }
 
-  test("merge removes merged Task") {
+  it("merge removes merged Task") {
     val project = Project.create.name("My Project")
     project.save()
     val mainTask = Task.create.name("Main task").parent(project)
@@ -80,7 +76,7 @@ class TaskServiceTest extends FunSuite with DbSpec {
     assert(Task.find(By(Task.id, taskToBeMerged.id.get)).isEmpty)
   }
 
-  test("merge transfers TaskItems to the target Task") {
+  it("merge transfers TaskItems to the target Task") {
     val project = Project.create.name("My Project")
     project.save()
     val mainTask = Task.create.name("Main task").parent(project)
