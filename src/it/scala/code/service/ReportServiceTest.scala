@@ -1,75 +1,152 @@
 package code.service
 
 import code.model.{Project, Task, TaskItem, User}
+import code.service.ReportService.taskSheetData
 import code.test.utils.BaseSuite
 import code.util.TaskSheetUtils.{dates, sum, tasks}
 import net.liftweb.common.{Box, Empty, Full}
 import net.liftweb.mapper.By
 import com.github.nscala_time.time.Imports._
 
+import scala.language.postfixOps
+
 class ReportServiceTest extends BaseSuite {
 
-  describe("Report task sheet data for default user and single day") {
-    lazy val ts = ReportService.taskSheetData(date(2016, 1, 30).toInterval(), identity, defaultUser())
+  describe("Task sheet data report for any daily interval and user") {
+    val interval = new Interval(date(2016, 1, 29).toInterval.start, date(2016, 1, 31).toInterval.end)
+    lazy val ts = taskSheetData(interval, identity, defaultUser())
 
-    it("the summary should be 8 hours") {
-      sum(ts) shouldBe 8.hours.toDuration
+    it("should contain all task items for the given interval") {
+      ts mapValues { _.map { case (t, d) => t.name -> d } } should contain theSameElementsAs Map(
+        date(2016, 1, 29) -> Map(),
+        date(2016, 1, 30) -> Map(
+          "p1-t1" -> (1.hours + 55.minutes).toDuration,
+          "p1-t2" -> (1.hours + 35.minutes).toDuration,
+          "p1-p11-t3" -> (4.hours + 30.minutes).toDuration
+        ),
+        date(2016, 1, 31) -> Map(
+          "p1-t1" -> (1.hours + 55.minutes).toDuration,
+          "p1-t2" -> (1.hours + 35.minutes).toDuration,
+          "p1-p11-t3" -> (4.hours + 30.minutes).toDuration,
+          "p2-t7" -> 30.minutes.toDuration
+        )
+      )
     }
 
-    it("should contain all tasks for the interval") {
-      tasks(ts) map (_.name) should contain theSameElementsAs List("p1-t1", "p1-t2", "p1-p11-t3")
-    }
-
-    it("should contain all dates for the interval") {
-      dates(ts) should contain theSameElementsAs List(date(2016, 1, 30))
-    }
-  }
-
-  describe("Report task sheet data for default user and overflowed day") {
-    lazy val ts = ReportService.taskSheetData(date(2016, 1, 31).toInterval(), identity, defaultUser())
-
-    it("the summary should be 8 and a half hours") {
-      sum(ts) shouldBe (8.hours + 30.minutes).toDuration
-    }
-
-    it("should contain all tasks for the interval") {
-      tasks(ts) map (_.name) should contain theSameElementsAs List("p1-t1", "p1-t2", "p1-p11-t3", "p2-t7")
-    }
-
-    it("should contain all dates for the interval") {
-      dates(ts) should contain theSameElementsAs List(date(2016, 1, 31))
-    }
-  }
-
-  describe("Report task sheet data for default user and day with slipped tasks") {
-    lazy val ts = ReportService.taskSheetData(date(2016, 2, 1).toInterval(), identity, defaultUser())
-
-    it("the summary should be 8 and a half hours") {
-      sum(ts) shouldBe (8.hours + 30.minutes).toDuration
-    }
-
-    it("should contain all tasks for the interval") {
-      tasks(ts) map (_.name) should contain theSameElementsAs List("p2-t7", "p1-p12-t4", "p2-t5", "p2-t6")
-    }
-
-    it("should contain all dates for the interval") {
-      dates(ts) should contain theSameElementsAs List(date(2016, 2, 1))
-    }
-  }
-
-  describe("Report task sheet data for default user and single month") {
-    lazy val ts = ReportService.taskSheetData(new YearMonth(2016, 1).toInterval(), identity, defaultUser())
-
-    it("the summary should be 16 and a half hours") {
+    it("should have summary") {
       sum(ts) shouldBe (16.hours + 30.minutes).toDuration
     }
 
-    it("should contain all tasks for the interval") {
+    it("should contain all tasks with full name") {
       tasks(ts) map (_.name) should contain theSameElementsAs List("p1-t1", "p1-t2", "p1-p11-t3", "p2-t7")
     }
 
-    it("should contain all dates for the interval") {
-      dates(ts) should contain theSameElementsAs Stream.iterate(date(2016, 1, 1))(_.plusDays(1)).take(31)
+    it("should contain all discrete dates for the interval") {
+      dates(ts) should contain theSameElementsAs List(date(2016, 1, 29), date(2016, 1, 30), date(2016, 1, 31))
+    }
+  }
+
+  describe("Task sheet data report for any monthly interval and user") {
+    val interval = new Interval(yearMonth(2015, 12).toInterval.start, yearMonth(2016, 2).toInterval.end)
+    lazy val ts = taskSheetData(interval, d => new YearMonth(d), defaultUser())
+
+    it("should contain all task items for the given interval") {
+      ts mapValues { _.map { case (t, d) => t.name -> d } } should contain theSameElementsAs Map(
+        yearMonth(2015, 12) -> Map(),
+        yearMonth(2016, 1) -> Map(
+          "p1-t1" -> (3.hours + 50.minutes).toDuration,
+          "p1-t2" -> (3.hours + 10.minutes).toDuration,
+          "p1-p11-t3" -> 9.hours.toDuration,
+          "p2-t7" -> 30.minutes.toDuration
+        ),
+        yearMonth(2016, 2) -> Map(
+          "p2-t7" -> 30.minutes.toDuration,
+          "p1-p12-t4" -> (1.hours + 55.minutes).toDuration,
+          "p2-t5" -> (1.hours + 35.minutes).toDuration,
+          "p2-t6" -> (4.hours + 30.minutes).toDuration
+        )
+      )
+    }
+
+    it("should have summary") {
+      sum(ts) shouldBe 25.hours.toDuration
+    }
+
+    it("should contain all tasks with full name") {
+      tasks(ts) map (_.name) should contain theSameElementsAs List("p1-t1", "p1-t2", "p1-p11-t3", "p1-p12-t4", "p2-t5", "p2-t6", "p2-t7")
+    }
+
+    it("should contain all discrete dates for the interval") {
+      dates(ts) should contain theSameElementsAs List(yearMonth(2015, 12), yearMonth(2016, 1), yearMonth(2016, 2))
+    }
+  }
+
+  describe("Task sheet data report for any daily interval and all user") {
+    val interval = new Interval(date(2016, 1, 29).toInterval.start, date(2016, 1, 31).toInterval.end)
+    lazy val ts = taskSheetData(interval, identity, Empty)
+
+    it("should contain all task items for the given interval") {
+      ts mapValues { _.map { case (t, d) => t.name -> d } } should contain theSameElementsAs Map(
+        date(2016, 1, 29) -> Map(),
+        date(2016, 1, 30) -> Map(
+          "p1-t1" -> (3.hours + 50.minutes).toDuration,
+          "p1-t2" -> (3.hours + 10.minutes).toDuration,
+          "p1-p11-t3" -> 9.hours.toDuration
+        ),
+        date(2016, 1, 31) -> Map(
+          "p1-t1" -> (3.hours + 50.minutes).toDuration,
+          "p1-t2" -> (3.hours + 10.minutes).toDuration,
+          "p1-p11-t3" -> 9.hours.toDuration,
+          "p2-t7" -> 1.hour.toDuration
+        )
+      )
+    }
+
+    it("should have summary") {
+      sum(ts) shouldBe 33.hours.toDuration
+    }
+
+    it("should contain all tasks with full name") {
+      tasks(ts) map (_.name) should contain theSameElementsAs List("p1-t1", "p1-t2", "p1-p11-t3", "p2-t7")
+    }
+
+    it("should contain all discrete dates for the interval") {
+      dates(ts) should contain theSameElementsAs List(date(2016, 1, 29), date(2016, 1, 30), date(2016, 1, 31))
+    }
+  }
+
+  describe("Task sheet data report for any monthly interval and all user") {
+    val interval = new Interval(yearMonth(2015, 12).toInterval.start, yearMonth(2016, 2).toInterval.end)
+    lazy val ts = taskSheetData(interval, d => new YearMonth(d), Empty)
+
+    it("should contain all task items for the given interval") {
+      ts mapValues { _.map { case (t, d) => t.name -> d } } should contain theSameElementsAs Map(
+        yearMonth(2015, 12) -> Map(),
+        yearMonth(2016, 1) -> Map(
+          "p1-t1" -> (7.hours + 40.minutes).toDuration,
+          "p1-t2" -> (6.hours + 20.minutes).toDuration,
+          "p1-p11-t3" -> 18.hours.toDuration,
+          "p2-t7" -> 1.hour.toDuration
+        ),
+        yearMonth(2016, 2) -> Map(
+          "p2-t7" -> 1.hour.toDuration,
+          "p1-p12-t4" -> (3.hours + 50.minutes).toDuration,
+          "p2-t5" -> (3.hours + 10.minutes).toDuration,
+          "p2-t6" -> 9.hours.toDuration
+        )
+      )
+    }
+
+    it("should have summary") {
+      sum(ts) shouldBe 50.hours.toDuration
+    }
+
+    it("should contain all tasks with full name") {
+      tasks(ts) map (_.name) should contain theSameElementsAs List("p1-t1", "p1-t2", "p1-p11-t3", "p1-p12-t4", "p2-t5", "p2-t6", "p2-t7")
+    }
+
+    it("should contain all discrete dates for the interval") {
+      dates(ts) should contain theSameElementsAs List(yearMonth(2015, 12), yearMonth(2016, 1), yearMonth(2016, 2))
     }
   }
 
@@ -119,7 +196,9 @@ class ReportServiceTest extends BaseSuite {
   def givenTaskItems(u: User, ld: LocalDate, tis: (Box[Task], LocalTime)*): List[TaskItem] =
     tis map { case (t, lt) => TaskItem.create.user(u).task(t).start(ld.toDateTime(lt).getMillis) } toList
 
-  def date(year: Integer, monthOfYear: Integer, dayOfMonth: Integer): LocalDate = new LocalDate(year, monthOfYear, dayOfMonth)
+  def date(year: Int, monthOfYear: Int, dayOfMonth: Int): LocalDate = new LocalDate(year, monthOfYear, dayOfMonth)
 
-  def time(hourOfDay: Integer, minuteOfHour: Integer): LocalTime = new LocalTime(hourOfDay, minuteOfHour)
+  def yearMonth(year: Int, monthOfYear: Int): YearMonth = new YearMonth(year, monthOfYear)
+
+  def time(hourOfDay: Int, minuteOfHour: Int): LocalTime = new LocalTime(hourOfDay, minuteOfHour)
 }
