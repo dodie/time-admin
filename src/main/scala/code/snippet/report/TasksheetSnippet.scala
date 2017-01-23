@@ -13,8 +13,10 @@ import net.liftweb.common.Box
 import net.liftweb.http.S
 import net.liftweb.util.BindHelpers.strToCssBindPromoter
 import net.liftweb.util.CssSel
-import org.joda.time.{ReadablePartial, YearMonth}
+import org.joda.time.DateTimeConstants.{SATURDAY, SUNDAY}
+import org.joda.time.{DateTimeConstants, DateTimeFieldType, ReadablePartial, YearMonth}
 
+import scala.util.Try
 import scala.xml.NodeSeq
 
 
@@ -56,24 +58,24 @@ class TasksheetSnippet extends DateFunctions {
     val taskSheet = ReportService.taskSheetData(i, f, u)
     val durations = new Durations(taskSheet)
 
-    ".dayHeader" #> dates(taskSheet).map(d => ".dayHeader *" #> dayOf(d).map(_.toString).getOrElse(d.toString)) &
+    ".dayHeader" #> dates(taskSheet).map(d => ".dayHeader *" #> printDateHeader(d)) &
         ".TaskRow" #> tasks(taskSheet).map { t =>
           ".taskFullName *" #> t.name & ".taskFullName [title]" #> t.name &
             ".dailyData" #> dates(taskSheet)
-              .map(d => ".dailyData *" #> durations.print(duration(taskSheet, d, t)) & formatData(i, d)) &
+              .map(d => ".dailyData *" #> durations.print(duration(taskSheet, d, t)) & formatCell(d)) &
             ".taskSum *" #> durations.print(sumByTasks(taskSheet)(t))
         } &
         ".dailySum" #> dates(taskSheet).map(d => ".dailySum *" #> durations.print(sumByDates(taskSheet)(d))) &
         ".totalSum *" #> durations.print(sum(taskSheet))
   }
 
-  def formatData[D <: ReadablePartial](i: Interval, d: D): CssSel =
-    ".dailyData [class]" #> Some(d)
-      .filter(hasDayFieldType)
-      .flatMap(d => mapToDateTime(i, d))
-      .filter(isWeekend)
-      .map(_ => "colWeekend")
-      .getOrElse("colWeekday")
+  def printDateHeader[D <: ReadablePartial](d: D): String =
+    Try(d.get(DateTimeFieldType.dayOfMonth())) map (_.toString) getOrElse d.toString
+
+  def formatCell[D <: ReadablePartial](d: D): CssSel =
+    Try(d.get(DateTimeFieldType.dayOfWeek())).toOption flatMap { i =>
+      if (i == SATURDAY || i == SUNDAY) Some(".dailyData [class]" #> "colWeekend") else None
+    } getOrElse ".dailyData [class]" #> "colWeekday"
 
   class Durations[D <: ReadablePartial](ts: TaskSheet[D]) {
     val minutes = ("minutes", S.?("dimensions.minutes"), (d: Duration) => d.minutes.toString)

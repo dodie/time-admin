@@ -16,7 +16,7 @@ import code.service.TaskItemService.getTaskItems
 import com.github.nscala_time.time.Imports._
 
 import scala.collection.immutable.Seq
-import code.util.ListToFoldedMap._
+import code.util.ListToReducedMap._
 
 import scala.language.postfixOps
 
@@ -116,8 +116,8 @@ object ReportService {
     val ps = Project.findAll
 
     dates(i, f).map(d => (d, getTaskItems(intervalFrom(d), u).filter(_.taskName.exists(_ != "")).map(t => taskSheetItemWithDuration(t, ps))))
-      .foldedMap(Nil: List[(TaskSheetItem,Duration)])(_ ::: _)
-      .mapValues(_.foldedMap(Duration.ZERO)(_ + _))
+      .leftReducedMap(Nil: List[(TaskSheetItem,Duration)])(_ ::: _)
+      .mapValues(_.leftReducedMap(Duration.ZERO)(_ + _))
   }
 
   def dates[D <: ReadablePartial](i: Interval, f: LocalDate => D): List[D] = days(i).map(f).distinct

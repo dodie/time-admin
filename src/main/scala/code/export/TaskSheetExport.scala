@@ -9,7 +9,10 @@ import com.norbitltd.spoiwo.natures.xlsx.Model2XlsxConversions.XlsxSheet
 import net.liftweb.common.Box
 import net.liftweb.http.S
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
-import org.joda.time.ReadablePartial
+import org.joda.time.DateTimeConstants.{SATURDAY, SUNDAY}
+import org.joda.time.{DateTimeFieldType, ReadablePartial}
+
+import scala.util.Try
 
 object TaskSheetExport {
 
@@ -31,7 +34,7 @@ object TaskSheetExport {
           Row(taskTitle :: (ds.map(d => header(d.toString)) :+ sumTitle)) :: {
           ts.map { t =>
             Row(left(t.name) :: (ds.map { d =>
-              value(duration(taskSheet, d, t).minutes).withDefaultStyle(weekend(interval, d))
+              value(duration(taskSheet, d, t).minutes).withDefaultStyle(formatCell(d))
             } :+ summary(sumByTasks(taskSheet)(t).minutes)))
           } :+
             Row(sumFooter :: (ds.map { d => footer(sumByDates(taskSheet)(d).minutes) } :+ footer(sum(taskSheet).minutes)))
@@ -44,6 +47,11 @@ object TaskSheetExport {
 
     (xlsx, s"tasksheet_${fullTitle.toLowerCase.replace(" ", "")}.xlsx")
   }
+
+  def formatCell[D <: ReadablePartial](d: D): Option[CellStyle] =
+    Try(d.get(DateTimeFieldType.dayOfWeek())).toOption flatMap { i =>
+      if (i == SATURDAY || i == SUNDAY) Some(styles.weekend) else None
+    }
 
   def taskTitle: Cell = Cell(value = S.?("export.tasksheet.project_identifier"), style = styles.header.withHorizontalAlignment(styles.left.horizontalAlignment.get))
 
@@ -67,33 +75,30 @@ object TaskSheetExport {
 
   def range(p: (Int, Int)): Range = p match { case (start, end) => start to end }
 
-  def weekend(i: Interval, d: ReadablePartial): Option[CellStyle] =
-    Some(d) filter hasDayFieldType flatMap (mapToDateTime(i, _)) filter isWeekend map (_ => styles.weekend)
-
   object styles {
     import com.norbitltd.spoiwo.model.Color.{LightGrey, LightYellow}
+    import com.norbitltd.spoiwo.model.enums.CellBorderStyle.{Medium, None, Thin}
     import com.norbitltd.spoiwo.model.enums.CellFill.Solid
     import com.norbitltd.spoiwo.model.enums.CellHorizontalAlignment.{Center, Left, Right}
-    import com.norbitltd.spoiwo.model.enums.CellBorderStyle.{Medium, None, Thin}
     import com.norbitltd.spoiwo.model.{CellStyle, _}
 
-    lazy val default = CellStyle(
+    lazy val default: CellStyle = CellStyle(
       font = Font(bold = true),
       horizontalAlignment = Right,
       borders = CellBorders(None)
     )
 
-    lazy val main = default.withHorizontalAlignment(Center)
+    lazy val main: CellStyle = default.withHorizontalAlignment(Center)
 
-    lazy val header = default.withBorders(CellBorders().withBottomStyle(Medium))
+    lazy val header: CellStyle = default.withBorders(CellBorders().withBottomStyle(Medium))
 
-    lazy val left = default.withHorizontalAlignment(Left)
+    lazy val left: CellStyle = default.withHorizontalAlignment(Left)
 
-    lazy val footer = default.withBorders(CellBorders().withTopStyle(Thin))
+    lazy val footer: CellStyle = default.withBorders(CellBorders().withTopStyle(Thin))
 
-    lazy val weekend = default.withFillPattern(Solid).withFillForegroundColor(LightGrey)
+    lazy val weekend: CellStyle = default.withFillPattern(Solid).withFillForegroundColor(LightGrey)
 
-    lazy val summary = default.withFillPattern(Solid).withFillForegroundColor(LightYellow)
+    lazy val summary: CellStyle = default.withFillPattern(Solid).withFillForegroundColor(LightYellow)
   }
 
 }
