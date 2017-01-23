@@ -15,7 +15,7 @@ import code.service.TaskItemService.getTaskItems
 import com.github.nscala_time.time.Imports._
 
 import scala.collection.immutable.Seq
-import code.util.ListToFoldedMap._
+import code.util.ListToReducedMap._
 
 /**
  * Reponsible for creating report data.
@@ -113,8 +113,8 @@ object ReportService {
     dates(i, f)
       .map(d => (d, activeTaskItems(intervalFrom(d), u)
         .map(t => taskSheetItemWithDuration(t))))
-      .foldedMap(Nil: List[(TaskSheetItem,Duration)])(_ ::: _)
-      .mapValues(_.foldedMap(Duration.ZERO)(_ + _))
+      .leftReducedMap(Nil: List[(TaskSheetItem,Duration)])(_ ::: _)
+      .mapValues(_.leftReducedMap(Duration.ZERO)(_ + _))
 
   def dates[D <: ReadablePartial](i: Interval, f: LocalDate => D): List[D] = days(i).map(f).distinct
 
