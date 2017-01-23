@@ -2,11 +2,9 @@ package code.util
 
 import code.service.ReportService._
 import code.service.TaskSheetItem
-import com.github.nscala_time.time.Imports._
 import code.util.ListToReducedMap._
-import org.joda.time.{DateTimeConstants, DateTimeFieldType, ReadablePartial}
-
-import scala.util.Try
+import com.github.nscala_time.time.Imports._
+import org.joda.time.ReadablePartial
 
 object TaskSheetUtils {
 
@@ -27,25 +25,6 @@ object TaskSheetUtils {
 
   def sum[D <: ReadablePartial](ts: TaskSheet[D]): Duration =
     sumByDates(ts).values.foldLeft(Duration.millis(0))(_ + _)
-
-  def ratioByTask[D <: ReadablePartial](ts: TaskSheet[D]): Map[TaskSheetItem, Double] = {
-    val s = sum(ts).getMillis
-    sumByTasks(ts).mapValues(d => (d.getMillis * 100.0d) / s)
-  }
-
-  def mapToDateTime[D <: ReadablePartial](i: Interval, d: D): Option[DateTime] =
-    List(d.toDateTime(i.start), d.toDateTime(i.end)).find(i.contains(_))
-
-  def isWeekend(d: DateTime): Boolean =
-    d.getDayOfWeek == DateTimeConstants.SATURDAY || d.getDayOfWeek == DateTimeConstants.SUNDAY
-
-  def hasDayFieldType[RD <: ReadablePartial](d: RD): Boolean =
-    d.isSupported(DateTimeFieldType.dayOfWeek()) || d.isSupported(DateTimeFieldType.dayOfMonth()) || d.isSupported(DateTimeFieldType.dayOfYear())
-
-  def dayOf[RD <: ReadablePartial](d: RD): Try[Int] =
-    Try(d.get(DateTimeFieldType.dayOfMonth()))
-      .orElse(Try(d.get(DateTimeFieldType.dayOfYear())))
-      .orElse(Try(d.get(DateTimeFieldType.dayOfWeek())))
 
   def title(interval: Interval, scale: LocalDate => ReadablePartial): String = {
     val now = LocalDate.now()
