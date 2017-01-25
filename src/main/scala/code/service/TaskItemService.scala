@@ -1,17 +1,18 @@
 package code
 package service
 
-import scala.collection.mutable.ListBuffer
-import org.joda.time.{DateTime, Interval}
 import code.commons.TimeUtils
+import code.commons.TimeUtils.{dayEndInMs, intervalFrom}
 import code.model.mixin.HierarchicalItem
 import code.model.{Project, Task, TaskItem, User}
 import code.service.HierarchicalItemService.path
-import net.liftweb.common.Box.box2Option
-import net.liftweb.common.{Box, Empty, Full}
-import net.liftweb.mapper._
 import com.github.nscala_time.time.Imports._
+import net.liftweb.common.Box.box2Option
+import net.liftweb.common.{Box, Full}
+import net.liftweb.mapper.{By, _}
+import org.joda.time.{DateTime, Interval, ReadablePartial}
 
+import scala.collection.mutable.ListBuffer
 import scala.language.postfixOps
 
 /**
@@ -26,7 +27,7 @@ object TaskItemService {
    * Returns the last option for the given day.
    */
   def getLastTaskItemForDay(offset: Int) = {
-    getTaskItems(TimeUtils.offsetToDailyInterval(offset)).lastOption
+    getTaskItems(TimeUtils.offsetToDailyInterval(offset), identity).lastOption
   }
 
   def alwaysTrue[T <: Mapper[T]]: QueryParam[T] = BySql[T]("1=1", IHaveValidatedThisSQL("suliatis", "2016-11-10"))
@@ -35,7 +36,7 @@ object TaskItemService {
    * Returns a sequence with the task item entries on the given day.
    * The ordering is determined by the item's start time.
    */
-  def getTaskItems(interval: Interval, user: Box[User] = User.currentUser): List[TaskItemWithDuration] = {
+  def getTaskItems[D <: ReadablePartial](interval: Interval, scale: LocalDate => D, user: Box[User] = User.currentUser): List[TaskItemWithDuration] = {
     lazy val projects = Project.findAll
 
     def toTimeline(taskItems: List[TaskItem]): List[TaskItemWithDuration] = {
@@ -65,6 +66,8 @@ object TaskItemService {
 
         val allTaskItems = trimmedItems ::: cap
 
+        splitTasksInInterval(allTaskItems, interval, scale)
+
         var previousTaskStart: Long =
           if (allTaskItems.last.task.get == 0) {
             allTaskItems.last.start.get
@@ -75,7 +78,7 @@ object TaskItemService {
         for (taskItem <- allTaskItems.reverse) {
           val start = taskItem.start.get
           //compensate lost millisecond at the end of the day
-          val duration = (if (previousTaskStart == TimeUtils.dayEndInMs(previousTaskStart)) previousTaskStart + 1 else previousTaskStart) - start
+          val duration = (if (previousTaskStart == dayEndInMs(previousTaskStart)) previousTaskStart + 1 else previousTaskStart) - start
           previousTaskStart = start
           taskItemDtos += TaskItemWithDuration(taskItem, Duration.millis(duration), taskItem.task.obj map (t => path(List(t), t.parent.box, projects)) getOrElse Nil)
         }
@@ -113,6 +116,33 @@ object TaskItemService {
     } else {
       list
     }
+  }
+
+  def splitTasksInInterval[D <: ReadablePartial](ts: List[TaskItem], i: Interval, f: LocalDate => D): List[TaskItem] = {
+    def pause(t: TaskItem, step: Interval): TaskItem =
+      TaskItem.create.user(t.user.get).task(0).start(nextStart(t, step) - 1)
+
+    def nextItem(t: TaskItem, step: Interval): TaskItem =
+      TaskItem.create.user(t.user.get).task(t.task.get).start(nextStart(t, step))
+
+    def nextStart(t: TaskItem, step: Interval): Long =
+      if (step.startMillis < t.start.get) t.start.get + new Interval(t.start, step.endMillis).toDurationMillis
+      else t.start.get + step.toDurationMillis
+
+    def next(step: Interval): Interval = new Interval(
+      step.startMillis + step.toDurationMillis,
+      step.endMillis + step.toDurationMillis
+    )
+
+    def loop(zs: List[TaskItem], ts: List[TaskItem], step: Interval): List[TaskItem] = ts match {
+      case h1 :: h2 :: t =>
+        if (new Interval(h1.start.get, h2.start.get).toDuration.getMillis > step.toDuration.getMillis)
+          loop(pause(h1, step):: h1 :: zs, nextItem(h1, step) :: h2 :: t, next(step))
+        else loop(h1 :: zs, h2 :: t, next(step))
+      case h :: Nil => h :: zs
+    }
+
+    loop(Nil, ts, intervalFrom(f(i.start.toLocalDate))).reverse
   }
 
   /**

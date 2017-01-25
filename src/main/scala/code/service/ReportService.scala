@@ -9,6 +9,7 @@ import scala.collection.mutable.ListBuffer
 import net.liftweb.common._
 import org.joda.time.{DateTime, Duration, Interval, _}
 import code.commons.TimeUtils
+import code.commons.TimeUtils.intervalFrom
 import net.liftweb.http.S
 import code.model.{Project, User}
 import code.service.HierarchicalItemService.path
@@ -56,7 +57,7 @@ object ReportService {
 
     // for all days, get all task items and produce data tuples
     (for (currentOffset <- monthStartOffset until monthEndOffset + 1) yield {
-      val taskItemsForDay = getTaskItems(TimeUtils.offsetToDailyInterval(currentOffset))
+      val taskItemsForDay = getTaskItems(TimeUtils.offsetToDailyInterval(currentOffset), identity)
 
       val offtimeToRemoveFromLeaveTime = {
         val aggregatedArray = createAggregatedDatas(taskItemsForDay)
@@ -115,9 +116,10 @@ object ReportService {
   def taskSheetData[D <: ReadablePartial](i: Interval, f: LocalDate => D, u: Box[User]): TaskSheet[D] = {
     val ps = Project.findAll
 
-    dates(i, f).map(d => (d, getTaskItems(intervalFrom(d), u).filter(_.taskName.exists(_ != "")).map(t => taskSheetItemWithDuration(t, ps))))
-      .leftReducedMap(Nil: List[(TaskSheetItem,Duration)])(_ ::: _)
-      .mapValues(_.leftReducedMap(Duration.ZERO)(_ + _))
+    val ds = dates(i, f).map(d => d -> (Nil: List[TaskItemWithDuration])).toMap
+
+    (ds ++ taskItemsExceptPause(i, f, u).groupBy(t => f(new LocalDate(t.taskItem.start.get))))
+      .mapValues(_.map(taskSheetItemWithDuration(_, ps)).leftReducedMap(Duration.ZERO)(_ + _))
   }
 
   def dates[D <: ReadablePartial](i: Interval, f: LocalDate => D): List[D] = days(i).map(f).distinct
@@ -129,15 +131,11 @@ object ReportService {
 
     } map (i.start.toLocalDate.plusDays(_)) toList
 
-  def taskItemsExceptPause(i: Interval, u: Box[User]): List[TaskItemWithDuration] =
-    getTaskItems(i, u) filter (_.taskName exists (_ != ""))
+  def taskItemsExceptPause[D <: ReadablePartial](i: Interval, f: LocalDate => D, u: Box[User]): List[TaskItemWithDuration] =
+    getTaskItems(i, f, u) filter (_.taskName exists (_ != ""))
 
   def taskSheetItemWithDuration(t: TaskItemWithDuration, ps: List[Project]): (TaskSheetItem, Duration) =
     (TaskSheetItem(t.task map (_.id.get) getOrElse 0L, t.fullName), new Duration(t.duration))
-
-  def intervalFrom[D <: ReadablePartial](d: D): Interval = d match {
-    case d: { def toInterval: Interval } => d.toInterval
-  }
 
   /**
    * Aggregates the given TaskItem DTOs.

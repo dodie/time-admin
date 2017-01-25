@@ -228,6 +228,10 @@ object TimeUtils {
 
   def offsetToDailyInterval[D <: ReadablePartial](offset: Int): Interval = new Interval(currentDayStartInMs(offset), currentDayEndInMs(offset))
 
+  def intervalFrom[D <: ReadablePartial](d: D): Interval = d match {
+    case d: { def toInterval: Interval } => d.toInterval
+  }
+
   lazy val monthNames = List(S.?("date.month.january"),
     S.?("date.month.february"),
     S.?("date.month.march"),

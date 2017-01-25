@@ -21,7 +21,7 @@ import scala.xml.{NodeSeq, Text}
 class TaskItemSnippet extends DateFunctions {
 
   /** All task items today for current user. */
-  lazy val taskItems = TaskItemService.getTaskItems(TimeUtils.offsetToDailyInterval(offsetInDays))
+  lazy val taskItems = TaskItemService.getTaskItems(TimeUtils.offsetToDailyInterval(offsetInDays), identity)
 
   /** All tasks. */
   lazy val tasks = TaskService.getTaskArray()

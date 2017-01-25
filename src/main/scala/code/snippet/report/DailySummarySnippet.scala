@@ -36,7 +36,7 @@ class DailySummarySnippet extends DateFunctions {
     }
 
     // All task today for current user
-    val taskItems = TaskItemService.getTaskItems(TimeUtils.offsetToDailyInterval(offsetInDays))
+    val taskItems = TaskItemService.getTaskItems(TimeUtils.offsetToDailyInterval(offsetInDays), identity)
 
     // aggregated data items
     val aggregatedArray = ReportService.createAggregatedDatas(taskItems)
