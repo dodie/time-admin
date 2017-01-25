@@ -64,9 +64,7 @@ object TaskItemService {
             List()
           }
 
-        val allTaskItems = trimmedItems ::: cap
-
-        splitTasksInInterval(allTaskItems, interval, scale)
+        val allTaskItems = splitTasksInInterval(trimmedItems ::: cap, interval, scale)
 
         var previousTaskStart: Long =
           if (allTaskItems.last.task.get == 0) {
@@ -84,7 +82,7 @@ object TaskItemService {
         }
       }
 
-      taskItemDtos.reverse.toList.filter(item => item.duration != 0 || item.taskItem.task.get == 0)
+      taskItemDtos.reverse.toList.filter(item => item.duration.getMillis != 0L || item.taskItem.task.get == 0)
     }
 
     val taskItemsForPeriod = TaskItem.findAll(
