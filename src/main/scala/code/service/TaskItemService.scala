@@ -119,30 +119,27 @@ object TaskItemService {
   }
 
   def splitTasksInInterval[D <: ReadablePartial](ts: List[TaskItem], i: Interval, f: LocalDate => D): List[TaskItem] = {
-    def pause(t: TaskItem, step: Interval): TaskItem =
+    def pause(t: TaskItem, step: Period): TaskItem =
       TaskItem.create.user(t.user.get).task(0).start(nextStart(t, step) - 1)
 
-    def nextItem(t: TaskItem, step: Interval): TaskItem =
+    def nextItem(t: TaskItem, step: Period): TaskItem =
       TaskItem.create.user(t.user.get).task(t.task.get).start(nextStart(t, step))
 
-    def nextStart(t: TaskItem, step: Interval): Long =
-      if (step.startMillis < t.start.get) t.start.get + new Interval(t.start, step.endMillis).toDurationMillis
-      else t.start.get + step.toDurationMillis
+    def nextStart(t: TaskItem, step: Period): Long = {
+      val interval = intervalFrom(f(new LocalDate(t.start.get)))
+      if (interval.startMillis < t.start.get) t.start.get + new Interval(t.start, interval.endMillis).toDurationMillis
+      else new DateTime(t.start.get).plus(step).getMillis
+    }
 
-    def next(step: Interval): Interval = new Interval(
-      step.startMillis + step.toDurationMillis,
-      step.endMillis + step.toDurationMillis
-    )
-
-    def loop(zs: List[TaskItem], ts: List[TaskItem], step: Interval): List[TaskItem] = ts match {
+    def loop(zs: List[TaskItem], ts: List[TaskItem], step: Period): List[TaskItem] = ts match {
       case h1 :: h2 :: t =>
-        if (new Interval(h1.start.get, h2.start.get).toDuration.getMillis > step.toDuration.getMillis)
-          loop(pause(h1, step):: h1 :: zs, nextItem(h1, step) :: h2 :: t, next(step))
-        else loop(h1 :: zs, h2 :: t, next(step))
+        if (new Interval(h1.start.get, h2.start.get).toDuration.getMillis > step.toDurationFrom(new DateTime(h1.start.get)).getMillis)
+          loop(pause(h1, step):: h1 :: zs, nextItem(h1, step) :: h2 :: t, step)
+        else loop(h1 :: zs, h2 :: t, step)
       case h :: Nil => h :: zs
     }
 
-    loop(Nil, ts, intervalFrom(f(i.start.toLocalDate))).reverse
+    loop(Nil, ts, intervalFrom(f(i.start.toLocalDate)).toPeriod).reverse
   }
 
   /**

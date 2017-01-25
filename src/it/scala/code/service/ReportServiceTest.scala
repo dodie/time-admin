@@ -7,6 +7,7 @@ import code.util.TaskSheetUtils.{dates, sum, tasks}
 import net.liftweb.common.{Box, Empty, Full}
 import net.liftweb.mapper.By
 import com.github.nscala_time.time.Imports._
+import org.joda.time.PeriodType
 
 import scala.language.postfixOps
 
@@ -147,6 +148,14 @@ class ReportServiceTest extends BaseSuite {
 
     it("should contain all discrete dates for the interval") {
       dates(ts) should contain theSameElementsAs List(yearMonth(2015, 12), yearMonth(2016, 1), yearMonth(2016, 2))
+    }
+
+    it("step") {
+      val i = new YearMonth(1999, 1).toInterval()
+      var step = new LocalDate(i.getStart).toInterval.toPeriod()
+      step.toStandardDuration shouldBe 1.day.toStandardDuration
+
+      new LocalDate(DateTime.now()).toInterval
     }
   }
 
