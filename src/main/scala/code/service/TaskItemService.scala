@@ -64,7 +64,7 @@ object TaskItemService {
             List()
           }
 
-        val allTaskItems = splitTasksInInterval(trimmedItems ::: cap, interval, scale)
+        val allTaskItems = split(trimmedItems ::: cap, interval, scale)
 
         var previousTaskStart: Long =
           if (allTaskItems.last.task.get == 0) {
@@ -116,28 +116,29 @@ object TaskItemService {
     }
   }
 
-  def splitTasksInInterval[D <: ReadablePartial](ts: List[TaskItem], i: Interval, f: LocalDate => D): List[TaskItem] = {
-    def pause(t: TaskItem, step: Period): TaskItem =
-      TaskItem.create.user(t.user.get).task(0).start(nextStart(t, step) - 1)
+  def split[D <: ReadablePartial](ts: List[TaskItem], i: Interval, f: LocalDate => D): List[TaskItem] = {
+    def nextStep(instant: Long, step: Interval, period: Period): Interval =
+      if (step.contains(instant)) step
+      else nextStep(instant, new Interval(step.start + period, step.end + period), period)
 
-    def nextItem(t: TaskItem, step: Period): TaskItem =
-      TaskItem.create.user(t.user.get).task(t.task.get).start(nextStart(t, step))
+    def pause(t: TaskItem, step: Interval): TaskItem =
+      TaskItem.create.user(t.user.get).task(0).start(step.endMillis - 1L)
 
-    def nextStart(t: TaskItem, step: Period): Long = {
-      val interval = intervalFrom(f(new LocalDate(t.start.get)))
-      if (interval.startMillis < t.start.get) t.start.get + new Interval(t.start, interval.endMillis).toDurationMillis
-      else new DateTime(t.start.get).plus(step).getMillis
+    def task(t: TaskItem, step: Interval): TaskItem =
+      TaskItem.create.user(t.user.get).task(t.task.get).start(step.endMillis)
+
+    def loop(zs: List[TaskItem], ts: List[TaskItem], step: Interval, period: Period): List[TaskItem] = ts match {
+      case t1 :: t2 :: ts =>
+        val s = nextStep(t1.start.get, step, period)
+        if (s.contains(new Interval(t1.start.get, t2.start.get))) loop(t1 :: zs, t2 :: ts, s, period)
+        else loop(pause(t1, s) :: t1 :: zs, task(t1, s) :: t2 :: ts, s, period)
+      case t :: Nil =>  (t :: zs).reverse
     }
 
-    def loop(zs: List[TaskItem], ts: List[TaskItem], step: Period): List[TaskItem] = ts match {
-      case h1 :: h2 :: t =>
-        if (new Interval(h1.start.get, h2.start.get).toDuration.getMillis > step.toDurationFrom(new DateTime(h1.start.get)).getMillis)
-          loop(pause(h1, step):: h1 :: zs, nextItem(h1, step) :: h2 :: t, step)
-        else loop(h1 :: zs, h2 :: t, step)
-      case h :: Nil => h :: zs
-    }
 
-    loop(Nil, ts, intervalFrom(f(i.start.toLocalDate)).toPeriod).reverse
+    val step = intervalFrom(f(new LocalDate(i.start)))
+    val period = step.toPeriod
+    loop(Nil, ts, step, period)
   }
 
   /**
