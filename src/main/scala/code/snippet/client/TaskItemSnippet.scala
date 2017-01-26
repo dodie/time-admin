@@ -2,6 +2,7 @@ package code
 package snippet
 
 import code.commons.TimeUtils
+import code.service.TaskItemService.IntervalQuery
 import code.service._
 import code.snippet.mixin.DateFunctions
 import net.liftweb.common.Box.box2Option
@@ -21,7 +22,7 @@ import scala.xml.{NodeSeq, Text}
 class TaskItemSnippet extends DateFunctions {
 
   /** All task items today for current user. */
-  lazy val taskItems = TaskItemService.getTaskItems(TimeUtils.offsetToDailyInterval(offsetInDays), identity)
+  lazy val taskItems = TaskItemService.getTaskItems(IntervalQuery(TimeUtils.offsetToDailyInterval(offsetInDays)))
 
   /** All tasks. */
   lazy val tasks = TaskService.getTaskArray()

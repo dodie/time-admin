@@ -2,7 +2,7 @@ package code
 package service
 
 import code.commons.TimeUtils
-import code.commons.TimeUtils.{dayEndInMs, intervalFrom}
+import code.commons.TimeUtils.dayEndInMs
 import code.model.mixin.HierarchicalItem
 import code.model.{Project, Task, TaskItem, User}
 import code.service.HierarchicalItemService.path
@@ -10,7 +10,7 @@ import com.github.nscala_time.time.Imports._
 import net.liftweb.common.Box.box2Option
 import net.liftweb.common.{Box, Full}
 import net.liftweb.mapper.{By, _}
-import org.joda.time.{DateTime, Interval, ReadablePartial}
+import org.joda.time.{DateTime, Interval, LocalDate, ReadablePartial}
 
 import scala.collection.mutable.ListBuffer
 import scala.language.postfixOps
@@ -27,7 +27,7 @@ object TaskItemService {
    * Returns the last option for the given day.
    */
   def getLastTaskItemForDay(offset: Int): Option[TaskItemWithDuration] = {
-    getTaskItems(TimeUtils.offsetToDailyInterval(offset), identity).lastOption
+    getTaskItems(IntervalQuery(TimeUtils.offsetToDailyInterval(offset))).lastOption
   }
 
   def alwaysTrue[T <: Mapper[T]]: QueryParam[T] = BySql[T]("1=1", IHaveValidatedThisSQL("suliatis", "2016-11-10"))
@@ -36,7 +36,7 @@ object TaskItemService {
    * Returns a sequence with the task item entries on the given day.
    * The ordering is determined by the item's start time.
    */
-  def getTaskItems[D <: ReadablePartial](interval: Interval, scale: LocalDate => D, user: Box[User] = User.currentUser): List[TaskItemWithDuration] = {
+  def getTaskItems(query: IntervalQuery, user: Box[User] = User.currentUser): List[TaskItemWithDuration] = {
     lazy val projects = Project.findAll
 
     def toTimeline(taskItems: List[TaskItem]): List[TaskItemWithDuration] = {
@@ -46,25 +46,25 @@ object TaskItemService {
         val trimmedItems =
           taskItems
             .map(item =>
-              if (item.start.get < interval.startMillis)
+              if (item.start.get < query.interval.startMillis)
                 TaskItem.create
                   .user(item.user.get)
                   .task(item.task.get)
-                  .start(interval.startMillis)
+                  .start(query.interval.startMillis)
               else
                 item)
 
         val cap =
-          if (taskItems.last.task.get != 0 && interval.endMillis < TimeUtils.currentTime) {
+          if (taskItems.last.task.get != 0 && query.interval.endMillis < TimeUtils.currentTime) {
             List(TaskItem.create
               .user(taskItems.last.user.get)
               .task(0)
-              .start(interval.endMillis - 1))
+              .start(query.interval.endMillis - 1))
           } else {
             List()
           }
 
-        val allTaskItems = split(trimmedItems ::: cap, interval, scale)
+        val allTaskItems = split(trimmedItems ::: cap, query)
 
         var previousTaskStart: Long =
           if (allTaskItems.last.task.get == 0) {
@@ -88,8 +88,8 @@ object TaskItemService {
     val taskItemsForPeriod = TaskItem.findAll(
         OrderBy(TaskItem.start, Ascending),
         user.map(u => By(TaskItem.user, u)).getOrElse(alwaysTrue),
-        By_<(TaskItem.start, interval.endMillis),
-        By_>=(TaskItem.start, interval.startMillis),
+        By_<(TaskItem.start, query.interval.endMillis),
+        By_>=(TaskItem.start, query.interval.startMillis),
         PreCache(TaskItem.task)
       )
 
@@ -101,7 +101,7 @@ object TaskItemService {
           TaskItem.findAll(OrderBy(TaskItem.start, Descending),
             MaxRows(1),
             By(TaskItem.user, u),
-            By_<(TaskItem.start, interval.startMillis))
+            By_<(TaskItem.start, query.interval.startMillis))
           .filter(_.task != 0))
 
     val taskItems = lastPartTaskItemBeforePeriodThatMightCount ::: taskItemsForPeriod
@@ -110,16 +110,16 @@ object TaskItemService {
 
     if (list.isEmpty) {
       // if the result is empty, then return a list that contains only a Pause item
-      List(TaskItemWithDuration(TaskItem.create.user(user).start(interval.startMillis + 1), 0 millis, Nil))
+      List(TaskItemWithDuration(TaskItem.create.user(user).start(query.interval.startMillis + 1), 0 millis, Nil))
     } else {
       list
     }
   }
 
-  def split[D <: ReadablePartial](ts: List[TaskItem], i: Interval, f: LocalDate => D): List[TaskItem] = {
-    def nextStep(instant: Long, step: Interval, period: Period): Interval =
-      if (step.contains(instant)) step
-      else nextStep(instant, new Interval(step.start + period, step.end + period), period)
+  def split(ts: List[TaskItem], i: IntervalQuery): List[TaskItem] = {
+    def nextStep(instant: Long, i: IntervalQuery): IntervalQuery =
+      if (i.step.contains(instant)) i
+      else nextStep(instant, i.next)
 
     def pause(t: TaskItem, step: Interval): TaskItem =
       TaskItem.create.user(t.user.get).task(0).start(step.endMillis - 1L)
@@ -127,18 +127,38 @@ object TaskItemService {
     def task(t: TaskItem, step: Interval): TaskItem =
       TaskItem.create.user(t.user.get).task(t.task.get).start(step.endMillis)
 
-    def loop(zs: List[TaskItem], ts: List[TaskItem], step: Interval, period: Period): List[TaskItem] = ts match {
+    def loop(zs: List[TaskItem], ts: List[TaskItem], i: IntervalQuery): List[TaskItem] = ts match {
       case t1 :: t2 :: ts =>
-        val s = nextStep(t1.start.get, step, period)
-        if (s.contains(new Interval(t1.start.get, t2.start.get))) loop(t1 :: zs, t2 :: ts, s, period)
-        else loop(pause(t1, s) :: t1 :: zs, task(t1, s) :: t2 :: ts, s, period)
+        val s = nextStep(t1.start.get, i)
+        if (s.step.contains(new Interval(t1.start.get, t2.start.get))) loop(t1 :: zs, t2 :: ts, i)
+        else loop(pause(t1, s.step) :: t1 :: zs, task(t1, s.step) :: t2 :: ts, i)
       case t :: Nil =>  (t :: zs).reverse
     }
 
+    loop(Nil, ts, i)
+  }
 
-    val step = intervalFrom(f(new LocalDate(i.start)))
-    val period = step.toPeriod
-    loop(Nil, ts, step, period)
+  case class IntervalQuery(interval: Interval, scale: LocalDate => ReadablePartial) {
+    lazy val step: Interval = intervalFrom(scale(new LocalDate(interval.start)))
+    lazy val period: Period = step.toPeriod
+
+    def next: IntervalQuery = IntervalQuery(new Interval(interval.start + period, interval.end), scale)
+
+    private def intervalFrom(d: ReadablePartial): Interval = d match {
+      case d: { def toInterval: Interval } => d.toInterval
+    }
+  }
+
+  object IntervalQuery {
+    def apply(interval: Interval): IntervalQuery = IntervalQuery(interval, identity)
+
+    def between(start: YearMonth, end: YearMonth): IntervalQuery =
+      if (start.year == end.year && start.monthOfYear == end.monthOfYear) oneMonth(start)
+      else IntervalQuery(start.toInterval.start to end.toInterval.end, d => new YearMonth(d))
+
+    def oneMonth(start: YearMonth): IntervalQuery = IntervalQuery(start.toInterval)
+
+    def thisMonth(): IntervalQuery = IntervalQuery(YearMonth.now().toInterval)
   }
 
   /**

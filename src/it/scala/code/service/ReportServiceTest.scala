@@ -2,6 +2,7 @@ package code.service
 
 import code.model.{Project, Task, TaskItem, User}
 import code.service.ReportService.taskSheetData
+import code.service.TaskItemService.IntervalQuery
 import code.test.utils.BaseSuite
 import code.util.TaskSheetUtils.{dates, sum, tasks}
 import com.github.nscala_time.time.Imports._
@@ -14,7 +15,7 @@ class ReportServiceTest extends BaseSuite {
 
   describe("Task sheet data report for any daily interval and user") {
     val interval = new Interval(date(2016, 1, 29).toInterval.start, date(2016, 1, 31).toInterval.end)
-    lazy val ts = taskSheetData(interval, identity, defaultUser())
+    lazy val ts = taskSheetData(IntervalQuery(interval), defaultUser())
 
     it("should contain all task items for the given interval") {
       ts mapValues { _.map { case (t, d) => t.name -> d } } should contain theSameElementsAs Map(
@@ -49,7 +50,7 @@ class ReportServiceTest extends BaseSuite {
 
   describe("Task sheet data report for any monthly interval and user") {
     val interval = new Interval(yearMonth(2015, 12).toInterval.start, yearMonth(2016, 2).toInterval.end)
-    lazy val ts = taskSheetData(interval, d => new YearMonth(d), defaultUser())
+    lazy val ts = taskSheetData(IntervalQuery(interval, d => new YearMonth(d)), defaultUser())
 
     it("should contain all task items for the given interval") {
       ts mapValues { _.map { case (t, d) => t.name -> d } } should contain theSameElementsAs Map(
@@ -84,7 +85,7 @@ class ReportServiceTest extends BaseSuite {
 
   describe("Task sheet data report for any daily interval and all user") {
     val interval = new Interval(date(2016, 1, 29).toInterval.start, date(2016, 1, 31).toInterval.end)
-    lazy val ts = taskSheetData(interval, identity, Empty)
+    lazy val ts = taskSheetData(IntervalQuery(interval), Empty)
 
     it("should contain all task items for the given interval") {
       ts mapValues { _.map { case (t, d) => t.name -> d } } should contain theSameElementsAs Map(
@@ -119,7 +120,7 @@ class ReportServiceTest extends BaseSuite {
 
   describe("Task sheet data report for any monthly interval and all user") {
     val interval = new Interval(yearMonth(2015, 12).toInterval.start, yearMonth(2016, 2).toInterval.end)
-    lazy val ts = taskSheetData(interval, d => new YearMonth(d), Empty)
+    lazy val ts = taskSheetData(IntervalQuery(interval, d => new YearMonth(d)), Empty)
 
     it("should contain all task items for the given interval") {
       ts mapValues { _.map { case (t, d) => t.name -> d } } should contain theSameElementsAs Map(

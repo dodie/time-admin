@@ -6,7 +6,6 @@ import scala.xml.NodeSeq.seqToNodeSeq
 import scala.xml.NodeSeq
 import scala.xml.Node
 import scala.xml.Text
-
 import net.liftweb.common._
 import code.model.Project
 import code.service.TaskItemService
@@ -14,6 +13,7 @@ import code.service.ReportService
 import code.service.TaskService
 import code.snippet.mixin.DateFunctions
 import code.commons.TimeUtils
+import code.service.TaskItemService.IntervalQuery
 import net.liftweb.mapper.MappedField.mapToType
 import net.liftweb.util.Helpers.AttrBindParam
 import net.liftweb.util.Helpers.strToSuperArrowAssoc
@@ -36,7 +36,7 @@ class DailySummarySnippet extends DateFunctions {
     }
 
     // All task today for current user
-    val taskItems = TaskItemService.getTaskItems(TimeUtils.offsetToDailyInterval(offsetInDays), identity)
+    val taskItems = TaskItemService.getTaskItems(IntervalQuery(TimeUtils.offsetToDailyInterval(offsetInDays)))
 
     // aggregated data items
     val aggregatedArray = ReportService.createAggregatedDatas(taskItems)

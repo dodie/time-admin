@@ -17,8 +17,9 @@ import net.liftweb.http.provider._
 import net.liftweb.http._
 import java.util.Locale
 
+import code.service.TaskItemService.IntervalQuery
 import code.service.UserService.nonAdmin
-import code.snippet.Params.{parseInterval, parseUser, thisMonth}
+import code.snippet.Params.{parseInterval, parseUser}
 import code.util.IO.{using, xlsxResponse}
 import net.liftweb.db.DBLogEntry
 import net.liftweb.http.js.JE
@@ -195,9 +196,9 @@ class Boot extends Loggable {
           if (!clientUser) {
             Full(RedirectResponse("/"))
           } else {
-            val (interval, scale) = parseInterval() getOrElse thisMonth()
+            val interval = parseInterval getOrElse IntervalQuery.thisMonth()
             val user = User.currentUser filter nonAdmin or parseUser()
-            val (xlsx, name) = TaskSheetExport.workbook(interval, scale, user)
+            val (xlsx, name) = TaskSheetExport.workbook(interval, user)
 
             val contentStream = using(new ByteArrayOutputStream()) { out =>
               xlsx.write(out)

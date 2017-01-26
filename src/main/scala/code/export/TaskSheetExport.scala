@@ -2,6 +2,7 @@ package code.export
 
 import code.model.User
 import code.service.ReportService
+import code.service.TaskItemService.IntervalQuery
 import code.util.TaskSheetUtils._
 import com.github.nscala_time.time.Imports._
 import com.norbitltd.spoiwo.model._
@@ -16,14 +17,14 @@ import scala.util.Try
 
 object TaskSheetExport {
 
-  def workbook(interval: Interval, scale: LocalDate => ReadablePartial, user: Box[User]): (XSSFWorkbook, String) = {
-    val taskSheet = ReportService.taskSheetData(interval, scale, user)
+  def workbook(i: IntervalQuery, user: Box[User]): (XSSFWorkbook, String) = {
+    val taskSheet = ReportService.taskSheetData(i, user)
 
     val ds = dates(taskSheet)
     val ts = tasks(taskSheet)
 
     val userName = user.map(u => s"${u.lastName} ${u.firstName} ").getOrElse("")
-    val fullTitle = userName + title(interval, scale)
+    val fullTitle = userName + title(i.interval, i.scale)
 
     val columnWith = 0 -> (ds.length + 1)
 
@@ -48,7 +49,7 @@ object TaskSheetExport {
     (xlsx, s"tasksheet_${fullTitle.toLowerCase.replace(" ", "")}.xlsx")
   }
 
-  def formatCell[D <: ReadablePartial](d: D): Option[CellStyle] =
+  def formatCell(d: ReadablePartial): Option[CellStyle] =
     Try(d.get(DateTimeFieldType.dayOfWeek())).toOption flatMap { i =>
       if (i == SATURDAY || i == SUNDAY) Some(styles.weekend) else None
     }
