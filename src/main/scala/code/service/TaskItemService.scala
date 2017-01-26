@@ -26,7 +26,7 @@ object TaskItemService {
   /**
    * Returns the last option for the given day.
    */
-  def getLastTaskItemForDay(offset: Int) = {
+  def getLastTaskItemForDay(offset: Int): Option[TaskItemWithDuration] = {
     getTaskItems(TimeUtils.offsetToDailyInterval(offset), identity).lastOption
   }
 
@@ -148,7 +148,7 @@ object TaskItemService {
    *
    * The time value always converted to whole minutes.
    */
-  def insertTaskItem(taskId: Long, time: Long) = {
+  def insertTaskItem(taskId: Long, time: Long): Boolean = {
     // calculate insert time
     val insertTime = math.min(time, TimeUtils.currentTime)
 
@@ -172,7 +172,7 @@ object TaskItemService {
    *
    * The time value always converted to whole minutes.
    */
-  def editTaskItem(taskItemId: Long, taskId: Long, time: Long, split: Boolean = false) = {
+  def editTaskItem(taskItemId: Long, taskId: Long, time: Long, split: Boolean = false): Boolean = {
     // offset value that represents the given day
     val offset = math.abs(TimeUtils.getOffset(time)) * (-1)
 
@@ -241,7 +241,7 @@ object TaskItemService {
    *
    * The time value always converted to whole minutes.
    */
-  def appendTaskItem(taskId: Long, time: Long) = {
+  def appendTaskItem(taskId: Long, time: Long): Boolean = {
     val now = TimeUtils.currentTime
     val dayStart = TimeUtils.currentDayStartInMs(0)
     val actualTaskItemStart = {
@@ -271,7 +271,7 @@ object TaskItemService {
   /**
    * Deletes task item with the given id for current user.
    */
-  def deleteTaskItem(id: Long) = {
+  def deleteTaskItem(id: Long): Boolean = {
     TaskItem.find(By(TaskItem.id, id), By(TaskItem.user, User.currentUser.get)).get.delete_!
   }
 
@@ -280,7 +280,7 @@ object TaskItemService {
    * 	- merges task item A and B (by deleting B), if A has the same task as B, and B directly follows A
    *  - deletes a Pause task item, if there are no non-Pause tasks before that
    */
-  def normalizeTaskItems(offset: Int) = {
+  def normalizeTaskItems(offset: Int): Unit = {
     // get all task items for the given day
     val taskItemsForDay = TaskItem.findAll(OrderBy(TaskItem.start, Ascending),
       By(TaskItem.user, User.currentUser.get),
