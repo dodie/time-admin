@@ -64,7 +64,8 @@ class TasksheetSnippet extends DateFunctions {
           ".taskFullName *" #> t.name & ".taskFullName [title]" #> t.name &
             ".dailyData" #> dates(taskSheet)
               .map(d => ".dailyData *" #> durations.print(duration(taskSheet, d, t)) & formatCell(d)) &
-            ".taskSum *" #> durations.print(sumByTasks(taskSheet)(t))
+            ".taskSum *" #> durations.print(sumByTasks(taskSheet)(t)) &
+            ".taskRatio *" #> f"${(sumByTasks(taskSheet)(t).getMillis * 100.0d) / sum(taskSheet).getMillis}%1.2f"
         } &
         ".dailySum" #> dates(taskSheet).map(d => ".dailySum *" #> durations.print(sumByDates(taskSheet)(d))) &
         ".totalSum *" #> durations.print(sum(taskSheet))
@@ -82,12 +83,8 @@ class TasksheetSnippet extends DateFunctions {
     val minutes = ("minutes", S.?("dimensions.minutes"), (d: Duration) => d.minutes.toString)
     val hours = ("hours", S.?("dimensions.hours"), (d: Duration) => f"${d.minutes / 60.0d}%1.2f")
     val manDays = ("manDays", S.?("dimensions.manDays"), (d: Duration) => f"${(d.minutes / 60.0d) / 8.0d}%1.2f")
-    val ratio = ("ratio", S.?("dimensions.ratio"), (d: Duration) => {
-      val s = sum(ts).getMillis
-      f"${(d.getMillis * 100.0d) / s}%1.2f"
-    })
 
-    val all = List(minutes, hours, manDays, ratio)
+    val all = List(minutes, hours, manDays)
 
     def print(d: Duration): String = {
       (S.param("dimension") flatMap (s => all find (_._1 == s) map (_._3)) getOrElse minutes._3)(d)
