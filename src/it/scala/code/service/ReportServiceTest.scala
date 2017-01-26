@@ -4,10 +4,9 @@ import code.model.{Project, Task, TaskItem, User}
 import code.service.ReportService.taskSheetData
 import code.test.utils.BaseSuite
 import code.util.TaskSheetUtils.{dates, sum, tasks}
+import com.github.nscala_time.time.Imports._
 import net.liftweb.common.{Box, Empty, Full}
 import net.liftweb.mapper.By
-import com.github.nscala_time.time.Imports._
-import org.joda.time.PeriodType
 
 import scala.language.postfixOps
 
@@ -23,19 +22,20 @@ class ReportServiceTest extends BaseSuite {
         date(2016, 1, 30) -> Map(
           "p1-t1" -> (1.hours + 55.minutes).toDuration,
           "p1-t2" -> (1.hours + 35.minutes).toDuration,
-          "p1-p11-t3" -> (4.hours + 30.minutes).toDuration
+          "p1-p11-t3" -> (4.hours + 30.minutes).toDuration,
+          "p2-t7" -> 30.minutes.toDuration
         ),
         date(2016, 1, 31) -> Map(
           "p1-t1" -> (1.hours + 55.minutes).toDuration,
           "p1-t2" -> (1.hours + 35.minutes).toDuration,
           "p1-p11-t3" -> (4.hours + 30.minutes).toDuration,
-          "p2-t7" -> 30.minutes.toDuration
+          "p2-t7" -> 1.hour.toDuration
         )
       )
     }
 
     it("should have summary") {
-      sum(ts) shouldBe (16.hours + 30.minutes).toDuration
+      sum(ts) shouldBe (17.hours + 30.minutes).toDuration
     }
 
     it("should contain all tasks with full name") {
@@ -58,7 +58,7 @@ class ReportServiceTest extends BaseSuite {
           "p1-t1" -> (3.hours + 50.minutes).toDuration,
           "p1-t2" -> (3.hours + 10.minutes).toDuration,
           "p1-p11-t3" -> 9.hours.toDuration,
-          "p2-t7" -> 30.minutes.toDuration
+          "p2-t7" -> (1.hour + 30.minutes).toDuration
         ),
         yearMonth(2016, 2) -> Map(
           "p2-t7" -> 30.minutes.toDuration,
@@ -70,7 +70,7 @@ class ReportServiceTest extends BaseSuite {
     }
 
     it("should have summary") {
-      sum(ts) shouldBe 25.hours.toDuration
+      sum(ts) shouldBe 26.hours.toDuration
     }
 
     it("should contain all tasks with full name") {
@@ -92,19 +92,20 @@ class ReportServiceTest extends BaseSuite {
         date(2016, 1, 30) -> Map(
           "p1-t1" -> (3.hours + 50.minutes).toDuration,
           "p1-t2" -> (3.hours + 10.minutes).toDuration,
-          "p1-p11-t3" -> 9.hours.toDuration
+          "p1-p11-t3" -> 9.hours.toDuration,
+          "p2-t7" -> 30.minutes.toDuration
         ),
         date(2016, 1, 31) -> Map(
           "p1-t1" -> (3.hours + 50.minutes).toDuration,
           "p1-t2" -> (3.hours + 10.minutes).toDuration,
           "p1-p11-t3" -> 9.hours.toDuration,
-          "p2-t7" -> 1.hour.toDuration
+          "p2-t7" -> (1.hour + 30.minutes).toDuration
         )
       )
     }
 
     it("should have summary") {
-      sum(ts) shouldBe 33.hours.toDuration
+      sum(ts) shouldBe 34.hours.toDuration
     }
 
     it("should contain all tasks with full name") {
@@ -127,7 +128,7 @@ class ReportServiceTest extends BaseSuite {
           "p1-t1" -> (7.hours + 40.minutes).toDuration,
           "p1-t2" -> (6.hours + 20.minutes).toDuration,
           "p1-p11-t3" -> 18.hours.toDuration,
-          "p2-t7" -> 1.hour.toDuration
+          "p2-t7" -> 2.hours.toDuration
         ),
         yearMonth(2016, 2) -> Map(
           "p2-t7" -> 1.hour.toDuration,
@@ -139,7 +140,7 @@ class ReportServiceTest extends BaseSuite {
     }
 
     it("should have summary") {
-      sum(ts) shouldBe 50.hours.toDuration
+      sum(ts) shouldBe 51.hours.toDuration
     }
 
     it("should contain all tasks with full name") {
@@ -148,14 +149,6 @@ class ReportServiceTest extends BaseSuite {
 
     it("should contain all discrete dates for the interval") {
       dates(ts) should contain theSameElementsAs List(yearMonth(2015, 12), yearMonth(2016, 1), yearMonth(2016, 2))
-    }
-
-    it("step") {
-      val i = new YearMonth(1999, 1).toInterval()
-      var step = new LocalDate(i.getStart).toInterval.toPeriod()
-      step.toStandardDuration shouldBe 1.day.toStandardDuration
-
-      new LocalDate(DateTime.now()).toInterval
     }
   }
 
@@ -172,10 +165,10 @@ class ReportServiceTest extends BaseSuite {
     val pause = Empty
 
     givenTaskItems(u1, date(2016, 1, 30),
-      t1 -> time(8, 30), t2 -> time(10, 25), pause -> time(12, 0), t3 -> time(12, 30), pause -> time(17, 0)
+      t1 -> time(8, 30), t2 -> time(10, 25), pause -> time(12, 0), t3 -> time(12, 30), pause -> time(17, 0), t7 -> time(23, 30)
     ) :::
     givenTaskItems(u1, date(2016, 1, 31),
-      t1 -> time(8, 30), t2 -> time(10, 25), pause -> time(12, 0), t3 -> time(12, 30), pause -> time(17, 0), t7 -> time(23, 30)
+      pause -> time(0, 30), t1 -> time(8, 30), t2 -> time(10, 25), pause -> time(12, 0), t3 -> time(12, 30), pause -> time(17, 0), t7 -> time(23, 30)
     ) :::
     givenTaskItems(u1, date(2016, 2, 1),
       pause -> time(0, 30), t4 -> time(8, 30), t5 -> time(10, 25), pause -> time(12, 0), t6 -> time(12, 30), pause -> time(17, 0)
