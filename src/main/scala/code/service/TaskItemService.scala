@@ -64,7 +64,7 @@ object TaskItemService {
             List()
           }
 
-        val allTaskItems = split(trimmedItems ::: cap, query)
+        val allTaskItems = split(trimmedItems ::: cap, query.stepInterval)
 
         var previousTaskStart: Long =
           if (allTaskItems.last.task.get == 0) {
@@ -116,22 +116,22 @@ object TaskItemService {
     }
   }
 
-  def split(ts: List[TaskItem], i: IntervalQuery): List[TaskItem] = {
-    def nextStep(instant: Long, i: IntervalQuery): IntervalQuery =
+  def split(ts: List[TaskItem], i: StepInterval): List[TaskItem] = {
+    def nextStep(instant: Long, i: StepInterval): StepInterval =
       if (i.step.contains(instant)) i
       else nextStep(instant, i.next)
 
-    def pause(t: TaskItem, step: Interval): TaskItem =
-      TaskItem.create.user(t.user.get).task(0).start(step.endMillis - 1L)
+    def pause(t: TaskItem, i: StepInterval): TaskItem =
+      TaskItem.create.user(t.user.get).task(0).start(i.step.endMillis - 1L)
 
-    def task(t: TaskItem, step: Interval): TaskItem =
-      TaskItem.create.user(t.user.get).task(t.task.get).start(step.endMillis)
+    def task(t: TaskItem, i: StepInterval): TaskItem =
+      TaskItem.create.user(t.user.get).task(t.task.get).start(i.step.endMillis)
 
-    def loop(zs: List[TaskItem], ts: List[TaskItem], i: IntervalQuery): List[TaskItem] = ts match {
+    def loop(zs: List[TaskItem], ts: List[TaskItem], i: StepInterval): List[TaskItem] = ts match {
       case t1 :: t2 :: ts =>
         val s = nextStep(t1.start.get, i)
         if (s.step.contains(new Interval(t1.start.get, t2.start.get))) loop(t1 :: zs, t2 :: ts, i)
-        else loop(pause(t1, s.step) :: t1 :: zs, task(t1, s.step) :: t2 :: ts, i)
+        else loop(pause(t1, s) :: t1 :: zs, task(t1, s) :: t2 :: ts, i)
       case t :: Nil =>  (t :: zs).reverse
     }
 
@@ -139,14 +139,7 @@ object TaskItemService {
   }
 
   case class IntervalQuery(interval: Interval, scale: LocalDate => ReadablePartial) {
-    lazy val step: Interval = intervalFrom(scale(new LocalDate(interval.start)))
-    lazy val period: Period = step.toPeriod
-
-    def next: IntervalQuery = IntervalQuery(new Interval(interval.start + period, interval.end), scale)
-
-    private def intervalFrom(d: ReadablePartial): Interval = d match {
-      case d: { def toInterval: Interval } => d.toInterval
-    }
+    lazy val stepInterval: StepInterval = StepInterval(interval, scale)
   }
 
   object IntervalQuery {
@@ -159,6 +152,24 @@ object TaskItemService {
     def oneMonth(start: YearMonth): IntervalQuery = IntervalQuery(start.toInterval)
 
     def thisMonth(): IntervalQuery = IntervalQuery(YearMonth.now().toInterval)
+  }
+
+  case class StepInterval(step: Interval, period: Period) {
+
+    def next: StepInterval = StepInterval(new Interval(step.start + period, step.end + period), period)
+  }
+
+  object StepInterval {
+
+    def apply(interval: Interval, scale: LocalDate => ReadablePartial): StepInterval = {
+      lazy val step: Interval = intervalFrom(scale(new LocalDate(interval.start)))
+      lazy val period: Period = step.toPeriod
+      new StepInterval(step, period)
+    }
+
+    private def intervalFrom(d: ReadablePartial): Interval = d match {
+      case d: { def toInterval: Interval } => d.toInterval
+    }
   }
 
   /**
