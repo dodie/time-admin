@@ -22,10 +22,10 @@ import scala.xml.{NodeSeq, Text}
 class TaskItemSnippet extends DateFunctions {
 
   /** All task items today for current user. */
-  lazy val taskItems = TaskItemService.getTaskItems(IntervalQuery(TimeUtils.offsetToDailyInterval(offsetInDays)))
+  lazy val taskItems: List[TaskItemWithDuration] = TaskItemService.getTaskItems(IntervalQuery(TimeUtils.offsetToDailyInterval(offsetInDays)))
 
   /** All tasks. */
-  lazy val tasks = TaskService.getTaskArray()
+  lazy val tasks: Array[ShowTaskData] = TaskService.getTaskArray()
 
   /**
    * Renders the currently selected task as an information text.
@@ -33,7 +33,7 @@ class TaskItemSnippet extends DateFunctions {
   def actualTask(in: NodeSeq): NodeSeq = {
     if (offsetInDays == 0) {
       val actualTask = taskItems.lastOption
-      val description = if (actualTask.isDefined && !actualTask.get.task.isEmpty) TaskService.getPreparedDescription(actualTask.get.task.get) else "<span></span>"
+      val description = if (actualTask.isDefined && !actualTask.get.task.isEmpty) TaskService.getPreparedDescription(actualTask.get.task.openOrThrowException("Task must be defined!")) else "<span></span>"
 
       (
         ".actualTaskName *" #> (actualTask map (_.fullName) filter (_ != "") getOrElse S.?("tasks.pause")) &
@@ -52,7 +52,7 @@ class TaskItemSnippet extends DateFunctions {
       <lift:embed what="no_data"/>
     } else {
       (".item *" #> taskItems.map(taskItemDto => {
-        val active = (!taskItemDto.task.isEmpty)
+        val active = !taskItemDto.task.isEmpty
         val fragBarStyle = {
           "background-color:rgba" + taskItemDto.color.toString + ";"
         }
@@ -86,14 +86,14 @@ class TaskItemSnippet extends DateFunctions {
       val diagramEndTime = taskItems.last.taskItem.start.get + taskItems.last.duration.getMillis
       val diagramTotalTime = diagramEndTime - diagramStartTime
 
-      var odd = true;
+      var odd = true
 
       (
         ".frag" #> taskItems.map(
           taskItemDto => {
-            val last = (taskItemDto.taskItem.id == taskItems.last.taskItem.id)
-            val active = (!taskItemDto.task.isEmpty)
-            odd = !odd;
+            val last = taskItemDto.taskItem.id == taskItems.last.taskItem.id
+            val active = !taskItemDto.task.isEmpty
+            odd = !odd
 
             val lengthInPercent = {
               val value = ((taskItemDto.duration.getMillis.asInstanceOf[Double] / diagramTotalTime.asInstanceOf[Double]) * 100 * 100).asInstanceOf[Int] / 100D
@@ -144,12 +144,12 @@ class TaskItemSnippet extends DateFunctions {
     } else {
       tasks.toSeq.flatMap(
         showTaskData => {
-          val color = Color.get(showTaskData.task.name.get, showTaskData.projectName, true)
+          val color = Color.get(showTaskData.task.name.get, showTaskData.projectName, active = true)
 
           val taskStyleClass = if (showTaskData.task.specifiable.get) {
-            Text("hiddenTask specifiable-task");
+            Text("hiddenTask specifiable-task")
           } else {
-            Text("hiddenTask");
+            Text("hiddenTask")
           }
 
           Helpers.bind("task", in,
@@ -184,8 +184,8 @@ class TaskItemSnippet extends DateFunctions {
    * otherwise renders past node.
    */
   def renderByDate(in: NodeSeq): NodeSeq = {
-    val todayNode = (in \ "today")
-    val pastNode = (in \ "past")
+    val todayNode = in \ "today"
+    val pastNode = in \ "past"
     if (offsetInDays == 0) {
       todayNode \ "_"
     } else {
@@ -200,7 +200,7 @@ class TaskItemSnippet extends DateFunctions {
   def actions(in: NodeSeq): NodeSeq = {
     if (S.post_?) {
       // select task id param
-      val selectedTaskId = S.param("selecttaskid").get.toLong
+      val selectedTaskId = S.param("selecttaskid").openOrThrowException("Param must be defined!").toLong
 
       // operation type
       val mode = S.param("mode").getOrElse("default")
@@ -220,7 +220,7 @@ class TaskItemSnippet extends DateFunctions {
          * 	the taskitem will be inserted to the selected day at the given point of time
          */
         val offsetStringParameter = {
-          val offsetParameterString = (S.param("timeoffset") getOrElse "0")
+          val offsetParameterString = S.param("timeoffset") getOrElse "0"
           if (0 < offsetParameterString.length())
             offsetParameterString
           else
@@ -239,23 +239,22 @@ class TaskItemSnippet extends DateFunctions {
           }
           Some(TimeUtils.currentTime - offsetParameter)
         } catch {
-          case e: Exception => {
+          case _: Exception =>
             None
-          }
         }
 
         val preciseTimeMode = offsetStringParameter.contains(":")
 
-        if (!time.isEmpty) {
+        if (time.isDefined) {
           // valid parameters, make changes
 
           // Create new task if necessary
           val newTaskName = S.param("newtaskname").getOrElse("")
 
           val calculatedTaskId = if (!newTaskName.isEmpty) {
-            TaskService.specify(TaskService.getTask(selectedTaskId).get, newTaskName).id.get
+            TaskService.specify(TaskService.getTask(selectedTaskId).openOrThrowException("Task must be defined!"), newTaskName).id.get
           } else {
-            selectedTaskId;
+            selectedTaskId
           }
 
           if (preciseTimeMode) {
@@ -286,7 +285,7 @@ class TaskItemSnippet extends DateFunctions {
         val offset = {
           val timeOffset = S.param("timeoffset")
           try {
-            val offsetStringParameter = (timeOffset getOrElse "0")
+            val offsetStringParameter = timeOffset getOrElse "0"
             if (offsetStringParameter.contains(":")) {
               val hour = offsetStringParameter.substring(0, offsetStringParameter.indexOf(":")).toInt
               val min = offsetStringParameter.substring(offsetStringParameter.indexOf(":") + 1, offsetStringParameter.length).toInt
@@ -295,22 +294,21 @@ class TaskItemSnippet extends DateFunctions {
               None
             }
           } catch {
-            case e: Exception => {
+            case _: Exception =>
               None
-            }
           }
         }
 
-        if (!offset.isEmpty) {
+        if (offset.isDefined) {
           // valid parameters, make changes
           val selectedTime = TimeUtils.currentTime - offset.get
 
           val selectedTaskItemId = S.param("taskitemid")
 
           if (mode == "taskitemedit") {
-            TaskItemService.editTaskItem(selectedTaskItemId.get.toLong, selectedTaskId, selectedTime)
+            TaskItemService.editTaskItem(selectedTaskItemId.openOrThrowException("Task item id must be defined!").toLong, selectedTaskId, selectedTime)
           } else if (mode == "taskitemsplit") {
-            TaskItemService.editTaskItem(selectedTaskItemId.get.toLong, selectedTaskId, selectedTime, true)
+            TaskItemService.editTaskItem(selectedTaskItemId.openOrThrowException("Task item id must be defined!").toLong, selectedTaskId, selectedTime, split = true)
           }
         } else {
           // invalid parameters, show error
@@ -321,10 +319,10 @@ class TaskItemSnippet extends DateFunctions {
         /*
          * The specified taskitem will be deleted.
          */
-        TaskItemService.deleteTaskItem(S.param("taskitemid").get.toLong)
+        TaskItemService.deleteTaskItem(S.param("taskitemid").openOrThrowException("Task item id must be defined!").toLong)
       }
 
-      TaskItemService.normalizeTaskItems(offsetInDays);
+      TaskItemService.normalizeTaskItems(offsetInDays)
 
       S.redirectTo(S.uri)
     } else {
@@ -337,7 +335,7 @@ class TaskItemSnippet extends DateFunctions {
    */
   private def getDateString(taskItemDto: TaskItemWithDuration) = {
     if (taskItemDto.taskItem.id.get == -1) {
-      val firstOfTheDay = (taskItemDto.taskItem.id == taskItems.head.taskItem.id)
+      val firstOfTheDay = taskItemDto.taskItem.id == taskItems.head.taskItem.id
       if (firstOfTheDay) {
         S.?("tasks.from_prev_day")
       } else {

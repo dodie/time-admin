@@ -127,7 +127,7 @@ object ReportService {
     } map (i.start.toLocalDate.plusDays(_)) toList
 
   def taskItemsExceptPause(i: IntervalQuery, u: Box[User]): List[TaskItemWithDuration] =
-    getTaskItems(i, u) filter (_.taskName exists (_ != ""))
+    getTaskItems(i, u) filter (_.taskName != "")
 
   def taskSheetItemWithDuration(t: TaskItemWithDuration, ps: List[Project]): (TaskSheetItem, Duration) =
     (TaskSheetItem(t.task map (_.id.get) getOrElse 0L, t.fullName), new Duration(t.duration))

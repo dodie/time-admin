@@ -13,7 +13,7 @@ import net.liftweb.mapper.{By, _}
 import org.joda.time.{DateTime, Interval, LocalDate, ReadablePartial}
 
 import scala.collection.mutable.ListBuffer
-import scala.language.postfixOps
+import scala.language.{postfixOps, reflectiveCalls}
 
 /**
  * TaskItem data handling and conversion service.
@@ -133,6 +133,7 @@ object TaskItemService {
         if (s.step.contains(new Interval(t1.start.get, t2.start.get))) loop(t1 :: zs, t2 :: ts, i)
         else loop(pause(t1, s) :: t1 :: zs, task(t1, s) :: t2 :: ts, i)
       case t :: Nil =>  (t :: zs).reverse
+      case Nil => zs.reverse
     }
 
     loop(Nil, ts, i)
@@ -184,10 +185,10 @@ object TaskItemService {
     val insertTime = math.min(time, TimeUtils.currentTime)
 
     // if the new item collides with the user's other item, the previous one will be deleted
-    TaskItem.findAll(By(TaskItem.user, User.currentUser.get), By(TaskItem.start, insertTime)).foreach(_.delete_!)
+    TaskItem.findAll(By(TaskItem.user, User.currentUser.openOrThrowException("Current user must be defined!")), By(TaskItem.start, insertTime)).foreach(_.delete_!)
 
     // create item
-    TaskItem.create.task(taskId).user(User.currentUser.get).start(insertTime).save
+    TaskItem.create.task(taskId).user(User.currentUser.openOrThrowException("Current user must be defined!")).start(insertTime).save
   }
 
   /**
@@ -211,7 +212,7 @@ object TaskItemService {
     val minTime = TimeUtils.currentDayStartInMs(offset)
     val maxTime = math.min(TimeUtils.currentDayEndInMs(offset), TimeUtils.currentTime)
 
-    val taskItem = TaskItem.find(By(TaskItem.id, taskItemId), By(TaskItem.user, User.currentUser.get)).get
+    val taskItem = TaskItem.find(By(TaskItem.id, taskItemId), By(TaskItem.user, User.currentUser.openOrThrowException("Current user must be defined!"))).openOrThrowException("Task item must be defined!")
     val previousTaskItemTime = {
       val item = if (split) {
         Full(taskItem)
@@ -220,7 +221,7 @@ object TaskItemService {
       }
 
       if (!item.isEmpty) {
-        item.get.start.get + (1000L * 60) // one minute padding
+        item.openOrThrowException("Task item must be defined!").start.get + (1000L * 60) // one minute padding
       } else {
         minTime
       }
@@ -228,7 +229,7 @@ object TaskItemService {
     val nextTaskItemTime = {
       val item = nextTaskItem(taskItem)
       if (!item.isEmpty) {
-        item.get.start.get - (1000L * 60) // one minute padding
+        item.openOrThrowException("Task item must be defined!").start.get - (1000L * 60) // one minute padding
       } else {
         maxTime
       }
@@ -250,7 +251,7 @@ object TaskItemService {
 
     // update or split current task, based on mode
     if (split) {
-      TaskItem.create.task(taskId).user(User.currentUser.get).start(newTime).save
+      TaskItem.create.task(taskId).user(User.currentUser.openOrThrowException("Current user must be defined!")).start(newTime).save
     } else {
       taskItem.start(newTime).task(taskId).save
     }
@@ -295,15 +296,15 @@ object TaskItemService {
         actualTaskItemStart))
 
     // if the new item collides with the user's other item, the previous one will be deleted
-    TaskItem.findAll(By(TaskItem.user, User.currentUser.get), By(TaskItem.start, insertTime)).foreach(_.delete_!)
-    TaskItem.create.task(taskId).user(User.currentUser.get).start(insertTime).save
+    TaskItem.findAll(By(TaskItem.user, User.currentUser.openOrThrowException("Current user must be defined!")), By(TaskItem.start, insertTime)).foreach(_.delete_!)
+    TaskItem.create.task(taskId).user(User.currentUser.openOrThrowException("Current user must be defined!")).start(insertTime).save
   }
 
   /**
    * Deletes task item with the given id for current user.
    */
   def deleteTaskItem(id: Long): Boolean = {
-    TaskItem.find(By(TaskItem.id, id), By(TaskItem.user, User.currentUser.get)).get.delete_!
+    TaskItem.find(By(TaskItem.id, id), By(TaskItem.user, User.currentUser.openOrThrowException("Current user must be defined!"))).openOrThrowException("Task item must be defined!").delete_!
   }
 
   /**
@@ -314,7 +315,7 @@ object TaskItemService {
   def normalizeTaskItems(offset: Int): Unit = {
     // get all task items for the given day
     val taskItemsForDay = TaskItem.findAll(OrderBy(TaskItem.start, Ascending),
-      By(TaskItem.user, User.currentUser.get),
+      By(TaskItem.user, User.currentUser.openOrThrowException("Current user must be defined!")),
       By_<(TaskItem.start, TimeUtils.currentDayEndInMs(offset)),
       By_>(TaskItem.start, TimeUtils.currentDayStartInMs(offset)))
 
@@ -333,7 +334,7 @@ object TaskItemService {
 
     // delete task items
     for (taskItemId <- taskItemsToDelete) {
-      TaskItem.findByKey(taskItemId).get.delete_!
+      TaskItem.findByKey(taskItemId).openOrThrowException("Task item must be defined!").delete_!
     }
   }
 
@@ -344,7 +345,7 @@ object TaskItemService {
   private def previousTaskItem(taskItem: TaskItem) = {
     TaskItem.find(MaxRows(1),
       OrderBy(TaskItem.start, Descending),
-      By(TaskItem.user, User.currentUser.get),
+      By(TaskItem.user, User.currentUser.openOrThrowException("Current user must be defined!")),
       By_<=(TaskItem.start, taskItem.start.get),
       NotBy(TaskItem.id, taskItem.id.get))
   }
@@ -356,7 +357,7 @@ object TaskItemService {
   private def nextTaskItem(taskItem: TaskItem) = {
     TaskItem.find(MaxRows(1),
       OrderBy(TaskItem.start, Ascending),
-      By(TaskItem.user, User.currentUser.get),
+      By(TaskItem.user, User.currentUser.openOrThrowException("Current user must be defined!")),
       By_>=(TaskItem.start, taskItem.start.get),
       NotBy(TaskItem.id, taskItem.id.get))
   }

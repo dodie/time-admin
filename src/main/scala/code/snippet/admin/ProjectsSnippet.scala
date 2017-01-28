@@ -1,34 +1,21 @@
 package code
 package snippet
 
-import java.util.Date
-import java.util.Random
 import java.text.Collator
-import scala.util.Sorting
-import scala.xml._
-import code.service._
+
+import _root_.net.liftweb.util.{CssSel, Helpers}
 import code.model._
-import net.liftweb.mapper.By
-import _root_.scala.xml.NodeSeq
-import _root_.net.liftweb.util.Helpers
-import Helpers._
-import net.liftweb.http.js.JsCmds
-import net.liftweb.util.BindHelpers
-import net.liftweb.http.S
-import net.liftweb.util.Helpers._
-import code.commons.TimeUtils
-
-import net.liftweb._
-import http._
-import util.Helpers._
-import scala.xml.NodeSeq
-import net.liftweb.http.js.JE.JsRaw
-
-import net.liftweb.util.Helpers._
-import net.liftweb.http.{ SHtml, Templates }
-import net.liftweb.http.js.JsCmds.{ SetHtml, Noop }
-import net.liftweb.http.js.JsCmd
 import code.model.mixin.HierarchicalItem
+import code.service._
+import net.liftweb.http.js.JE.JsRaw
+import net.liftweb.http.js.JsCmd
+import net.liftweb.http.js.JsCmds.SetHtml
+import net.liftweb.http.{S, SHtml, Templates, _}
+import net.liftweb.mapper.By
+import net.liftweb.util.Helpers._
+
+import scala.util.Sorting
+import scala.xml.NodeSeq
 
 /**
  * Project snippet.
@@ -36,15 +23,13 @@ import code.model.mixin.HierarchicalItem
  */
 class ProjectsSnippet {
 
-  val collator = Collator.getInstance(S.locale);
+  val collator: Collator = Collator.getInstance(S.locale)
 
-  private var template: NodeSeq = null
+  private var template: NodeSeq = _
 
-  private var projectTemplate: NodeSeq = null
+  private var projectTemplate: NodeSeq = _
 
-  private var taskTemplate: NodeSeq = null
-
-  private val listSubprojectsEmptyNode = <div class="subproject"></div>
+  private var taskTemplate: NodeSeq = _
 
   private val listTasksEmptyNode = <div class="childTask"></div>
 
@@ -53,7 +38,7 @@ class ProjectsSnippet {
   object selectedProject extends SessionVar[Project](null)
   object selectedTask extends SessionVar[Task](null)
 
-  def toggleInactiveView = {
+  def toggleInactiveView: CssSel = {
     "type=submit [value]" #> (if (showInactiveProjectsAndTasks.get) S.?("projects.hide_inactive") else S.?("projects.show_inactive")) &
       "type=submit" #> SHtml.onSubmitUnit(() => {
         showInactiveProjectsAndTasks.set(!showInactiveProjectsAndTasks.get)
@@ -63,10 +48,10 @@ class ProjectsSnippet {
 
   def addRoot(in: NodeSeq): NodeSeq = {
     Helpers.bind("project", in,
-      AttrBindParam("onclick", SHtml.ajaxInvoke(addRootEditor _).toJsCmd, "onclick"))
+      AttrBindParam("onclick", SHtml.ajaxInvoke(addRootEditor).toJsCmd, "onclick"))
   }
 
-  def moveToRoot = {
+  def moveToRoot: CssSel = {
     def moveProjectToRoot: JsCmd = {
       if (selectedProject.get != null) {
         ProjectService.moveToRoot(selectedProject.get)
@@ -92,21 +77,21 @@ class ProjectsSnippet {
       try {
         (in \ "div" \ "div").filter(_.attribute("class").get.text == "parentId").text.toLong
       } catch {
-        case e: Exception => -1
+        case _: Exception => -1
       }
     }
 
-    var data = (if (parentId == -1) {
+    val data = (if (parentId == -1) {
       if (showInactiveProjectsAndTasks.get) {
-        Project.findAll.filter(_.parent.isEmpty).toSeq
+        Project.findAll.filter(_.parent.isEmpty)
       } else {
-        Project.findAll(By(Project.active, true)).filter(_.parent.isEmpty).toSeq
+        Project.findAll(By(Project.active, true)).filter(_.parent.isEmpty)
       }
     } else {
       if (showInactiveProjectsAndTasks.get) {
-        Project.findAll(By(Project.parent, Project.find(By(Project.id, parentId)).get)).toSeq
+        Project.findAll(By(Project.parent, Project.find(By(Project.id, parentId)).openOrThrowException("Project must be defined!")))
       } else {
-        Project.findAll(By(Project.parent, Project.find(By(Project.id, parentId)).get), By(Project.active, true)).toSeq
+        Project.findAll(By(Project.parent, Project.find(By(Project.id, parentId)).openOrThrowException("Project must be defined!")), By(Project.active, true))
       }
     }).toArray
 
@@ -114,7 +99,7 @@ class ProjectsSnippet {
       <lift:embed what="no_data"/>
     } else {
       Sorting.quickSort(data)(new Ordering[Project] {
-        def compare(x: Project, y: Project) = {
+        def compare(x: Project, y: Project): Int = {
           collator.compare(x.name.get, y.name.get)
         }
       })
@@ -142,8 +127,8 @@ class ProjectsSnippet {
       AttrBindParam("rootclass", rootClassName, "class"),
       AttrBindParam("class", className, "class"),
       AttrBindParam("onclick", SHtml.ajaxInvoke(() => editor(project)).toJsCmd, "onclick"),
-      AttrBindParam("subprojectonclick", SHtml.ajaxInvoke(() => addChild(project, true)).toJsCmd, "onclick"),
-      AttrBindParam("subtaskonclick", SHtml.ajaxInvoke(() => addChild(project, false)).toJsCmd, "onclick"),
+      AttrBindParam("subprojectonclick", SHtml.ajaxInvoke(() => addChild(project, isProject = true)).toJsCmd, "onclick"),
+      AttrBindParam("subtaskonclick", SHtml.ajaxInvoke(() => addChild(project, isProject = false)).toJsCmd, "onclick"),
       AttrBindParam("deleteprojectonclick", SHtml.ajaxInvoke(() => deleteProject(project)).toJsCmd, "onclick"),
       AttrBindParam("selectonclick", SHtml.ajaxInvoke(() => selectProject(project)).toJsCmd, "onclick"),
       AttrBindParam("movetoonclick", SHtml.ajaxInvoke(() => moveToProject(project)).toJsCmd, "onclick"))
@@ -155,7 +140,7 @@ class ProjectsSnippet {
       try {
         (in \ "div" \ "div").filter(_.attribute("class").get.text == "parentId").text.toLong
       } catch {
-        case e: Exception => -1
+        case _: Exception => -1
       }
     }
 
@@ -171,7 +156,7 @@ class ProjectsSnippet {
       val data = tasks.toArray
 
       Sorting.quickSort(data)(new Ordering[Task] {
-        def compare(x: Task, y: Task) = {
+        def compare(x: Task, y: Task): Int = {
           collator.compare(x.name.get, y.name.get)
         }
       })
@@ -204,24 +189,22 @@ class ProjectsSnippet {
 
     def submit: JsCmd = {
       hierarchicalItem match {
-        case _: Project => {
-          Project.findByKey(hierarchicalItem.id.get.toLong).get
+        case _: Project =>
+          Project.findByKey(hierarchicalItem.id.get).openOrThrowException("Project must be defined!")
             .name(name.get)
             .description(description.get)
             .color(color.get)
             .active(active.get)
             .specifiable(specifiable.get)
             .save
-        }
-        case _: Task => {
-          Task.findByKey(hierarchicalItem.id.get.toLong).get
+        case _: Task =>
+          Task.findByKey(hierarchicalItem.id.get).openOrThrowException("Project must be defined!")
             .name(name.get)
             .description(description.get)
             .color(color.get)
             .active(active.get)
             .specifiable(specifiable.get)
             .save
-        }
       }
       rerenderProjectTree &
       closeDialog
@@ -255,15 +238,13 @@ class ProjectsSnippet {
 
     val fieldBindings =
       hierarchicalItem match {
-        case _: Project => {
+        case _: Project =>
           fieldbindingsWithActive
-        }
-        case _: Task => {
+        case _: Task =>
           fieldbindingsWithActive ++
           Helpers.bind("property", editorPropertyTemplate,
               "name" -> S.?("projects.popup.specifiable"),
               "value" -> SHtml.checkboxElem(specifiable))
-        }
       }
 
     SetHtml("inject",
@@ -276,7 +257,7 @@ class ProjectsSnippet {
     openDialog
   }
 
-  private def addRootEditor: JsCmd = {
+  private def addRootEditor(): JsCmd = {
     object name extends TransientRequestVar("")
     object description extends TransientRequestVar("")
     object color extends TransientRequestVar("")
@@ -447,9 +428,9 @@ class ProjectsSnippet {
     openDialog
   }
 
-  val editorTemplate: NodeSeq = Templates("templates-hidden/editor_fragment" :: Nil).get
+  val editorTemplate: NodeSeq = Templates("templates-hidden/editor_fragment" :: Nil).openOrThrowException("Template must be defined!")
 
-  val editorPropertyTemplate: NodeSeq = Templates("templates-hidden/editor_property_fragment" :: Nil).get
+  val editorPropertyTemplate: NodeSeq = Templates("templates-hidden/editor_property_fragment" :: Nil).openOrThrowException("Template must be defined!")
 
   def closeDialog: JsCmd = JsRaw("$('.modal').modal('hide')").cmd
 
