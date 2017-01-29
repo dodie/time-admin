@@ -29,7 +29,7 @@ class UsersSnippet {
   def currentUser(in: NodeSeq): NodeSeq = {
     if (!User.currentUser.isEmpty) {
       (
-        ".ActualUserEmail *" #> User.currentUser.openOrThrowException("Current user must be defined!").email &
+        ".ActualUserEmail *" #> User.currentUser.openOrThrowException("Current user Emust be defined!").email &
         ".ActualUserName *" #> (User.currentUser.openOrThrowException("Current user must be defined!").firstName + " " + User.currentUser.openOrThrowException("Current user must be defined!").lastName)
       ).apply(in)
     } else {
