@@ -3,54 +3,15 @@
 	<div class="projectsPage">
 		<h1><lift:loc>page.projects</lift:loc></h1>
 		<div>
-			<span class="lift:projectsSnippet.addRoot"><a class="btn btn-success" project:onclick=""><lift:loc>projects.new_project</lift:loc></a></span>
-			<span class="lift:projectsSnippet.moveToRoot"><a class="btn btn-primary" project:onclick=""><lift:loc>projects.move_to_root</lift:loc></a></span>
+			<span class="lift:projectsSnippet.addRoot"><a class="btn btn-success add-root"><lift:loc>projects.new_project</lift:loc></a></span>
+			<span class="lift:projectsSnippet.moveToRoot"><a class="btn btn-primary"><lift:loc>projects.move_to_root</lift:loc></a></span>
 
 			<form class="button lift:ProjectsSnippet.toggleInactiveView?form=post">
 				<input class="btn btn-primary" type="submit" value="Submit">
 			</form>
 		</div><br/>
 		<div id="project-tree">
-			<div class="lift:projectsSnippet.projects">
-				<div project:rootclass="project">
-					<div class="parentId" style="display:none;"><project:id/></div>
-					<span project:class="">
-						<span class="dropdown">
-							<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
-								<span class="name"><project:name/></span>
-								<span class="caret"></span>
-							</a>
-							<ul class="dropdown-menu">
-								<li><a project:onclick=""><lift:loc>projects.edit</lift:loc></a></li>
-								<li><a project:subprojectonclick=""><lift:loc>projects.add_subproject</lift:loc></a></li>
-								<li><a project:subtaskonclick=""><lift:loc>projects.add_task</lift:loc></a></li>
-								<li><a project:deleteprojectonclick=""><lift:loc>projects.delete</lift:loc></a></li>
-								<li><a project:selectonclick=""><lift:loc>projects.select</lift:loc></a></li>
-								<li><a project:movetoonclick=""><lift:loc>projects.moveto</lift:loc></a></li>
-							</ul>
-						</span>
-					</span>
-					<project:subprojects></project:subprojects>
-					<project:tasks></project:tasks>
-				</div>
-				<div task:rootclass="task">
-					<div class="parentId" style="display:none;"><project:id/></div>
-					<span task:class="">
-						<span class="dropdown">
-							<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
-								<span class="name"><task:name/></span>
-								<span class="caret"></span>
-							</a>
-							<ul class="dropdown-menu">
-								<li><a task:onclick=""><lift:loc>projects.edit</lift:loc></a></li>
-								<li><a task:deletetaskonclick=""><lift:loc>projects.delete</lift:loc></a></li>
-								<li><a task:selectonclick=""><lift:loc>projects.select</lift:loc></a></li>
-								<li><a task:mergeintoonclick=""><lift:loc>projects.mergeinto</lift:loc></a></li>
-							</ul>
-						</span>
-					</span>
-				</div>
-			</div>
+			<div class="lift:projectsSnippet.projects"></div>
 		</div>
 	</div>
 

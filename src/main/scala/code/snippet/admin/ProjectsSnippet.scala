@@ -23,19 +23,12 @@ import scala.xml.NodeSeq
  */
 class ProjectsSnippet {
 
-  val collator: Collator = Collator.getInstance(S.locale)
-
-  private var template: NodeSeq = _
-
-  private var projectTemplate: NodeSeq = _
-
-  private var taskTemplate: NodeSeq = _
-
-  private val listTasksEmptyNode = <div class="childTask"></div>
+  private val collator: Collator = Collator.getInstance(S.locale)
 
   object showInactiveProjectsAndTasks extends SessionVar(false)
 
   object selectedProject extends SessionVar[Project](null)
+
   object selectedTask extends SessionVar[Task](null)
 
   def toggleInactiveView: CssSel = {
@@ -46,9 +39,8 @@ class ProjectsSnippet {
       })
   }
 
-  def addRoot(in: NodeSeq): NodeSeq = {
-    Helpers.bind("project", in,
-      AttrBindParam("onclick", SHtml.ajaxInvoke(addRootEditor).toJsCmd, "onclick"))
+  def addRoot: CssSel = {
+    ".add-root [onclick]" #> SHtml.ajaxInvoke(addRootEditor).toJsCmd
   }
 
   def moveToRoot: CssSel = {
@@ -64,11 +56,6 @@ class ProjectsSnippet {
   }
 
   def projects(in: NodeSeq): NodeSeq = {
-    // TODO: change snippet-based recursion
-    projectTemplate = <div class="lift:projectsSnippet.projectList">{ (in \ "div").head }</div>
-    taskTemplate = <div class="lift:projectsSnippet.taskList">{ (in \ "div").tail.head }</div>
-    template = in
-
     projectTemplate
   }
 
@@ -103,39 +90,86 @@ class ProjectsSnippet {
           collator.compare(x.name.get, y.name.get)
         }
       })
-      data.toSeq.flatMap(project => renderProject(project, in))
+      data.toSeq.flatMap(project => renderProject(project)(in))
     }
   }
 
-  private def renderProject(project: Project, in: NodeSeq) = {
-    var className = "projectName"
-    if (!project.active.get) className += " inactive"
+  private def renderProject(project: Project) = {
+    val displayName =
+      if (project.active.get)
+        project.name.get
+      else
+        project.name.get + " (" + S.?("projects.inactive") + ")"
 
-    var rootClassName = "project"
-    if (selectedProject.get == project) rootClassName += " selected"
+    var rootClass = "project"
+    if (selectedProject.get == project) rootClass += " selected"
 
-    Helpers.bind("project", in,
-      "name" -> {
-        if (project.active.get) {
-          project.name.get
-        } else {
-          project.name.get + " (" + S.?("projects.inactive") + ")"
-        }
-      },
-      "subprojects" -> Helpers.bind("project", projectTemplate, "id" -> project.id.toString),
-      "tasks" -> Helpers.bind("project", taskTemplate, "id" -> project.id.toString),
-      AttrBindParam("rootclass", rootClassName, "class"),
-      AttrBindParam("class", className, "class"),
-      AttrBindParam("onclick", SHtml.ajaxInvoke(() => editor(project)).toJsCmd, "onclick"),
-      AttrBindParam("subprojectonclick", SHtml.ajaxInvoke(() => addChild(project, isProject = true)).toJsCmd, "onclick"),
-      AttrBindParam("subtaskonclick", SHtml.ajaxInvoke(() => addChild(project, isProject = false)).toJsCmd, "onclick"),
-      AttrBindParam("deleteprojectonclick", SHtml.ajaxInvoke(() => deleteProject(project)).toJsCmd, "onclick"),
-      AttrBindParam("selectonclick", SHtml.ajaxInvoke(() => selectProject(project)).toJsCmd, "onclick"),
-      AttrBindParam("movetoonclick", SHtml.ajaxInvoke(() => moveToProject(project)).toJsCmd, "onclick"))
+    var innerClass = "projectName"
+    if (!project.active.get) innerClass += " inactive"
+
+    // TODO Remove snippet based recursion.
+    val subsCssSel:CssSel = ".parentId *" #> project.id.toString
+
+    ".name" #> displayName &
+    ".root-class [class]" #> rootClass &
+    ".inner-class [class]" #> innerClass &
+    ".edit [onclick]" #> SHtml.ajaxInvoke(() => editor(project)).toJsCmd &
+    ".add-subproject [onclick]" #> SHtml.ajaxInvoke(() => addChild(project, isProject = true)).toJsCmd &
+    ".add-subtask [onclick]" #> SHtml.ajaxInvoke(() => addChild(project, isProject = false)).toJsCmd &
+    ".delete [onclick]" #> SHtml.ajaxInvoke(() => deleteProject(project)).toJsCmd &
+    ".select [onclick]" #> SHtml.ajaxInvoke(() => selectProject(project)).toJsCmd &
+    ".moveto [onclick]" #> SHtml.ajaxInvoke(() => moveToProject(project)).toJsCmd &
+    ".subprojects *" #> subsCssSel(projectTemplate) &
+    ".subtasks *" #> subsCssSel(taskTemplate)
   }
 
-  def taskList(in: NodeSeq): NodeSeq = {
+  private val projectTemplate: NodeSeq =
+    <div class="lift:projectsSnippet.projectList">
+      <div class="root-class">
+        <div class="parentId" style="display:none;"></div>
+        <span class="inner-class">
+          <span class="dropdown">
+            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+              <span class="name"></span>
+              <span class="caret"></span>
+            </a>
+            <ul class="dropdown-menu">
+              <li><a class="edit"><lift:loc>projects.edit</lift:loc></a></li>
+              <li><a class="add-subproject"><lift:loc>projects.add_subproject</lift:loc></a></li>
+              <li><a class="add-subtask"><lift:loc>projects.add_task</lift:loc></a></li>
+              <li><a class="delete"><lift:loc>projects.delete</lift:loc></a></li>
+              <li><a class="select"><lift:loc>projects.select</lift:loc></a></li>
+              <li><a class="moveto"><lift:loc>projects.moveto</lift:loc></a></li>
+            </ul>
+          </span>
+        </span>
+        <div class="subprojects"></div>
+        <div class="subtasks"></div>
+      </div>
+    </div>
 
+  private val taskTemplate: NodeSeq =
+    <div class="lift:projectsSnippet.taskList">
+      <div class="task-root">
+        <div class="parentId" style="display:none;"></div>
+        <span class="task-inner">
+          <span class="dropdown">
+            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+              <span class="name"></span>
+              <span class="caret"></span>
+            </a>
+            <ul class="dropdown-menu">
+              <li><a class="edit"><lift:loc>projects.edit</lift:loc></a></li>
+              <li><a class="delete"><lift:loc>projects.delete</lift:loc></a></li>
+              <li><a class="select"><lift:loc>projects.select</lift:loc></a></li>
+              <li><a class="merge"><lift:loc>projects.mergeinto</lift:loc></a></li>
+            </ul>
+          </span>
+        </span>
+      </div>
+    </div>
+
+  def taskList(in: NodeSeq): NodeSeq = {
     val parentId: Long = {
       try {
         (in \ "div" \ "div").filter(_.attribute("class").get.text == "parentId").text.toLong
@@ -161,23 +195,38 @@ class ProjectsSnippet {
         }
       })
 
-      data.toSeq.flatMap(task => renderTask(task, in))
+      data.toSeq.flatMap(task => renderTask(task)(in))
     } else {
-      listTasksEmptyNode
+      <div class="childTask"></div>
     }
   }
 
-  private def renderTask(task: Task, in: NodeSeq) = {
-    var rootClassName = "task"
-    if (selectedTask.get == task) rootClassName += " selected"
-    Helpers.bind("task", in,
-      "name" -> { if (task.active.get) { task.name.get } else { task.name.get + " (" + S.?("projects.inactive") + ")" } },
-      AttrBindParam("rootclass", rootClassName, "class"),
-      AttrBindParam("class", { if (task.active.get) "taskName" else "taskName inactive" }, "class"),
-      AttrBindParam("onclick", SHtml.ajaxInvoke(() => editor(task)).toJsCmd, "onclick"),
-      AttrBindParam("deletetaskonclick", SHtml.ajaxInvoke(() => deleteTask(task)).toJsCmd, "onclick"),
-      AttrBindParam("selectonclick", SHtml.ajaxInvoke(() => selectTask(task)).toJsCmd, "onclick"),
-      AttrBindParam("mergeintoonclick", SHtml.ajaxInvoke(() => mergeTask(task)).toJsCmd, "onclick"))
+  private def renderTask(task: Task):CssSel = {
+    val displayName =
+      if (task.active.get)
+        task.name.get
+      else
+        task.name.get + " (" + S.?("projects.inactive") + ")"
+
+    val rootClass =
+      if (selectedTask.get == task)
+        "task selected"
+      else
+        "task"
+
+    val innerClass =
+      if (task.active.get)
+        "taskName"
+      else
+        "taskName inactive"
+
+    ".name" #> displayName &
+    ".task-root [class]" #> rootClass &
+    ".task-inner [class]" #> innerClass &
+    ".edit [onclick]" #> SHtml.ajaxInvoke(() => editor(task)).toJsCmd &
+    ".delete [onclick]" #> SHtml.ajaxInvoke(() => deleteTask(task)).toJsCmd &
+    ".select [onclick]" #> SHtml.ajaxInvoke(() => selectTask(task)).toJsCmd &
+    ".merge [onclick]" #> SHtml.ajaxInvoke(() => mergeTask(task)).toJsCmd
   }
 
   private def editor(hierarchicalItem: HierarchicalItem[_]): JsCmd = {
@@ -211,19 +260,19 @@ class ProjectsSnippet {
     }
 
     val defaultFieldBindings =
-          Helpers.bind("property", editorPropertyTemplate,
-              "name" -> S.?("projects.popup.name"),
-              "value" -> SHtml.textElem(name, "class" -> "form-control")) ++
-          Helpers.bind("property", editorPropertyTemplate,
-              "name" -> S.?("projects.popup.description"),
-              "value" -> SHtml.textElem(description, "class" -> "form-control"))
+      renderProperty(
+        ".name *" #> S.?("projects.popup.name") &
+        ".field" #> SHtml.textElem(name, "class" -> "form-control")) ++
+      renderProperty(
+        ".name *" #> S.?("projects.popup.description") &
+        ".field" #> SHtml.textElem(description, "class" -> "form-control"))
 
     val fieldBindigsWithColor =
       if (!hierarchicalItem.parent.defined_?)
         defaultFieldBindings ++
-        Helpers.bind("property", editorPropertyTemplate,
-            "name" -> S.?("projects.popup.color"),
-            "value" -> SHtml.textElem(color, "type" -> "color"))
+        renderProperty(
+          ".name *" #> S.?("projects.popup.color") &
+          ".field" #> SHtml.textElem(color, "type" -> "color"))
       else
         defaultFieldBindings
 
@@ -232,9 +281,9 @@ class ProjectsSnippet {
         fieldBindigsWithColor
       else
         fieldBindigsWithColor ++
-        Helpers.bind("property", editorPropertyTemplate,
-            "name" -> S.?("projects.popup.active"),
-            "value" -> SHtml.checkboxElem(active))
+        renderProperty(
+          ".name *" #> S.?("projects.popup.active") &
+          ".field" #> SHtml.checkboxElem(active))
 
     val fieldBindings =
       hierarchicalItem match {
@@ -242,18 +291,19 @@ class ProjectsSnippet {
           fieldbindingsWithActive
         case _: Task =>
           fieldbindingsWithActive ++
-          Helpers.bind("property", editorPropertyTemplate,
-              "name" -> S.?("projects.popup.specifiable"),
-              "value" -> SHtml.checkboxElem(specifiable))
+          renderProperty(
+              ".name *" #> S.?("projects.popup.specifiable") &
+              ".field" #> SHtml.checkboxElem(specifiable))
       }
 
     SetHtml("inject",
-      Helpers.bind("editor", editorTemplate,
-        "fields" -> fieldBindings,
-        "title" -> S.?("projects.edit"),
-        "submit" -> SHtml.ajaxSubmit(S.?("button.save"), submit _, "class" -> "btn btn-primary"),
-        "close" -> SHtml.ajaxSubmit(S.?("button.close"), closeDialog _, "class" -> "btn btn-default"))
-      ) &
+      (
+        ".fields *" #> fieldBindings &
+        ".title *" #> S.?("projects.edit") &
+        ".submit-button" #> SHtml.ajaxSubmit(S.?("button.save"), submit _, "class" -> "btn btn-primary") &
+        ".close-button" #> SHtml.ajaxSubmit(S.?("button.close"), closeDialog _, "class" -> "btn btn-default")
+      )(editorTemplate)
+    ) &
     openDialog
   }
 
@@ -276,23 +326,38 @@ class ProjectsSnippet {
     }
 
     SetHtml("inject",
-      Helpers.bind("editor", editorTemplate,
-        "fields" ->
-          (Helpers.bind("property", editorPropertyTemplate,
-              "name" -> S.?("projects.popup.name"),
-              "value" -> SHtml.textElem(name, "class" -> "form-control")) ++
-          Helpers.bind("property", editorPropertyTemplate,
-              "name" -> S.?("projects.popup.description"),
-              "value" -> SHtml.textElem(description, "class" -> "form-control")) ++
-          Helpers.bind("property", editorPropertyTemplate,
-              "name" -> S.?("projects.popup.color"),
-              "value" -> SHtml.textElem(color, "class" -> "form-control", "type" -> "color"))
-            ),
-        "title" -> S.?("projects.new_project"),
-        "submit" -> SHtml.ajaxSubmit(S.?("button.save"), submit _, "class" -> "btn btn-primary"),
-        "close" -> SHtml.ajaxSubmit(S.?("button.close"), closeDialog _, "class" -> "btn btn-default"))) &
+      (
+        ".fields *" #>
+          (
+            renderProperty(
+              ".name *" #> S.?("projects.popup.name") &
+              ".field" #> SHtml.textElem(name, "class" -> "form-control")) ++
+            renderProperty(
+              ".name *" #> S.?("projects.popup.description") &
+              ".field" #> SHtml.textElem(description, "class" -> "form-control")) ++
+            renderProperty(
+              ".name *" #> S.?("projects.popup.color") &
+              ".field" #> SHtml.textElem(color, "class" -> "form-control", "type" -> "color"))
+            ) &
+        ".title *" #> S.?("projects.new_project") &
+        ".submit-button" #> SHtml.ajaxSubmit(S.?("button.save"), submit _, "class" -> "btn btn-primary") &
+        ".close-button" #> SHtml.ajaxSubmit(S.?("button.close"), closeDialog _, "class" -> "btn btn-default")
+
+      )(editorTemplate)
+    ) &
     openDialog
   }
+
+  def renderProperty(cssSel: CssSel): NodeSeq = {
+    cssSel(editorPropertyTemplate)
+  }
+
+  val editorPropertyTemplate: NodeSeq =
+    <div class="form-group">
+      <label class="name"></label>
+      <input class="field"/>
+    </div>
+
 
   private def addChild(parent: Project, isProject: Boolean): JsCmd = {
     object name extends TransientRequestVar("")
@@ -321,17 +386,20 @@ class ProjectsSnippet {
     }
 
     SetHtml("inject",
-      Helpers.bind("editor", editorTemplate,
-        "fields" ->
-          (Helpers.bind("property", editorPropertyTemplate,
-              "name" -> S.?("projects.popup.name"),
-              "value" -> SHtml.textElem(name, "class" -> "form-control")) ++
-          Helpers.bind("property", editorPropertyTemplate,
-              "name" -> S.?("projects.popup.description"),
-              "value" -> SHtml.textElem(description, "class" -> "form-control"))),
-        "title" -> (if (isProject) S.?("projects.add_subproject") else S.?("projects.add_task")),
-        "submit" -> SHtml.ajaxSubmit(S.?("button.save"), submit _, "class" -> "btn btn-primary"),
-        "close" -> SHtml.ajaxSubmit(S.?("button.close"), closeDialog _, "class" -> "btn btn-default"))) &
+      (
+        ".fields *" #>
+          (
+            renderProperty(
+              ".name *" #> S.?("projects.popup.name") &
+              ".field" #> SHtml.textElem(name, "class" -> "form-control")) ++
+            renderProperty(
+              ".name" #> S.?("projects.popup.description") &
+              ".field" #> SHtml.textElem(description, "class" -> "form-control"))) &
+        ".title *" #> (if (isProject) S.?("projects.add_subproject") else S.?("projects.add_task")) &
+        ".submit-button" #> SHtml.ajaxSubmit(S.?("button.save"), submit _, "class" -> "btn btn-primary") &
+        ".close-button" #> SHtml.ajaxSubmit(S.?("button.close"), closeDialog _, "class" -> "btn btn-default")
+      )(editorTemplate)
+    ) &
     openDialog
   }
 
@@ -388,17 +456,20 @@ class ProjectsSnippet {
     }
 
     SetHtml("inject",
-      Helpers.bind("editor", editorTemplate,
-        "fields" ->
-          (Helpers.bind("property", editorPropertyTemplate,
-              "name" -> S.?("projects.popup.name"),
-              "value" -> project.name) ++
-          Helpers.bind("property", editorPropertyTemplate,
-              "name" -> S.?("projects.popup.description"),
-              "value" -> project.description)),
-        "title" -> S.?("projects.delete"),
-        "submit" -> SHtml.ajaxSubmit(S.?("button.delete"), submit _, "class" -> "btn btn-primary"),
-        "close" -> SHtml.ajaxSubmit(S.?("button.close"), closeDialog _, "class" -> "btn btn-default"))) &
+      (
+        ".fields *" #>
+          (
+            renderProperty(
+              ".name *" #> S.?("projects.popup.name") &
+              ".field" #> project.name) ++
+            renderProperty(
+              ".name *" #> S.?("projects.popup.description") &
+              ".field" #> project.description)) &
+        ".title *" #> S.?("projects.delete") &
+        ".submit-button" #> SHtml.ajaxSubmit(S.?("button.delete"), submit _, "class" -> "btn btn-primary") &
+        ".close-button" #> SHtml.ajaxSubmit(S.?("button.close"), closeDialog _, "class" -> "btn btn-default")
+      )(editorTemplate)
+    ) &
     openDialog
   }
 
@@ -414,27 +485,48 @@ class ProjectsSnippet {
     }
 
     SetHtml("inject",
-      Helpers.bind("editor", editorTemplate,
-        "fields" ->
-          (Helpers.bind("property", editorPropertyTemplate,
-              "name" -> S.?("projects.popup.name"),
-              "value" -> task.name) ++
-          Helpers.bind("property", editorPropertyTemplate,
-              "name" -> S.?("projects.popup.description"),
-              "value" -> task.description)),
-        "title" -> S.?("projects.delete"),
-        "submit" -> SHtml.ajaxSubmit(S.?("button.delete"), submit _, "class" -> "btn btn-primary"),
-        "close" -> SHtml.ajaxSubmit(S.?("button.close"), closeDialog _, "class" -> "btn btn-default"))) &
+      (
+        ".fields *" #>
+          (
+            renderProperty(
+              ".name *" #> S.?("projects.popup.name") &
+              ".field" #> task.name) ++
+            renderProperty(
+              ".name" #> S.?("projects.popup.description") &
+              ".field" #> task.description)) &
+        ".title *" #> S.?("projects.delete") &
+        ".submit-button" #> SHtml.ajaxSubmit(S.?("button.delete"), submit _, "class" -> "btn btn-primary") &
+        ".close-button" #> SHtml.ajaxSubmit(S.?("button.close"), closeDialog _, "class" -> "btn btn-default")
+
+      )(editorTemplate)
+    ) &
     openDialog
   }
 
-  val editorTemplate: NodeSeq = Templates("templates-hidden/editor_fragment" :: Nil).openOrThrowException("Template must be defined!")
-
-  val editorPropertyTemplate: NodeSeq = Templates("templates-hidden/editor_property_fragment" :: Nil).openOrThrowException("Template must be defined!")
 
   def closeDialog: JsCmd = JsRaw("$('.modal').modal('hide')").cmd
 
   def openDialog: JsCmd = JsRaw("$('.modal').modal()").cmd
 
-  def rerenderProjectTree: JsCmd = SetHtml("project-tree", projects(template))
+  def rerenderProjectTree: JsCmd = SetHtml("project-tree", projects(NodeSeq.Empty))
+
+
+  val editorTemplate: NodeSeq =
+    <div class="modal fade" data-backdrop="static" data-keyboard="false">
+      <div class="modal-dialog">
+        <form class="lift:form.ajax" role="form">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h4 class="modal-title title"></h4>
+            </div>
+            <div class="modal-body fields"></div>
+            <div class="modal-footer">
+              <input class="submit-button"/>
+              <input class="close-button"/>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
 }

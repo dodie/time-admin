@@ -1,12 +1,10 @@
-import NativePackagerKeys._
-
 packageArchetype.java_application
 
 name := "TimeAdmin"
 
 version := "0.0.1"
 
-organization := "net.liftweb"
+organization := "hu.advancedweb"
 
 scalaVersion := "2.11.2"
 
@@ -18,7 +16,7 @@ resolvers ++= Seq("snapshots"     at "http://oss.sonatype.org/content/repositori
 
 unmanagedResourceDirectories in Test <+= baseDirectory { _ / "src/main/webapp" }
 
-seq(webSettings :_*)
+Seq(webSettings :_*)
 
 scalacOptions ++= Seq("-deprecation", "-unchecked", "-Ywarn-unused-import")
 
