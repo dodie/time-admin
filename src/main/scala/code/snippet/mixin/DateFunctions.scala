@@ -11,12 +11,10 @@ import net.liftweb.common.Box.box2Option
 import net.liftweb.http.S
 import net.liftweb.http.js.JE._
 import net.liftweb.util.BindHelpers.strToCssBindPromoter
-import net.liftweb.util.Helpers
-import net.liftweb.util.Helpers.AttrBindParam
 import org.joda.time.YearMonth
 import org.joda.time.format.DateTimeFormat
 
-import scala.xml.{NodeSeq, Text}
+import scala.xml.NodeSeq
 
 trait DateFunctions {
 
@@ -37,23 +35,19 @@ trait DateFunctions {
   /**
    * Step to previous page.
    */
-  def pagingPrev(in: NodeSeq): NodeSeq = Helpers.bind("paging", in, AttrBindParam("url", Text("?" + PARAM_OFFSET + "=" + (offsetInDays - 1)), "href"))
+  def pagingPrev(in: NodeSeq): NodeSeq = ("a [href]" #> s"?$PARAM_OFFSET=${offsetInDays - 1}") apply in
 
   /**
    * Step to next page.
    */
-  def pagingNext(in: NodeSeq): NodeSeq = {
-    if (offsetInDays + 1 > 0) {
-      Helpers.bind("paging", in, AttrBindParam("url", Text(S.?("no_data")), "title"))
-    } else {
-      Helpers.bind("paging", in, AttrBindParam("url", Text("?" + PARAM_OFFSET + "=" + (offsetInDays + 1)), "href"))
-    }
-  }
+  def pagingNext(in: NodeSeq): NodeSeq =
+    if (offsetInDays + 1 > 0) ("a [title]" #> S.?("no_data")) apply in
+    else ("a [href]" #> s"?$PARAM_OFFSET=${offsetInDays + 1}") apply in
 
   /**
    * Step to today's page.
    */
-  def pagingCurrent(in: NodeSeq): NodeSeq = Helpers.bind("paging", in, AttrBindParam("url", Text("?" + PARAM_OFFSET + "=0"), "href"))
+  def pagingCurrent(in: NodeSeq): NodeSeq = ("a [href]" #> s"?$PARAM_OFFSET=0") apply in
 
   /**
    * Day selector component.
