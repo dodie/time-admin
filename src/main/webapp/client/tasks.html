@@ -114,23 +114,24 @@
 								</a>
 
 							</form>
+
 							<div class="lift:taskItemSnippet.selectableTasks tasks">
-								<div task:taskstyleclass="" task:rowid="">
+								<div class="task">
 									<div class="taskName">
-										<form task:formid="" method="post" class="InlineCommandsForm">
-											<div class="projectColorIndicator" task:projectcolorindicator="">-</div>
-											<input type="hidden" name="selecttaskid" task:taskid=""/>
-											<input class="newTaskItemInput" type="text" name="timeoffset" task:placeholder="" value="" autocomplete="off" onfocus="this.value='';" onclick="arguments[0].stopPropagation();" onkeypress="return submitOnEnter(this, event)"/>
-											<div class="taskColorIndicator" task:colorindicator="" task:onrowclick="">-&gt;</div>
+										<form method="post" class="InlineCommandsForm">
+											<div class="projectColorIndicator">-</div>
+											<input type="hidden" name="selecttaskid"/>
+											<input class="newTaskItemInput" type="text" name="timeoffset" value="" autocomplete="off" onfocus="this.value='';" onclick="arguments[0].stopPropagation();" onkeypress="return submitOnEnter(this, event)" placeholder="hh:mm"/>
+											<div class="taskColorIndicator">-&gt;</div>
 											<div class="taskName_info">
-												<span class="tasksProjectName" task:onrowclick=""><task:projectname/></span>
+												<span class="tasksProjectName"></span>
 												-
-												<span class="tasksTaskName" task:onrowclick=""><task:taskname/></span>
+												<span class="tasksTaskName"></span>
 												<span style="display:none;" class="newtaskholder">
 													-
 													<input type="text" name="newtaskname" onkeypress="return submitOnEnter(this, event)"/>
 												</span>
-												<span class="tasksTaskDescription"><task:taskdescription/></span>
+												<span class="tasksTaskDescription"></span>
 											</div>
 										</form>
 										<a class="specify-subtask" onclick="toggleSubtaskCreatorForm(this);">
@@ -140,6 +141,7 @@
 									</div>
 								</div>
 							</div>
+
 						</div>
 					</div>
 				</div>

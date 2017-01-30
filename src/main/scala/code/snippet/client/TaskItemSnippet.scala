@@ -6,10 +6,10 @@ import code.service.TaskItemService.IntervalQuery
 import code.service._
 import code.snippet.mixin.DateFunctions
 import net.liftweb.common.Box.box2Option
+import net.liftweb.common.{Empty, Full}
 import net.liftweb.http.S
 import net.liftweb.util.Helpers._
-import net.liftweb.util.Helpers.{AttrBindParam, strToSuperArrowAssoc}
-import net.liftweb.util.{Helpers, PCDataXmlParser}
+import net.liftweb.util.PCDataXmlParser
 import org.joda.time.format.DateTimeFormat
 
 import scala.xml.NodeSeq.seqToNodeSeq
@@ -139,44 +139,27 @@ class TaskItemSnippet extends DateFunctions {
    * Renders the tasks selectable by the user.
    */
   def selectableTasks(in: NodeSeq): NodeSeq = {
-    if (tasks.isEmpty) {
-      <lift:embed what="no_data"/>
-    } else {
-      tasks.toSeq.flatMap(
-        showTaskData => {
-          val color = Color.get(showTaskData.task.name.get, showTaskData.projectName, active = true)
+      ".tasks" #> tasks.toList.map { t =>
+        val color = Color.get(t.task.name.get, t.projectName, active = true)
+        val projectColor = ProjectService.getRootProject(t.rootProject).color.get
+        val onRowClick =
+          if (offsetInDays == 0) s"sendForm('tskf_${t.task.id.get}', true)"
+          else s"sendForm('tskf_${t.task.id.get}', false)"
 
-          val taskStyleClass = if (showTaskData.task.specifiable.get) {
-            Text("hiddenTask specifiable-task")
-          } else {
-            Text("hiddenTask")
-          }
-
-          Helpers.bind("task", in,
-            AttrBindParam("taskstyleclass", taskStyleClass, "class"),
-            AttrBindParam("placeholder",
-              if (offsetInDays == 0) Text("hh:mm")
-              else Text("hh:mm"), "placeholder"),
-            AttrBindParam("colorindicator",
-              Text("background-color:rgba" + color.toString),
-              "style"),
-            AttrBindParam("projectcolorindicator",
-              Text("background-color:" + ProjectService.getRootProject(showTaskData.rootProject).color.get),
-              "style"),
-            // Form sending without submit button
-            AttrBindParam("formid", Text("tskf_" + showTaskData.task.id.get), "id"),
-            AttrBindParam("rowid", Text("tskr_" + showTaskData.task.id.get), "id"),
-            AttrBindParam("taskid", Text(showTaskData.task.id.get + ""), "value"),
-            AttrBindParam("onrowclick",
-              if (offsetInDays == 0) Text("sendForm('tskf_" + showTaskData.task.id.get + "', true)")
-              else Text("sendForm('tskf_" + showTaskData.task.id.get + "', false)"), "onclick"),
-
-            "taskname" -> showTaskData.task.name.get,
-            "projectname" -> showTaskData.projectName,
-            "taskdescription" -> PCDataXmlParser.apply(TaskService.getPreparedDescription(showTaskData.task)).getOrElse(Text("")))
+        ".task" #> {
+          ".task [id]" #> s"tskr_${t.task.id.get}" &
+          ".task [class]" #> { if (t.task.specifiable.get) Full("specifiable-task") else Empty } &
+          ".InlineCommandsForm [id]" #> s"tskf_${t.task.id.get}" &
+          ".projectColorIndicator [style]" #> s"background-color:$projectColor" &
+          "@selecttaskid [value]" #> t.task.id.get &
+          ".taskColorIndicator [style]" #> s"background-color:rgba${color.toString}" &
+          ".taskColorIndicator [onclick]" #> onRowClick &
+          ".tasksProjectName *" #> t.projectName &
+          ".tasksTaskName *" #> t.task.name &
+          ".tasksTaskName [onclick]" #> onRowClick &
+          ".tasksTaskDescription" #> PCDataXmlParser.apply(TaskService.getPreparedDescription(t.task))
         }
-      )
-    }
+      } apply in
   }
 
   /**
