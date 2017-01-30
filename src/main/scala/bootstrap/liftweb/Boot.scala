@@ -17,11 +17,12 @@ import net.liftweb.http.provider._
 import net.liftweb.http._
 import java.util.Locale
 
+import code.service.TaskItemService.IntervalQuery
 import code.service.UserService.nonAdmin
-import code.snippet.Params.{parseInterval, parseUser, thisMonth}
+import code.snippet.Params.{parseInterval, parseUser}
 import code.util.IO.{using, xlsxResponse}
+import net.liftweb.db.DBLogEntry
 import net.liftweb.http.js.JE
-import net.liftweb.util.ControlHelpers.tryo
 
 
 
@@ -29,7 +30,7 @@ import net.liftweb.util.ControlHelpers.tryo
  * Allows the application to modify lift's environment based on the configuration.
  * @author David Csakvari
  */
-class Boot {
+class Boot extends Loggable {
   def boot() {
     // DB config
     if (!DB.jndiJdbcConnAvailable_?) {
@@ -50,6 +51,15 @@ class Boot {
       LiftRules.unloadHooks.append(vendor.closeAllConnections_!)
 
       DB.defineConnectionManager(mapper.DefaultConnectionIdentifier, vendor)
+    }
+
+    DB.addLogFunc {
+      case (log, duration) => {
+        logger.trace("Total query time : %d ms".format(duration))
+        log.allEntries.foreach {
+          case DBLogEntry(stmt, duration) => logger.trace("  %s in %d ms".format(stmt, duration))
+        }
+      }
     }
 
     // Entities (Mapper)
@@ -186,9 +196,9 @@ class Boot {
           if (!clientUser) {
             Full(RedirectResponse("/"))
           } else {
-            val (interval, scale) = parseInterval() getOrElse thisMonth()
+            val interval = parseInterval getOrElse IntervalQuery.thisMonth()
             val user = User.currentUser filter nonAdmin or parseUser()
-            val (xlsx, name) = TaskSheetExport.workbook(interval, scale, user)
+            val (xlsx, name) = TaskSheetExport.workbook(interval, user)
 
             val contentStream = using(new ByteArrayOutputStream()) { out =>
               xlsx.write(out)

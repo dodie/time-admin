@@ -1,21 +1,21 @@
 package code
 package service
 
-import java.util.Date
 import java.text.Collator
-import java.text.DecimalFormat
+import java.util.Date
 
-import scala.collection.mutable.ListBuffer
-import net.liftweb.common._
-import org.joda.time.{DateTime, Duration, Interval, _}
 import code.commons.TimeUtils
-import net.liftweb.http.S
 import code.model.{Project, User}
-import code.service.TaskItemService.getTaskItems
+import code.service.TaskItemService.{IntervalQuery, getTaskItems}
+import code.util.ListToReducedMap._
 import com.github.nscala_time.time.Imports._
+import net.liftweb.common._
+import net.liftweb.http.S
+import org.joda.time.{DateTime, Duration, Interval, _}
 
 import scala.collection.immutable.Seq
-import code.util.ListToReducedMap._
+import scala.collection.mutable.ListBuffer
+import scala.language.postfixOps
 
 /**
  * Reponsible for creating report data.
@@ -28,7 +28,7 @@ object ReportService {
    * Calculates the number of milliseconds to be subtracted from leave time for a day,
    * based on user preferences and the given offtime.
    */
-  def calculateTimeRemovalFromLeaveTime(offtime: Long) = {
+  def calculateTimeRemovalFromLeaveTime(offtime: Long): Long = {
     val removeOfftimeFromLeaveTime = UserPreferenceService.getUserPreference(UserPreferenceNames.timesheetLeaveOfftime).toBoolean
     val additionalLeaveTime = UserPreferenceService.getUserPreference(UserPreferenceNames.timesheetLeaveAdditionalTime).toLong * 1000 * 60
 
@@ -41,11 +41,10 @@ object ReportService {
 
   /**
    * Processes the TaskItems in the given month defined by the offset (in days) from the current day,
-   * and returns data that can be used in timesheets.
+   * and returns data that can be used in time sheets.
    * @return a sequence of (dayOfMonth: String, arriveTime: String, leaveTime: String) tuples. Arrive and leave time strings are in hh:mm format.
    */
   def getTimesheetData(offset: Int): Seq[(String,String,String,Double)] = {
-    val formatter = new DecimalFormat("#.#")
 
     // calculate first and last days of the month
     val monthStartOffset = TimeUtils.currentMonthStartInOffset(offset) + offset
@@ -53,7 +52,7 @@ object ReportService {
 
     // for all days, get all task items and produce data tuples
     (for (currentOffset <- monthStartOffset until monthEndOffset + 1) yield {
-      val taskItemsForDay = getTaskItems(TimeUtils.offsetToDailyInterval(currentOffset))
+      val taskItemsForDay = getTaskItems(IntervalQuery(TimeUtils.offsetToDailyInterval(currentOffset)))
 
       val offtimeToRemoveFromLeaveTime = {
         val aggregatedArray = createAggregatedDatas(taskItemsForDay)
@@ -107,16 +106,18 @@ object ReportService {
     }).filter(_ != null)
   }
 
-  type TaskSheet[D <: ReadablePartial] = Map[D, Map[TaskSheetItem,Duration]]
+  type TaskSheet = Map[ReadablePartial, Map[TaskSheetItem,Duration]]
 
-  def taskSheetData[D <: ReadablePartial](i: Interval, f: LocalDate => D, u: Box[User]): TaskSheet[D] =
-    dates(i, f)
-      .map(d => (d, activeTaskItems(intervalFrom(d), u)
-        .map(t => taskSheetItemWithDuration(t))))
-      .leftReducedMap(Nil: List[(TaskSheetItem,Duration)])(_ ::: _)
-      .mapValues(_.leftReducedMap(Duration.ZERO)(_ + _))
+  def taskSheetData(i: IntervalQuery, u: Box[User]): TaskSheet = {
+    val ps = Project.findAll
 
-  def dates[D <: ReadablePartial](i: Interval, f: LocalDate => D): List[D] = days(i).map(f).distinct
+    val ds = dates(i.interval, i.scale).map(d => d -> (Nil: List[TaskItemWithDuration])).toMap
+
+    (ds ++ taskItemsExceptPause(i, u).groupBy(t => i.scale(new LocalDate(t.taskItem.start.get))))
+      .mapValues(_.map(taskSheetItemWithDuration(_, ps)).leftReducedMap(Duration.ZERO)(_ + _))
+  }
+
+  def dates(i: Interval, f: LocalDate => ReadablePartial): List[ReadablePartial] = days(i).map(f).distinct
 
   def days(i: Interval): List[LocalDate] =
     {
@@ -125,14 +126,11 @@ object ReportService {
 
     } map (i.start.toLocalDate.plusDays(_)) toList
 
-  def activeTaskItems(i: Interval, u: Box[User]): List[TaskItemWithDuration] =
-    getTaskItems(i, u).filter(_.project.exists(_.active.get))
+  def taskItemsExceptPause(i: IntervalQuery, u: Box[User]): List[TaskItemWithDuration] =
+    getTaskItems(i, u) filter (_.taskName exists (_ != ""))
 
-  def intervalFrom[D <: ReadablePartial](d: D): Interval = d match {
-    case d: { def toInterval: Interval } => d.toInterval
-  }
-
-  def taskSheetItemWithDuration(t: TaskItemWithDuration): (TaskSheetItem, Duration) = (TaskSheetItem(t), new Duration(t.duration))
+  def taskSheetItemWithDuration(t: TaskItemWithDuration, ps: List[Project]): (TaskSheetItem, Duration) =
+    (TaskSheetItem(t.task map (_.id.get) getOrElse 0L, t.fullName), new Duration(t.duration))
 
   /**
    * Aggregates the given TaskItem DTOs.
@@ -145,10 +143,7 @@ object ReportService {
     val aggregatedDatas = new ListBuffer[AggregatedTaskItemData]
 
     for (aggregated <- trim(taskItemsToGroup).groupBy(_.taskItem.task.get)) {
-      var dur: Long = 0
-      for (taskItemDto <- aggregated._2) {
-        dur = dur + taskItemDto.duration
-      }
+      val duration = aggregated._2.foldLeft(Duration.ZERO)(_ + _.duration)
 
       val task = TaskService.getTask(aggregated._2.head.taskItem.task.get)
       val taskName: String = task match {
@@ -171,7 +166,7 @@ object ReportService {
         case _ => -1
       }
 
-      aggregatedDatas.append(AggregatedTaskItemData(aggregated._1, rootProjectId, dur, projectName, taskName, task.isEmpty))
+      aggregatedDatas.append(AggregatedTaskItemData(aggregated._1, rootProjectId, duration.getMillis, projectName, taskName, task.isEmpty))
     }
 
     aggregatedDatas.toList.sortBy((t: AggregatedTaskItemData) => t.projectName + t.taskName).toArray
@@ -191,7 +186,7 @@ object ReportService {
  * TaskItem DTO that represents aggregated task items of a task for a given period.
  */
 case class AggregatedTaskItemData(taskId: Long, rootProjectId: Long, duration: Long, projectName: String, taskName: String, isPause: Boolean = false) extends Ordered[AggregatedTaskItemData] {
-  def collator = Collator.getInstance(S.locale);
-  def compare(that: AggregatedTaskItemData) = collator.compare(projectName + taskName, that.projectName + that.taskName)
-  def durationInMinutes = (duration / 60D / 1000).toLong
+  def collator: Collator = Collator.getInstance(S.locale)
+  def compare(that: AggregatedTaskItemData): Int = collator.compare(projectName + taskName, that.projectName + that.taskName)
+  def durationInMinutes: Long = (duration / 60D / 1000).toLong
 }

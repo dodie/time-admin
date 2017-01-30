@@ -1,22 +1,19 @@
 package code
 package snippet
 
-import code.service.ProjectService
-import scala.xml.NodeSeq.seqToNodeSeq
-import scala.xml.NodeSeq
-import scala.xml.Text
 import code.commons.TimeUtils
-import code.service.TaskItemService
-import code.service.TaskItemWithDuration
-import code.service.TaskService
+import code.service.TaskItemService.IntervalQuery
+import code.service._
 import code.snippet.mixin.DateFunctions
 import net.liftweb.common.Box.box2Option
 import net.liftweb.http.S
 import net.liftweb.util.BindHelpers.strToCssBindPromoter
-import net.liftweb.util.Helpers.AttrBindParam
-import net.liftweb.util.Helpers
-import net.liftweb.util.PCDataXmlParser
-import net.liftweb.util.Helpers.strToSuperArrowAssoc
+import net.liftweb.util.Helpers.{AttrBindParam, strToSuperArrowAssoc}
+import net.liftweb.util.{Helpers, PCDataXmlParser}
+import org.joda.time.format.DateTimeFormat
+
+import scala.xml.NodeSeq.seqToNodeSeq
+import scala.xml.{NodeSeq, Text}
 
 /**
  * Task item editing and listing.
@@ -25,7 +22,7 @@ import net.liftweb.util.Helpers.strToSuperArrowAssoc
 class TaskItemSnippet extends DateFunctions {
 
   /** All task items today for current user. */
-  lazy val taskItems = TaskItemService.getTaskItems(TimeUtils.offsetToDailyInterval(offsetInDays))
+  lazy val taskItems = TaskItemService.getTaskItems(IntervalQuery(TimeUtils.offsetToDailyInterval(offsetInDays)))
 
   /** All tasks. */
   lazy val tasks = TaskService.getTaskArray()
@@ -36,12 +33,10 @@ class TaskItemSnippet extends DateFunctions {
   def actualTask(in: NodeSeq): NodeSeq = {
     if (offsetInDays == 0) {
       val actualTask = taskItems.lastOption
-      val taskName = if (!actualTask.isEmpty) actualTask.get.taskName.getOrElse(S.?("tasks.pause")) else S.?("tasks.pause")
-      val projectName = if (!actualTask.isEmpty && !actualTask.get.projectName.isEmpty) actualTask.get.projectName.get + "-" else ""
-      val description = if (!actualTask.isEmpty && !actualTask.get.task.isEmpty) TaskService.getPreparedDescription(actualTask.get.task.get) else "<span></span>"
+      val description = if (actualTask.isDefined && !actualTask.get.task.isEmpty) TaskService.getPreparedDescription(actualTask.get.task.get) else "<span></span>"
 
       (
-        ".actualTaskName *" #> (projectName + taskName) &
+        ".actualTaskName *" #> (actualTask map (_.fullName) filter (_ != "") getOrElse S.?("tasks.pause")) &
         ".actualDescription *" #> PCDataXmlParser.apply(description)
       ).apply(in)
     } else {
@@ -58,17 +53,15 @@ class TaskItemSnippet extends DateFunctions {
     } else {
       (".item *" #> taskItems.map(taskItemDto => {
         val active = (!taskItemDto.task.isEmpty)
-        val (red, green, blue, alpha) = TaskService.getColor(taskItemDto.taskName.getOrElse(""), taskItemDto.projectName.getOrElse(""), active)
-        val fragBarStyle = "background-color:rgba(" + red + " , " + green + " , " + blue + " ," + alpha + ");"
+        val fragBarStyle = {
+          "background-color:rgba" + taskItemDto.color.toString + ";"
+        }
         val fragBarProjectStyle = {
-          taskItemDto.project match {
-            case Some(project) => "background-color:" + ProjectService.getRootProject(project).color.get
-            case _ => ""
-          }
+          "background-color:rgba" + taskItemDto.baseColor.toString + ";"
         }
         ".date *" #> getDateString(taskItemDto) &
-        ".project *" #> taskItemDto.projectName.getOrElse("") &
-        ".task *" #> taskItemDto.taskName.getOrElse("") &
+        ".project *" #> taskItemDto.projectName &
+        ".task *" #> taskItemDto.taskName &
         ".taskColorIndicator [style]" #> fragBarStyle &
         ".projectColorIndicator [style]" #> fragBarProjectStyle &
         (if (active)
@@ -90,7 +83,7 @@ class TaskItemSnippet extends DateFunctions {
       <lift:embed what="no_data"/>
     } else {
       val diagramStartTime = taskItems.head.taskItem.start.get
-      val diagramEndTime = taskItems.last.taskItem.start.get.toLong + taskItems.last.duration
+      val diagramEndTime = taskItems.last.taskItem.start.get + taskItems.last.duration.getMillis
       val diagramTotalTime = diagramEndTime - diagramStartTime
 
       var odd = true;
@@ -103,7 +96,7 @@ class TaskItemSnippet extends DateFunctions {
             odd = !odd;
 
             val lengthInPercent = {
-              val value = ((taskItemDto.duration.asInstanceOf[Double] / diagramTotalTime.asInstanceOf[Double]) * 100 * 100).asInstanceOf[Int] / 100D
+              val value = ((taskItemDto.duration.getMillis.asInstanceOf[Double] / diagramTotalTime.asInstanceOf[Double]) * 100 * 100).asInstanceOf[Int] / 100D
               if (value < 0.1D || (last && !active)) {
                 0D
               } else {
@@ -113,36 +106,22 @@ class TaskItemSnippet extends DateFunctions {
 
             val fragStyle = "width:" + lengthInPercent + "%;"
             val fragBarStyle = {
-              val (red, green, blue, alpha) = TaskService.getColor(taskItemDto.taskName.getOrElse(""), taskItemDto.projectName.getOrElse(""), active)
-              val isDarkColor = (((red * 299) + (green * 587) + (blue * 114)) / 1000) < 128
-              (if (isDarkColor) "color:white; " else "color:black; ") +
-              "background-color:" + "rgba(" + red + " , " + green + " , " + blue + " , " + alpha + ");"
+              val color = taskItemDto.color
+              (if (color.isDark) "color:white; " else "color:black; ") + "background-color:rgba" + color.toString + ";"
             }
+
             val fragBarProjectStyle = {
-              taskItemDto.project match {
-                case Some(project) => {
-                  var bgColor = ProjectService.getRootProject(project).color.get
-                  if (bgColor != null && bgColor.length == 7) {
-                    val (red, green, blue) = (Integer.valueOf(bgColor.substring(1, 3), 16),
-                                              Integer.valueOf(bgColor.substring(3, 5), 16),
-                                              Integer.valueOf(bgColor.substring(5, 7), 16))
-                    val isDarkColor = (((red * 299) + (green * 587) + (blue * 114)) / 1000) < 128
-                    (if (isDarkColor) "color:white; " else "color:black; ") + "background-color:" + bgColor
-                  } else {
-                    ""
-                  }
-                }
-                case _ => ""
-              }
+              val color = taskItemDto.baseColor
+              (if (color.isDark) "color:white; " else "color:black; ") + "background-color:rgba" + color.toString + ";"
             }
             val fragTextStyle = if (odd) Text("top:-80px;") else Text("top:15px;")
             val fragBarClass = if (active && last) "fragBar fragBarContinued" else if (active && !last) "fragBar" else "fragBar noborder"
 
-            ".ProjectName *" #> taskItemDto.projectName.getOrElse("") &
+            ".ProjectName *" #> taskItemDto.projectName &
             ".ProjectName [style]" #> fragBarProjectStyle &
-            ".TaskName *" #> taskItemDto.taskName.getOrElse("") &
-            ".Duration *" #> (S.?("duration") + ": " + taskItemDto.durationInMinutes + " " + S.?("minute")) &
-            ".fragText *" #> taskItemDto.timeString &
+            ".TaskName *" #> taskItemDto.taskName &
+            ".Duration *" #> (S.?("duration") + ": " + taskItemDto.duration.toStandardMinutes.getMinutes + " " + S.?("minute")) &
+            ".fragText *" #> taskItemDto.localTime.toString(DateTimeFormat.forPattern("HH:mm")) &
             ".frag [style]" #> fragStyle &
             ".fragBar [style]" #> fragBarStyle &
             ".fragBar [class]" #> fragBarClass &
@@ -165,8 +144,7 @@ class TaskItemSnippet extends DateFunctions {
     } else {
       tasks.toSeq.flatMap(
         showTaskData => {
-          val (red, green, blue, alpha) = TaskService.getColor(showTaskData.task.name.get, showTaskData.projectName, true)
-          val name = showTaskData.projectName + "-" + showTaskData.task.name.get
+          val color = Color.get(showTaskData.task.name.get, showTaskData.projectName, true)
 
           val taskStyleClass = if (showTaskData.task.specifiable.get) {
             Text("hiddenTask specifiable-task");
@@ -180,7 +158,7 @@ class TaskItemSnippet extends DateFunctions {
               if (offsetInDays == 0) Text("hh:mm")
               else Text("hh:mm"), "placeholder"),
             AttrBindParam("colorindicator",
-              Text("background-color: rgba(" + red + "," + green + "," + blue + " , " + alpha + ")"),
+              Text("background-color:rgba" + color.toString),
               "style"),
             AttrBindParam("projectcolorindicator",
               Text("background-color:" + ProjectService.getRootProject(showTaskData.rootProject).color.get),
@@ -366,7 +344,7 @@ class TaskItemSnippet extends DateFunctions {
         S.?("tasks.to_next_day")
       }
     } else {
-      taskItemDto.timeString
+      taskItemDto.localTime.toString(DateTimeFormat.forPattern("HH:mm"))
     }
   }
 }

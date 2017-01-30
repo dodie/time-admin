@@ -1,16 +1,19 @@
 package code
 package service
 
-import scala.collection.mutable.ListBuffer
-import org.joda.time.{DateTime, Interval}
 import code.commons.TimeUtils
-import code.model.TaskItem
-import code.model.User
-import code.model.Project
+import code.commons.TimeUtils.dayEndInMs
+import code.model.mixin.HierarchicalItem
+import code.model.{Project, Task, TaskItem, User}
+import code.service.HierarchicalItemService.path
+import com.github.nscala_time.time.Imports._
 import net.liftweb.common.Box.box2Option
 import net.liftweb.common.{Box, Full}
-import net.liftweb.mapper._
-import com.github.nscala_time.time.Imports._
+import net.liftweb.mapper.{By, _}
+import org.joda.time.{DateTime, Interval, LocalDate, ReadablePartial}
+
+import scala.collection.mutable.ListBuffer
+import scala.language.postfixOps
 
 /**
  * TaskItem data handling and conversion service.
@@ -23,8 +26,8 @@ object TaskItemService {
   /**
    * Returns the last option for the given day.
    */
-  def getLastTaskItemForDay(offset: Int) = {
-    getTaskItems(TimeUtils.offsetToDailyInterval(offset)).lastOption
+  def getLastTaskItemForDay(offset: Int): Option[TaskItemWithDuration] = {
+    getTaskItems(IntervalQuery(TimeUtils.offsetToDailyInterval(offset))).lastOption
   }
 
   def alwaysTrue[T <: Mapper[T]]: QueryParam[T] = BySql[T]("1=1", IHaveValidatedThisSQL("suliatis", "2016-11-10"))
@@ -33,7 +36,8 @@ object TaskItemService {
    * Returns a sequence with the task item entries on the given day.
    * The ordering is determined by the item's start time.
    */
-  def getTaskItems(interval: Interval, user: Box[User] = User.currentUser): List[TaskItemWithDuration] = {
+  def getTaskItems(query: IntervalQuery, user: Box[User] = User.currentUser): List[TaskItemWithDuration] = {
+    lazy val projects = Project.findAll
 
     def toTimeline(taskItems: List[TaskItem]): List[TaskItemWithDuration] = {
       val taskItemDtos = new ListBuffer[TaskItemWithDuration]
@@ -42,25 +46,25 @@ object TaskItemService {
         val trimmedItems =
           taskItems
             .map(item =>
-              if (item.start.get < interval.startMillis)
+              if (item.start.get < query.interval.startMillis)
                 TaskItem.create
                   .user(item.user.get)
                   .task(item.task.get)
-                  .start(interval.startMillis)
+                  .start(query.interval.startMillis)
               else
                 item)
 
         val cap =
-          if (taskItems.last.task.get != 0 && interval.endMillis < TimeUtils.currentTime) {
+          if (taskItems.last.task.get != 0 && query.interval.endMillis < TimeUtils.currentTime) {
             List(TaskItem.create
               .user(taskItems.last.user.get)
               .task(0)
-              .start(interval.endMillis - 1))
+              .start(query.interval.endMillis - 1))
           } else {
             List()
           }
 
-        val allTaskItems = trimmedItems ::: cap
+        val allTaskItems = split(trimmedItems ::: cap, query.stepInterval)
 
         var previousTaskStart: Long =
           if (allTaskItems.last.task.get == 0) {
@@ -72,20 +76,22 @@ object TaskItemService {
         for (taskItem <- allTaskItems.reverse) {
           val start = taskItem.start.get
           //compensate lost millisecond at the end of the day
-          val duration = (if (previousTaskStart == TimeUtils.dayEndInMs(previousTaskStart)) previousTaskStart + 1 else previousTaskStart) - start
+          val duration = (if (previousTaskStart == dayEndInMs(previousTaskStart)) previousTaskStart + 1 else previousTaskStart) - start
           previousTaskStart = start
-          taskItemDtos += TaskItemWithDuration(taskItem, duration)
+          taskItemDtos += TaskItemWithDuration(taskItem, Duration.millis(duration), taskItem.task.obj map (t => path(Nil, t.parent.box, projects)) getOrElse Nil)
         }
       }
 
-      taskItemDtos.reverse.toList.filter(item => item.duration != 0 || item.taskItem.task.get == 0)
+      taskItemDtos.reverse.toList.filter(item => item.duration.getMillis != 0L || item.taskItem.task.get == 0)
     }
 
-    val taskItemsForPeriod =
-      TaskItem.findAll(OrderBy(TaskItem.start, Ascending),
+    val taskItemsForPeriod = TaskItem.findAll(
+        OrderBy(TaskItem.start, Ascending),
         user.map(u => By(TaskItem.user, u)).getOrElse(alwaysTrue),
-        By_<(TaskItem.start, interval.endMillis),
-        By_>=(TaskItem.start, interval.startMillis))
+        By_<(TaskItem.start, query.interval.endMillis),
+        By_>=(TaskItem.start, query.interval.startMillis),
+        PreCache(TaskItem.task)
+      )
 
     val users = user.map(List(_)).getOrElse(User.findAll)
 
@@ -95,7 +101,7 @@ object TaskItemService {
           TaskItem.findAll(OrderBy(TaskItem.start, Descending),
             MaxRows(1),
             By(TaskItem.user, u),
-            By_<(TaskItem.start, interval.startMillis))
+            By_<(TaskItem.start, query.interval.startMillis))
           .filter(_.task != 0))
 
     val taskItems = lastPartTaskItemBeforePeriodThatMightCount ::: taskItemsForPeriod
@@ -104,9 +110,65 @@ object TaskItemService {
 
     if (list.isEmpty) {
       // if the result is empty, then return a list that contains only a Pause item
-      List(TaskItemWithDuration(TaskItem.create.user(user).start(interval.startMillis + 1), 0))
+      List(TaskItemWithDuration(TaskItem.create.user(user).start(query.interval.startMillis + 1), 0 millis, Nil))
     } else {
       list
+    }
+  }
+
+  def split(ts: List[TaskItem], i: StepInterval): List[TaskItem] = {
+    def nextStep(instant: Long, i: StepInterval): StepInterval =
+      if (i.step.contains(instant)) i
+      else nextStep(instant, i.next)
+
+    def pause(t: TaskItem, i: StepInterval): TaskItem =
+      TaskItem.create.user(t.user.get).task(0).start(i.step.endMillis - 1L)
+
+    def task(t: TaskItem, i: StepInterval): TaskItem =
+      TaskItem.create.user(t.user.get).task(t.task.get).start(i.step.endMillis)
+
+    def loop(zs: List[TaskItem], ts: List[TaskItem], i: StepInterval): List[TaskItem] = ts match {
+      case t1 :: t2 :: ts =>
+        val s = nextStep(t1.start.get, i)
+        if (s.step.contains(new Interval(t1.start.get, t2.start.get))) loop(t1 :: zs, t2 :: ts, i)
+        else loop(pause(t1, s) :: t1 :: zs, task(t1, s) :: t2 :: ts, i)
+      case t :: Nil =>  (t :: zs).reverse
+    }
+
+    loop(Nil, ts, i)
+  }
+
+  case class IntervalQuery(interval: Interval, scale: LocalDate => ReadablePartial) {
+    lazy val stepInterval: StepInterval = StepInterval(interval, scale)
+  }
+
+  object IntervalQuery {
+    def apply(interval: Interval): IntervalQuery = IntervalQuery(interval, identity)
+
+    def between(start: YearMonth, end: YearMonth): IntervalQuery =
+      if (start.year == end.year && start.monthOfYear == end.monthOfYear) oneMonth(start)
+      else IntervalQuery(start.toInterval.start to end.toInterval.end, d => new YearMonth(d))
+
+    def oneMonth(start: YearMonth): IntervalQuery = IntervalQuery(start.toInterval)
+
+    def thisMonth(): IntervalQuery = IntervalQuery(YearMonth.now().toInterval)
+  }
+
+  case class StepInterval(step: Interval, period: Period) {
+
+    def next: StepInterval = StepInterval(new Interval(step.start + period, step.end + period), period)
+  }
+
+  object StepInterval {
+
+    def apply(interval: Interval, scale: LocalDate => ReadablePartial): StepInterval = {
+      lazy val step: Interval = intervalFrom(scale(new LocalDate(interval.start)))
+      lazy val period: Period = step.toPeriod
+      new StepInterval(step, period)
+    }
+
+    private def intervalFrom(d: ReadablePartial): Interval = d match {
+      case d: { def toInterval: Interval } => d.toInterval
     }
   }
 
@@ -117,7 +179,7 @@ object TaskItemService {
    *
    * The time value always converted to whole minutes.
    */
-  def insertTaskItem(taskId: Long, time: Long) = {
+  def insertTaskItem(taskId: Long, time: Long): Boolean = {
     // calculate insert time
     val insertTime = math.min(time, TimeUtils.currentTime)
 
@@ -141,7 +203,7 @@ object TaskItemService {
    *
    * The time value always converted to whole minutes.
    */
-  def editTaskItem(taskItemId: Long, taskId: Long, time: Long, split: Boolean = false) = {
+  def editTaskItem(taskItemId: Long, taskId: Long, time: Long, split: Boolean = false): Boolean = {
     // offset value that represents the given day
     val offset = math.abs(TimeUtils.getOffset(time)) * (-1)
 
@@ -210,7 +272,7 @@ object TaskItemService {
    *
    * The time value always converted to whole minutes.
    */
-  def appendTaskItem(taskId: Long, time: Long) = {
+  def appendTaskItem(taskId: Long, time: Long): Boolean = {
     val now = TimeUtils.currentTime
     val dayStart = TimeUtils.currentDayStartInMs(0)
     val actualTaskItemStart = {
@@ -240,7 +302,7 @@ object TaskItemService {
   /**
    * Deletes task item with the given id for current user.
    */
-  def deleteTaskItem(id: Long) = {
+  def deleteTaskItem(id: Long): Boolean = {
     TaskItem.find(By(TaskItem.id, id), By(TaskItem.user, User.currentUser.get)).get.delete_!
   }
 
@@ -249,7 +311,7 @@ object TaskItemService {
    * 	- merges task item A and B (by deleting B), if A has the same task as B, and B directly follows A
    *  - deletes a Pause task item, if there are no non-Pause tasks before that
    */
-  def normalizeTaskItems(offset: Int) = {
+  def normalizeTaskItems(offset: Int): Unit = {
     // get all task items for the given day
     val taskItemsForDay = TaskItem.findAll(OrderBy(TaskItem.start, Ascending),
       By(TaskItem.user, User.currentUser.get),
@@ -305,16 +367,17 @@ object TaskItemService {
  * TaskItem wrapper/DTO, witch contains the duration value of the given entry as it is usually needed.
  * The duration can be derived from the entry's and the following entry's start time.
  */
-case class TaskItemWithDuration(taskItem: TaskItem, var duration: Long) {
-  val task = TaskService.getTask(taskItem.task.get)
-  val project = if (!task.isEmpty) Some(Project.findByKey(task.get.parent.get).get) else None
+case class TaskItemWithDuration(taskItem: TaskItem, duration: Duration, path: List[HierarchicalItem[_]]) {
+  lazy val task: Box[Task] = taskItem.task.obj
 
-  val taskName = if (!task.isEmpty) Some(task.get.name.get) else None
-  val projectName = if (!project.isEmpty) Some(ProjectService.getDisplayName(project.get)) else None
+  lazy val taskName: String = task map (_.name.get) getOrElse ""
+  lazy val projectName: String = path map (_.name.get) mkString "-"
+  lazy val fullName: String = task map { t => s"$projectName-${t.name.get}" } getOrElse ""
 
-  val timeString = TimeUtils.format(TimeUtils.TIME_FORMAT, taskItem.start.get)
+  lazy val color: Color = Color.get(taskName, projectName, task exists (_.active.get))
+  lazy val baseColor: Color = path.headOption map (_.color.get) flatMap {
+    s => Option(s) filter (c => c.nonEmpty && c.length == 7)
+  } map Color.parse getOrElse Color.transparent
 
-  def durationInMinutes = (duration / 60D / 1000).toLong
+  lazy val localTime: LocalTime = new DateTime(taskItem.start.get).toLocalTime
 }
-
-

@@ -2,9 +2,10 @@ package code.snippet
 
 import code.model.User
 import code.service.ReportService.TaskSheet
+import code.service.TaskItemService.IntervalQuery
 import code.service.UserService.nonAdmin
 import code.service.{ReportService, TaskSheetItem}
-import code.snippet.Params.{parseInterval, parseMonths, parseUser, thisMonth}
+import code.snippet.Params.{parseInterval, parseMonths, parseUser}
 import code.snippet.mixin.DateFunctions
 import code.util.TaskSheetUtils
 import code.util.TaskSheetUtils._
@@ -14,7 +15,7 @@ import net.liftweb.http.S
 import net.liftweb.util.BindHelpers.strToCssBindPromoter
 import net.liftweb.util.CssSel
 import org.joda.time.DateTimeConstants.{SATURDAY, SUNDAY}
-import org.joda.time.{DateTimeConstants, DateTimeFieldType, ReadablePartial, YearMonth}
+import org.joda.time.{DateTimeFieldType, ReadablePartial, YearMonth}
 
 import scala.util.Try
 import scala.xml.NodeSeq
@@ -36,8 +37,8 @@ class TasksheetSnippet extends DateFunctions {
   }
 
   def title(in: NodeSeq): NodeSeq = {
-    val (interval, scale) = parseInterval() getOrElse thisMonth()
-    <span>{TaskSheetUtils.title(interval, scale)}</span>
+    val i = parseInterval getOrElse IntervalQuery.thisMonth()
+    <span>{TaskSheetUtils.title(i.interval, i.scale)}</span>
   }
 
   def dimensionSelector(in: NodeSeq): NodeSeq = {
@@ -48,14 +49,14 @@ class TasksheetSnippet extends DateFunctions {
   }
 
   def tasksheet(in: NodeSeq): NodeSeq = {
-    val (interval, scale) = parseInterval() getOrElse thisMonth
+    val i = parseInterval getOrElse IntervalQuery.thisMonth()
     val user = User.currentUser filter nonAdmin or parseUser()
 
-    renderTaskSheet(interval, scale, user)(in)
+    renderTaskSheet(i, user)(in)
   }
 
-  def renderTaskSheet[D <: ReadablePartial](i: Interval, f: LocalDate => D, u: Box[User]): CssSel = {
-    val taskSheet = ReportService.taskSheetData(i, f, u)
+  def renderTaskSheet(i: IntervalQuery, u: Box[User]): CssSel = {
+    val taskSheet = ReportService.taskSheetData(i, u)
     val durations = new Durations(taskSheet)
 
     ".dayHeader" #> dates(taskSheet).map(d => ".dayHeader *" #> printDateHeader(d)) &
@@ -70,15 +71,15 @@ class TasksheetSnippet extends DateFunctions {
         ".totalSum *" #> durations.print(sum(taskSheet))
   }
 
-  def printDateHeader[D <: ReadablePartial](d: D): String =
+  def printDateHeader(d: ReadablePartial): String =
     Try(d.get(DateTimeFieldType.dayOfMonth())) map (_.toString) getOrElse d.toString
 
-  def formatCell[D <: ReadablePartial](d: D): CssSel =
+  def formatCell(d: ReadablePartial): CssSel =
     Try(d.get(DateTimeFieldType.dayOfWeek())).toOption flatMap { i =>
       if (i == SATURDAY || i == SUNDAY) Some(".dailyData [class]" #> "colWeekend") else None
     } getOrElse ".dailyData [class]" #> "colWeekday"
 
-  class Durations[D <: ReadablePartial](ts: TaskSheet[D]) {
+  class Durations(ts: TaskSheet) {
     val minutes = ("minutes", S.?("dimensions.minutes"), (d: Duration) => d.minutes.toString)
     val hours = ("hours", S.?("dimensions.hours"), (d: Duration) => f"${d.minutes / 60.0d}%1.2f")
     val manDays = ("manDays", S.?("dimensions.manDays"), (d: Duration) => f"${(d.minutes / 60.0d) / 8.0d}%1.2f")

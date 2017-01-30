@@ -221,12 +221,12 @@ object TimeUtils {
     dt.dayOfMonth().withMaximumValue().getDayOfMonth();
   }
 
-  def getPreviousMonthOffset(): Int = {
+  def getPreviousMonthOffset: Int = {
     val today: DateTime = new DateTime(currentTime).withDayOfMonth(1);
     deltaInDays(today.toDate, today.minusMonths(1).toDate);
   }
 
-  def offsetToDailyInterval[D <: ReadablePartial](offset: Int): Interval = new Interval(currentDayStartInMs(offset), currentDayEndInMs(offset))
+  def offsetToDailyInterval(offset: Int): Interval = new Interval(currentDayStartInMs(offset), currentDayEndInMs(offset))
 
   lazy val monthNames = List(S.?("date.month.january"),
     S.?("date.month.february"),
