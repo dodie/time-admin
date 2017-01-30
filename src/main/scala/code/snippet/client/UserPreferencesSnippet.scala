@@ -3,7 +3,7 @@ package snippet
 
 import code.service.{UserPreferenceGroupNames, UserPreferenceNames, UserPreferenceService}
 import net.liftweb.http.S
-import net.liftweb.util.BindHelpers.strToCssBindPromoter
+import net.liftweb.util.Helpers._
 
 import scala.xml.NodeSeq
 import scala.xml.NodeSeq.seqToNodeSeq

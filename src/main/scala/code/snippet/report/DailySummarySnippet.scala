@@ -18,7 +18,7 @@ import net.liftweb.mapper.MappedField.mapToType
 import net.liftweb.util.Helpers.AttrBindParam
 import net.liftweb.util.Helpers.strToSuperArrowAssoc
 import net.liftweb.util.Helpers
-import net.liftweb.util.BindHelpers.strToCssBindPromoter
+import net.liftweb.util.Helpers._
 import net.liftweb.http.S
 
 /**

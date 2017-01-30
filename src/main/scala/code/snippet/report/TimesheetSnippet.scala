@@ -3,7 +3,7 @@ package code.snippet
 import scala.xml.NodeSeq
 import code.service.ReportService
 import code.snippet.mixin.DateFunctions
-import net.liftweb.util.BindHelpers.strToCssBindPromoter
+import net.liftweb.util.Helpers._
 
 import scala.util.Try
 
@@ -27,7 +27,7 @@ class TimesheetSnippet extends DateFunctions {
    */
   def timesheet(in: NodeSeq): NodeSeq = {
     val timesheetData = ReportService.getTimesheetData(offsetInDays)
-    if (!timesheetData.isEmpty) {
+    if (timesheetData.nonEmpty) {
       (
         ".item *" #> timesheetData.map(
           row => {

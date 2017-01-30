@@ -7,7 +7,7 @@ import code.service._
 import code.snippet.mixin.DateFunctions
 import net.liftweb.common.Box.box2Option
 import net.liftweb.http.S
-import net.liftweb.util.BindHelpers.strToCssBindPromoter
+import net.liftweb.util.Helpers._
 import net.liftweb.util.Helpers.{AttrBindParam, strToSuperArrowAssoc}
 import net.liftweb.util.{Helpers, PCDataXmlParser}
 import org.joda.time.format.DateTimeFormat

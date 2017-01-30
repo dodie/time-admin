@@ -10,7 +10,7 @@ import code.snippet.Params.parseMonths
 import net.liftweb.common.Box.box2Option
 import net.liftweb.http.S
 import net.liftweb.http.js.JE._
-import net.liftweb.util.BindHelpers.strToCssBindPromoter
+import net.liftweb.util.Helpers._
 import org.joda.time.YearMonth
 import org.joda.time.format.DateTimeFormat
 

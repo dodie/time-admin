@@ -10,7 +10,6 @@ import code.snippet.Params.parseUser
 import net.liftweb.common.Full
 import net.liftweb.http.S
 import net.liftweb.mapper.By
-import net.liftweb.util.BindHelpers.strToCssBindPromoter
 import net.liftweb.util.Helpers._
 
 import _root_.scala.xml.NodeSeq
