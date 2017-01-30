@@ -3,14 +3,19 @@
 		<span class="lift:userPreferencesSnippet.actions"></span>
 		<form class="form-user" method="post">
 			<h1><lift:loc>page.usersettings</lift:loc></h1>
-			<table>
+			<table class="lift:userPreferencesSnippet">
 				<tbody>
-					<tr class="lift:userPreferencesSnippet">
-						<td>
-							<span preference:datahint="" class="preferenceName"><preference:name/></span>
+					<tr>
+						<td colspan="2" class="PreferenceGroup">
+							<span class="PreferenceGroupName"></span>
+							<a class="QuickHelp" data-hint="">?</a>
 						</td>
-						<td>
-							<preference:input/>
+					</tr>
+					<tr class="Preference">
+						<td class="PreferenceName">
+							<span class="preferenceName" data-hint=""></span>
+						</td>
+						<td class="PreferenceValue">
 						</td>
 					</tr>
 				</tbody>

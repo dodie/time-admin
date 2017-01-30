@@ -1,19 +1,18 @@
 package code
 package snippet
 
-import _root_.scala.xml.NodeSeq
-import _root_.net.liftweb.util.{CssSel, Helpers}
-import code.model._
-import net.liftweb.mapper.By
-import net.liftweb.common.Full
-import net.liftweb.http.S
-import Helpers._
 import java.text.Collator
 
+import _root_.net.liftweb.util.{CssSel, Helpers}
+import code.model._
 import code.service.UserService.nonAdmin
 import code.snippet.Params.parseUser
+import net.liftweb.common.Full
+import net.liftweb.http.S
+import net.liftweb.mapper.By
+import net.liftweb.util.Helpers._
 
-import net.liftweb.util.BindHelpers.strToCssBindPromoter
+import _root_.scala.xml.NodeSeq
 
 /**
  * User data snippet.
@@ -21,7 +20,7 @@ import net.liftweb.util.BindHelpers.strToCssBindPromoter
  */
 class UsersSnippet {
 
-  val collator = Collator.getInstance(S.locale);
+  val collator: Collator = Collator.getInstance(S.locale)
 
   /**
    * Renders the current user name.
@@ -29,8 +28,8 @@ class UsersSnippet {
   def currentUser(in: NodeSeq): NodeSeq = {
     if (!User.currentUser.isEmpty) {
       (
-        ".ActualUserEmail *" #> User.currentUser.get.email &
-        ".ActualUserName *" #> (User.currentUser.get.firstName + " " + User.currentUser.get.lastName)
+        ".ActualUserEmail *" #> User.currentUser.openOrThrowException("Current user Emust be defined!").email &
+        ".ActualUserName *" #> (User.currentUser.openOrThrowException("Current user must be defined!").firstName + " " + User.currentUser.openOrThrowException("Current user must be defined!").lastName)
       ).apply(in)
     } else {
       NodeSeq.Empty
@@ -45,7 +44,7 @@ class UsersSnippet {
       User.login
     } else {
       (
-        ".NiceName *" #> User.currentUser.get.niceName
+        ".NiceName *" #> User.currentUser.openOrThrowException("Current user must be defined!").niceName
       ).apply(in)
     }
   }
@@ -130,7 +129,7 @@ class UsersSnippet {
             ".userRole" #> roles.map(role => {
               "input [name]" #> (user.id.get + "_" + role.id.get) &
                 (
-                  if (!UserRoles.findAll(By(UserRoles.user, user), By(UserRoles.role, role)).isEmpty) {
+                  if (UserRoles.findAll(By(UserRoles.user, user), By(UserRoles.role, role)).nonEmpty) {
                     "input [checked]" #> "true"
                   } else {
                     "input [unchecked]" #> "true"
@@ -149,8 +148,8 @@ class UsersSnippet {
     val userIdBox = S.param("edit")
 
     if (!userIdBox.isEmpty) {
-      val user = User.findByKey(userIdBox.get.toLong)
-      User.edit(user.get)
+      val user = User.findByKey(userIdBox.openOrThrowException("User id must be defined!").toLong)
+      User.edit(user.openOrThrowException("User must be defined!"))
       //user.get.toForm(Full("save"), "/admin/users")
     } else {
       <lift:embed what="no_data"/>
@@ -163,7 +162,7 @@ class UsersSnippet {
   def actions(in: NodeSeq): NodeSeq = {
     if (S.post_?) {
       if (!S.param("useredit").isEmpty && !S.param("edit").isEmpty) {
-        User.findByKey(S.param("edit").get.toLong).get.toForm(Full("save"), "/item/list")
+        User.findByKey(S.param("edit").openOrThrowException("User id must be defined!").toLong).openOrThrowException("User must be defined!").toForm(Full("save"), "/item/list")
       } else {
         val roles = Role.findAll.sortWith((a, b) => collator.compare(a.name.get, b.name.get) < 0)
         val users = User.findAll.sortWith((a, b) => collator.compare(a.niceName, b.niceName) < 0)

@@ -2,24 +2,16 @@ package code.snippet
 
 import java.util.Date
 
-import scala.xml.NodeSeq.seqToNodeSeq
-import scala.xml.NodeSeq
-import scala.xml.Node
-import scala.xml.Text
-import net.liftweb.common._
-import code.model.Project
-import code.service.TaskItemService
-import code.service.ReportService
-import code.service.TaskService
-import code.snippet.mixin.DateFunctions
 import code.commons.TimeUtils
+import code.model.Project
 import code.service.TaskItemService.IntervalQuery
-import net.liftweb.mapper.MappedField.mapToType
-import net.liftweb.util.Helpers.AttrBindParam
-import net.liftweb.util.Helpers.strToSuperArrowAssoc
-import net.liftweb.util.Helpers
-import net.liftweb.util.BindHelpers.strToCssBindPromoter
+import code.service.{ReportService, TaskItemService, TaskService}
+import code.snippet.mixin.DateFunctions
+import net.liftweb.common._
 import net.liftweb.http.S
+import net.liftweb.util.Helpers._
+
+import scala.xml.NodeSeq
 
 /**
  * Creates daily reports.
@@ -31,9 +23,6 @@ class DailySummarySnippet extends DateFunctions {
    * Displays daily report for the current user.
    */
   def summaryForToday(in: NodeSeq): NodeSeq = {
-    def attributeValueEquals(value: String)(node: Node) = {
-      node.attributes.exists(_.value.text == value)
-    }
 
     // All task today for current user
     val taskItems = TaskItemService.getTaskItems(IntervalQuery(TimeUtils.offsetToDailyInterval(offsetInDays)))
@@ -52,7 +41,7 @@ class DailySummarySnippet extends DateFunctions {
     if (aggregatedArray.isEmpty) {
       NodeSeq.Empty
     } else {
-      val pause = aggregatedArray.filter(_.taskId == 0).headOption
+      val pause = aggregatedArray.find(_.taskId == 0)
       val pauseDuration = if (pause.isEmpty) {
         0
       } else {
@@ -68,17 +57,15 @@ class DailySummarySnippet extends DateFunctions {
           "-"
         } else {
           val deltaInMs = last.get.taskItem.start.get - first.get.taskItem.start.get - ReportService.calculateTimeRemovalFromLeaveTime(pauseDuration)
-          val date = new Date(deltaInMs)
-
-          val h = (deltaInMs / 1000 / 60 / 60)
+          val h = deltaInMs / 1000 / 60 / 60
           val m = (deltaInMs / 1000 / 60) - (h * 60)
           h + S.?("hour.short") + " " + m + S.?("minute.short")
         }
       }
 
       val flowBreak = {
-        var counter = 0;
-        var prevTaskItemId: java.lang.Long = 0;
+        var counter = 0
+        var prevTaskItemId: java.lang.Long = 0L
         for (item <- ReportService.trim(taskItems).filter(_.taskItem != 0).reverse) {
           if (item.taskItem.task.get != 0 && prevTaskItemId != 0) {
             counter = counter + 1
@@ -136,14 +123,14 @@ class DailySummarySnippet extends DateFunctions {
 
           val fragBarStyle = "background-color:rgba(" + red + " , " + green + " , " + blue + " ," + alpha + ");"
           val fragBarProjectStyle = {
-            (Project.findByKey(aggregatedData.rootProjectId) match {
+            Project.findByKey(aggregatedData.rootProjectId) match {
               case Full(project) => "background-color:" + project.color.get
               case _ => "background-color: white"
-            })
+            }
           }
 
           ".minutes *" #> (math.round(aggregatedData.duration / 60D / 1000)) &
-          ".name *" #> (if (aggregatedData.projectName.isEmpty) aggregatedData.taskName else (aggregatedData.projectName + "-" + aggregatedData.taskName)) &
+          ".name *" #> (if (aggregatedData.projectName.isEmpty) aggregatedData.taskName else aggregatedData.projectName + "-" + aggregatedData.taskName) &
           ".taskColorIndicator [style]" #> fragBarStyle &
           ".projectColorIndicator [style]" #> fragBarProjectStyle
         }) &

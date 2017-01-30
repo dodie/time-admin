@@ -12,6 +12,7 @@ import code.util.TaskSheetUtils._
 import com.github.nscala_time.time.Imports._
 import net.liftweb.common.Box
 import net.liftweb.http.S
+//TODO: it not possible to use `Helpers._` before upgrading to 3.0.1
 import net.liftweb.util.BindHelpers.strToCssBindPromoter
 import net.liftweb.util.CssSel
 import org.joda.time.DateTimeConstants.{SATURDAY, SUNDAY}

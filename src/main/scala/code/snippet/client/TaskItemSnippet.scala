@@ -6,10 +6,10 @@ import code.service.TaskItemService.IntervalQuery
 import code.service._
 import code.snippet.mixin.DateFunctions
 import net.liftweb.common.Box.box2Option
+import net.liftweb.common.{Empty, Full}
 import net.liftweb.http.S
-import net.liftweb.util.BindHelpers.strToCssBindPromoter
-import net.liftweb.util.Helpers.{AttrBindParam, strToSuperArrowAssoc}
-import net.liftweb.util.{Helpers, PCDataXmlParser}
+import net.liftweb.util.Helpers._
+import net.liftweb.util.PCDataXmlParser
 import org.joda.time.format.DateTimeFormat
 
 import scala.xml.NodeSeq.seqToNodeSeq
@@ -22,10 +22,10 @@ import scala.xml.{NodeSeq, Text}
 class TaskItemSnippet extends DateFunctions {
 
   /** All task items today for current user. */
-  lazy val taskItems = TaskItemService.getTaskItems(IntervalQuery(TimeUtils.offsetToDailyInterval(offsetInDays)))
+  lazy val taskItems: List[TaskItemWithDuration] = TaskItemService.getTaskItems(IntervalQuery(TimeUtils.offsetToDailyInterval(offsetInDays)))
 
   /** All tasks. */
-  lazy val tasks = TaskService.getTaskArray()
+  lazy val tasks: Array[ShowTaskData] = TaskService.getTaskArray()
 
   /**
    * Renders the currently selected task as an information text.
@@ -33,7 +33,7 @@ class TaskItemSnippet extends DateFunctions {
   def actualTask(in: NodeSeq): NodeSeq = {
     if (offsetInDays == 0) {
       val actualTask = taskItems.lastOption
-      val description = if (actualTask.isDefined && !actualTask.get.task.isEmpty) TaskService.getPreparedDescription(actualTask.get.task.get) else "<span></span>"
+      val description = if (actualTask.isDefined && !actualTask.get.task.isEmpty) TaskService.getPreparedDescription(actualTask.get.task.openOrThrowException("Task must be defined!")) else "<span></span>"
 
       (
         ".actualTaskName *" #> (actualTask map (_.fullName) filter (_ != "") getOrElse S.?("tasks.pause")) &
@@ -52,7 +52,7 @@ class TaskItemSnippet extends DateFunctions {
       <lift:embed what="no_data"/>
     } else {
       (".item *" #> taskItems.map(taskItemDto => {
-        val active = (!taskItemDto.task.isEmpty)
+        val active = !taskItemDto.task.isEmpty
         val fragBarStyle = {
           "background-color:rgba" + taskItemDto.color.toString + ";"
         }
@@ -86,14 +86,14 @@ class TaskItemSnippet extends DateFunctions {
       val diagramEndTime = taskItems.last.taskItem.start.get + taskItems.last.duration.getMillis
       val diagramTotalTime = diagramEndTime - diagramStartTime
 
-      var odd = true;
+      var odd = true
 
       (
         ".frag" #> taskItems.map(
           taskItemDto => {
-            val last = (taskItemDto.taskItem.id == taskItems.last.taskItem.id)
-            val active = (!taskItemDto.task.isEmpty)
-            odd = !odd;
+            val last = taskItemDto.taskItem.id == taskItems.last.taskItem.id
+            val active = !taskItemDto.task.isEmpty
+            odd = !odd
 
             val lengthInPercent = {
               val value = ((taskItemDto.duration.getMillis.asInstanceOf[Double] / diagramTotalTime.asInstanceOf[Double]) * 100 * 100).asInstanceOf[Int] / 100D
@@ -139,44 +139,27 @@ class TaskItemSnippet extends DateFunctions {
    * Renders the tasks selectable by the user.
    */
   def selectableTasks(in: NodeSeq): NodeSeq = {
-    if (tasks.isEmpty) {
-      <lift:embed what="no_data"/>
-    } else {
-      tasks.toSeq.flatMap(
-        showTaskData => {
-          val color = Color.get(showTaskData.task.name.get, showTaskData.projectName, true)
+      ".tasks" #> tasks.toList.map { t =>
+        val color = Color.get(t.task.name.get, t.projectName, active = true)
+        val projectColor = ProjectService.getRootProject(t.rootProject).color.get
+        val onRowClick =
+          if (offsetInDays == 0) s"sendForm('tskf_${t.task.id.get}', true)"
+          else s"sendForm('tskf_${t.task.id.get}', false)"
 
-          val taskStyleClass = if (showTaskData.task.specifiable.get) {
-            Text("hiddenTask specifiable-task");
-          } else {
-            Text("hiddenTask");
-          }
-
-          Helpers.bind("task", in,
-            AttrBindParam("taskstyleclass", taskStyleClass, "class"),
-            AttrBindParam("placeholder",
-              if (offsetInDays == 0) Text("hh:mm")
-              else Text("hh:mm"), "placeholder"),
-            AttrBindParam("colorindicator",
-              Text("background-color:rgba" + color.toString),
-              "style"),
-            AttrBindParam("projectcolorindicator",
-              Text("background-color:" + ProjectService.getRootProject(showTaskData.rootProject).color.get),
-              "style"),
-            // Form sending without submit button
-            AttrBindParam("formid", Text("tskf_" + showTaskData.task.id.get), "id"),
-            AttrBindParam("rowid", Text("tskr_" + showTaskData.task.id.get), "id"),
-            AttrBindParam("taskid", Text(showTaskData.task.id.get + ""), "value"),
-            AttrBindParam("onrowclick",
-              if (offsetInDays == 0) Text("sendForm('tskf_" + showTaskData.task.id.get + "', true)")
-              else Text("sendForm('tskf_" + showTaskData.task.id.get + "', false)"), "onclick"),
-
-            "taskname" -> showTaskData.task.name.get,
-            "projectname" -> showTaskData.projectName,
-            "taskdescription" -> PCDataXmlParser.apply(TaskService.getPreparedDescription(showTaskData.task)).getOrElse(Text("")))
+        ".task" #> {
+          ".task [id]" #> s"tskr_${t.task.id.get}" &
+          ".task [class]" #> { if (t.task.specifiable.get) Full("specifiable-task") else Empty } &
+          ".InlineCommandsForm [id]" #> s"tskf_${t.task.id.get}" &
+          ".projectColorIndicator [style]" #> s"background-color:$projectColor" &
+          "@selecttaskid [value]" #> t.task.id.get &
+          ".taskColorIndicator [style]" #> s"background-color:rgba${color.toString}" &
+          ".taskColorIndicator [onclick]" #> onRowClick &
+          ".tasksProjectName *" #> t.projectName &
+          ".tasksTaskName *" #> t.task.name &
+          ".tasksTaskName [onclick]" #> onRowClick &
+          ".tasksTaskDescription" #> PCDataXmlParser.apply(TaskService.getPreparedDescription(t.task))
         }
-      )
-    }
+      } apply in
   }
 
   /**
@@ -184,8 +167,8 @@ class TaskItemSnippet extends DateFunctions {
    * otherwise renders past node.
    */
   def renderByDate(in: NodeSeq): NodeSeq = {
-    val todayNode = (in \ "today")
-    val pastNode = (in \ "past")
+    val todayNode = in \ "today"
+    val pastNode = in \ "past"
     if (offsetInDays == 0) {
       todayNode \ "_"
     } else {
@@ -200,7 +183,7 @@ class TaskItemSnippet extends DateFunctions {
   def actions(in: NodeSeq): NodeSeq = {
     if (S.post_?) {
       // select task id param
-      val selectedTaskId = S.param("selecttaskid").get.toLong
+      val selectedTaskId = S.param("selecttaskid").openOrThrowException("Param must be defined!").toLong
 
       // operation type
       val mode = S.param("mode").getOrElse("default")
@@ -220,7 +203,7 @@ class TaskItemSnippet extends DateFunctions {
          * 	the taskitem will be inserted to the selected day at the given point of time
          */
         val offsetStringParameter = {
-          val offsetParameterString = (S.param("timeoffset") getOrElse "0")
+          val offsetParameterString = S.param("timeoffset") getOrElse "0"
           if (0 < offsetParameterString.length())
             offsetParameterString
           else
@@ -239,23 +222,22 @@ class TaskItemSnippet extends DateFunctions {
           }
           Some(TimeUtils.currentTime - offsetParameter)
         } catch {
-          case e: Exception => {
+          case _: Exception =>
             None
-          }
         }
 
         val preciseTimeMode = offsetStringParameter.contains(":")
 
-        if (!time.isEmpty) {
+        if (time.isDefined) {
           // valid parameters, make changes
 
           // Create new task if necessary
           val newTaskName = S.param("newtaskname").getOrElse("")
 
           val calculatedTaskId = if (!newTaskName.isEmpty) {
-            TaskService.specify(TaskService.getTask(selectedTaskId).get, newTaskName).id.get
+            TaskService.specify(TaskService.getTask(selectedTaskId).openOrThrowException("Task must be defined!"), newTaskName).id.get
           } else {
-            selectedTaskId;
+            selectedTaskId
           }
 
           if (preciseTimeMode) {
@@ -286,7 +268,7 @@ class TaskItemSnippet extends DateFunctions {
         val offset = {
           val timeOffset = S.param("timeoffset")
           try {
-            val offsetStringParameter = (timeOffset getOrElse "0")
+            val offsetStringParameter = timeOffset getOrElse "0"
             if (offsetStringParameter.contains(":")) {
               val hour = offsetStringParameter.substring(0, offsetStringParameter.indexOf(":")).toInt
               val min = offsetStringParameter.substring(offsetStringParameter.indexOf(":") + 1, offsetStringParameter.length).toInt
@@ -295,22 +277,21 @@ class TaskItemSnippet extends DateFunctions {
               None
             }
           } catch {
-            case e: Exception => {
+            case _: Exception =>
               None
-            }
           }
         }
 
-        if (!offset.isEmpty) {
+        if (offset.isDefined) {
           // valid parameters, make changes
           val selectedTime = TimeUtils.currentTime - offset.get
 
           val selectedTaskItemId = S.param("taskitemid")
 
           if (mode == "taskitemedit") {
-            TaskItemService.editTaskItem(selectedTaskItemId.get.toLong, selectedTaskId, selectedTime)
+            TaskItemService.editTaskItem(selectedTaskItemId.openOrThrowException("Task item id must be defined!").toLong, selectedTaskId, selectedTime)
           } else if (mode == "taskitemsplit") {
-            TaskItemService.editTaskItem(selectedTaskItemId.get.toLong, selectedTaskId, selectedTime, true)
+            TaskItemService.editTaskItem(selectedTaskItemId.openOrThrowException("Task item id must be defined!").toLong, selectedTaskId, selectedTime, split = true)
           }
         } else {
           // invalid parameters, show error
@@ -321,10 +302,10 @@ class TaskItemSnippet extends DateFunctions {
         /*
          * The specified taskitem will be deleted.
          */
-        TaskItemService.deleteTaskItem(S.param("taskitemid").get.toLong)
+        TaskItemService.deleteTaskItem(S.param("taskitemid").openOrThrowException("Task item id must be defined!").toLong)
       }
 
-      TaskItemService.normalizeTaskItems(offsetInDays);
+      TaskItemService.normalizeTaskItems(offsetInDays)
 
       S.redirectTo(S.uri)
     } else {
@@ -337,7 +318,7 @@ class TaskItemSnippet extends DateFunctions {
    */
   private def getDateString(taskItemDto: TaskItemWithDuration) = {
     if (taskItemDto.taskItem.id.get == -1) {
-      val firstOfTheDay = (taskItemDto.taskItem.id == taskItems.head.taskItem.id)
+      val firstOfTheDay = taskItemDto.taskItem.id == taskItems.head.taskItem.id
       if (firstOfTheDay) {
         S.?("tasks.from_prev_day")
       } else {
