@@ -260,19 +260,19 @@ class ProjectsSnippet {
     }
 
     val defaultFieldBindings =
-          Helpers.bind("property", editorPropertyTemplate,
-              "name" -> S.?("projects.popup.name"),
-              "value" -> SHtml.textElem(name, "class" -> "form-control")) ++
-          Helpers.bind("property", editorPropertyTemplate,
-              "name" -> S.?("projects.popup.description"),
-              "value" -> SHtml.textElem(description, "class" -> "form-control"))
+      renderProperty(
+        ".name *" #> S.?("projects.popup.name") &
+        ".field" #> SHtml.textElem(name, "class" -> "form-control")) ++
+      renderProperty(
+        ".name *" #> S.?("projects.popup.description") &
+        ".field" #> SHtml.textElem(description, "class" -> "form-control"))
 
     val fieldBindigsWithColor =
       if (!hierarchicalItem.parent.defined_?)
         defaultFieldBindings ++
-        Helpers.bind("property", editorPropertyTemplate,
-            "name" -> S.?("projects.popup.color"),
-            "value" -> SHtml.textElem(color, "type" -> "color"))
+        renderProperty(
+          ".name *" #> S.?("projects.popup.color") &
+          ".field" #> SHtml.textElem(color, "type" -> "color"))
       else
         defaultFieldBindings
 
@@ -281,9 +281,9 @@ class ProjectsSnippet {
         fieldBindigsWithColor
       else
         fieldBindigsWithColor ++
-        Helpers.bind("property", editorPropertyTemplate,
-            "name" -> S.?("projects.popup.active"),
-            "value" -> SHtml.checkboxElem(active))
+        renderProperty(
+          ".name *" #> S.?("projects.popup.active") &
+          ".field" #> SHtml.checkboxElem(active))
 
     val fieldBindings =
       hierarchicalItem match {
@@ -291,18 +291,19 @@ class ProjectsSnippet {
           fieldbindingsWithActive
         case _: Task =>
           fieldbindingsWithActive ++
-          Helpers.bind("property", editorPropertyTemplate,
-              "name" -> S.?("projects.popup.specifiable"),
-              "value" -> SHtml.checkboxElem(specifiable))
+          renderProperty(
+              ".name *" #> S.?("projects.popup.specifiable") &
+              ".field" #> SHtml.checkboxElem(specifiable))
       }
 
     SetHtml("inject",
-      Helpers.bind("editor", editorTemplate,
-        "fields" -> fieldBindings,
-        "title" -> S.?("projects.edit"),
-        "submit" -> SHtml.ajaxSubmit(S.?("button.save"), submit _, "class" -> "btn btn-primary"),
-        "close" -> SHtml.ajaxSubmit(S.?("button.close"), closeDialog _, "class" -> "btn btn-default"))
-      ) &
+      (
+        ".fields *" #> fieldBindings &
+        ".title *" #> S.?("projects.edit") &
+        ".submit-button" #> SHtml.ajaxSubmit(S.?("button.save"), submit _, "class" -> "btn btn-primary") &
+        ".close-button" #> SHtml.ajaxSubmit(S.?("button.close"), closeDialog _, "class" -> "btn btn-default")
+      )(editorTemplate)
+    ) &
     openDialog
   }
 
@@ -325,28 +326,36 @@ class ProjectsSnippet {
     }
 
     SetHtml("inject",
-      Helpers.bind("editor", editorTemplate,
-        "fields" ->
-          (Helpers.bind("property", editorPropertyTemplate,
-              "name" -> S.?("projects.popup.name"),
-              "value" -> SHtml.textElem(name, "class" -> "form-control")) ++
-          Helpers.bind("property", editorPropertyTemplate,
-              "name" -> S.?("projects.popup.description"),
-              "value" -> SHtml.textElem(description, "class" -> "form-control")) ++
-          Helpers.bind("property", editorPropertyTemplate,
-              "name" -> S.?("projects.popup.color"),
-              "value" -> SHtml.textElem(color, "class" -> "form-control", "type" -> "color"))
-            ),
-        "title" -> S.?("projects.new_project"),
-        "submit" -> SHtml.ajaxSubmit(S.?("button.save"), submit _, "class" -> "btn btn-primary"),
-        "close" -> SHtml.ajaxSubmit(S.?("button.close"), closeDialog _, "class" -> "btn btn-default"))) &
+      (
+        ".fields *" #>
+          (
+            renderProperty(
+              ".name *" #> S.?("projects.popup.name") &
+              ".field" #> SHtml.textElem(name, "class" -> "form-control")) ++
+            renderProperty(
+              ".name *" #> S.?("projects.popup.description") &
+              ".field" #> SHtml.textElem(description, "class" -> "form-control")) ++
+            renderProperty(
+              ".name *" #> S.?("projects.popup.color") &
+              ".field" #> SHtml.textElem(color, "class" -> "form-control", "type" -> "color"))
+            ) &
+        ".title *" #> S.?("projects.new_project") &
+        ".submit-button" #> SHtml.ajaxSubmit(S.?("button.save"), submit _, "class" -> "btn btn-primary") &
+        ".close-button" #> SHtml.ajaxSubmit(S.?("button.close"), closeDialog _, "class" -> "btn btn-default")
+
+      )(editorTemplate)
+    ) &
     openDialog
+  }
+
+  def renderProperty(cssSel: CssSel): NodeSeq = {
+    cssSel(editorPropertyTemplate)
   }
 
   val editorPropertyTemplate: NodeSeq =
     <div class="form-group">
-      <label><property:name></property:name></label>
-      <property:value></property:value>
+      <label class="name"></label>
+      <input class="field"/>
     </div>
 
 
@@ -377,17 +386,20 @@ class ProjectsSnippet {
     }
 
     SetHtml("inject",
-      Helpers.bind("editor", editorTemplate,
-        "fields" ->
-          (Helpers.bind("property", editorPropertyTemplate,
-              "name" -> S.?("projects.popup.name"),
-              "value" -> SHtml.textElem(name, "class" -> "form-control")) ++
-          Helpers.bind("property", editorPropertyTemplate,
-              "name" -> S.?("projects.popup.description"),
-              "value" -> SHtml.textElem(description, "class" -> "form-control"))),
-        "title" -> (if (isProject) S.?("projects.add_subproject") else S.?("projects.add_task")),
-        "submit" -> SHtml.ajaxSubmit(S.?("button.save"), submit _, "class" -> "btn btn-primary"),
-        "close" -> SHtml.ajaxSubmit(S.?("button.close"), closeDialog _, "class" -> "btn btn-default"))) &
+      (
+        ".fields *" #>
+          (
+            renderProperty(
+              ".name *" #> S.?("projects.popup.name") &
+              ".field" #> SHtml.textElem(name, "class" -> "form-control")) ++
+            renderProperty(
+              ".name" #> S.?("projects.popup.description") &
+              ".field" #> SHtml.textElem(description, "class" -> "form-control"))) &
+        ".title *" #> (if (isProject) S.?("projects.add_subproject") else S.?("projects.add_task")) &
+        ".submit-button" #> SHtml.ajaxSubmit(S.?("button.save"), submit _, "class" -> "btn btn-primary") &
+        ".close-button" #> SHtml.ajaxSubmit(S.?("button.close"), closeDialog _, "class" -> "btn btn-default")
+      )(editorTemplate)
+    ) &
     openDialog
   }
 
@@ -444,17 +456,20 @@ class ProjectsSnippet {
     }
 
     SetHtml("inject",
-      Helpers.bind("editor", editorTemplate,
-        "fields" ->
-          (Helpers.bind("property", editorPropertyTemplate,
-              "name" -> S.?("projects.popup.name"),
-              "value" -> project.name) ++
-          Helpers.bind("property", editorPropertyTemplate,
-              "name" -> S.?("projects.popup.description"),
-              "value" -> project.description)),
-        "title" -> S.?("projects.delete"),
-        "submit" -> SHtml.ajaxSubmit(S.?("button.delete"), submit _, "class" -> "btn btn-primary"),
-        "close" -> SHtml.ajaxSubmit(S.?("button.close"), closeDialog _, "class" -> "btn btn-default"))) &
+      (
+        ".fields *" #>
+          (
+            renderProperty(
+              ".name *" #> S.?("projects.popup.name") &
+              ".field" #> project.name) ++
+            renderProperty(
+              ".name *" #> S.?("projects.popup.description") &
+              ".field" #> project.description)) &
+        ".title *" #> S.?("projects.delete") &
+        ".submit-button" #> SHtml.ajaxSubmit(S.?("button.delete"), submit _, "class" -> "btn btn-primary") &
+        ".close-button" #> SHtml.ajaxSubmit(S.?("button.close"), closeDialog _, "class" -> "btn btn-default")
+      )(editorTemplate)
+    ) &
     openDialog
   }
 
@@ -470,17 +485,21 @@ class ProjectsSnippet {
     }
 
     SetHtml("inject",
-      Helpers.bind("editor", editorTemplate,
-        "fields" ->
-          (Helpers.bind("property", editorPropertyTemplate,
-              "name" -> S.?("projects.popup.name"),
-              "value" -> task.name) ++
-          Helpers.bind("property", editorPropertyTemplate,
-              "name" -> S.?("projects.popup.description"),
-              "value" -> task.description)),
-        "title" -> S.?("projects.delete"),
-        "submit" -> SHtml.ajaxSubmit(S.?("button.delete"), submit _, "class" -> "btn btn-primary"),
-        "close" -> SHtml.ajaxSubmit(S.?("button.close"), closeDialog _, "class" -> "btn btn-default"))) &
+      (
+        ".fields *" #>
+          (
+            renderProperty(
+              ".name *" #> S.?("projects.popup.name") &
+              ".field" #> task.name) ++
+            renderProperty(
+              ".name" #> S.?("projects.popup.description") &
+              ".field" #> task.description)) &
+        ".title *" #> S.?("projects.delete") &
+        ".submit-button" #> SHtml.ajaxSubmit(S.?("button.delete"), submit _, "class" -> "btn btn-primary") &
+        ".close-button" #> SHtml.ajaxSubmit(S.?("button.close"), closeDialog _, "class" -> "btn btn-default")
+
+      )(editorTemplate)
+    ) &
     openDialog
   }
 
@@ -498,14 +517,12 @@ class ProjectsSnippet {
         <form class="lift:form.ajax" role="form">
           <div class="modal-content">
             <div class="modal-header">
-              <h4 class="modal-title"><editor:title></editor:title></h4>
+              <h4 class="modal-title title"></h4>
             </div>
-            <div class="modal-body">
-              <editor:fields></editor:fields>
-            </div>
+            <div class="modal-body fields"></div>
             <div class="modal-footer">
-              <editor:submit type="submit"></editor:submit>
-              <editor:close type="submit"></editor:close>
+              <input class="submit-button"/>
+              <input class="close-button"/>
             </div>
           </div>
         </form>
