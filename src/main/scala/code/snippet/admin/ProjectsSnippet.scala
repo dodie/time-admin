@@ -23,7 +23,7 @@ import scala.xml.NodeSeq
  */
 class ProjectsSnippet {
 
-  val collator: Collator = Collator.getInstance(S.locale)
+  private val collator: Collator = Collator.getInstance(S.locale)
 
   private var template: NodeSeq = _
 
@@ -36,6 +36,7 @@ class ProjectsSnippet {
   object showInactiveProjectsAndTasks extends SessionVar(false)
 
   object selectedProject extends SessionVar[Project](null)
+
   object selectedTask extends SessionVar[Task](null)
 
   def toggleInactiveView: CssSel = {
@@ -46,9 +47,8 @@ class ProjectsSnippet {
       })
   }
 
-  def addRoot(in: NodeSeq): NodeSeq = {
-    Helpers.bind("project", in,
-      AttrBindParam("onclick", SHtml.ajaxInvoke(addRootEditor).toJsCmd, "onclick"))
+  def addRoot: CssSel = {
+    ".add-root [onclick]" #> SHtml.ajaxInvoke(addRootEditor).toJsCmd
   }
 
   def moveToRoot: CssSel = {
@@ -428,9 +428,31 @@ class ProjectsSnippet {
     openDialog
   }
 
-  val editorTemplate: NodeSeq = Templates("templates-hidden/editor_fragment" :: Nil).openOrThrowException("Template must be defined!")
+  val editorTemplate: NodeSeq =
+    <div class="modal fade" data-backdrop="static" data-keyboard="false">
+      <div class="modal-dialog">
+        <form class="lift:form.ajax" role="form">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h4 class="modal-title"><editor:title></editor:title></h4>
+            </div>
+            <div class="modal-body">
+              <editor:fields></editor:fields>
+            </div>
+            <div class="modal-footer">
+              <editor:submit type="submit"></editor:submit>
+              <editor:close type="submit"></editor:close>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
 
-  val editorPropertyTemplate: NodeSeq = Templates("templates-hidden/editor_property_fragment" :: Nil).openOrThrowException("Template must be defined!")
+  val editorPropertyTemplate: NodeSeq =
+    <div class="form-group">
+      <label><property:name></property:name></label>
+      <property:value></property:value>
+    </div>
 
   def closeDialog: JsCmd = JsRaw("$('.modal').modal('hide')").cmd
 
