@@ -6,7 +6,7 @@ version := "0.0.1"
 
 organization := "hu.advancedweb"
 
-scalaVersion := "2.12.1"
+scalaVersion := "2.11.7"
 
 parallelExecution in Test := false
 
