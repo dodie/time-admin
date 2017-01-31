@@ -5,7 +5,7 @@ import java.util.Date
 import code.commons.TimeUtils
 import code.model.Project
 import code.service.TaskItemService.IntervalQuery
-import code.service.{ReportService, TaskItemService, TaskService}
+import code.service.{Color, ReportService, TaskItemService, TaskService}
 import code.snippet.mixin.DateFunctions
 import net.liftweb.common._
 import net.liftweb.http.S
@@ -119,9 +119,9 @@ class DailySummarySnippet extends DateFunctions {
 
       (
         ".fragWrapper *" #> aggregatedArray.map(aggregatedData => {
-          val (red, green, blue, alpha) = TaskService.getColor(aggregatedData.taskName, aggregatedData.projectName, !aggregatedData.isPause)
+          val color = Color.get(aggregatedData.taskName, aggregatedData.projectName, !aggregatedData.isPause)
 
-          val fragBarStyle = "background-color:rgba(" + red + " , " + green + " , " + blue + " ," + alpha + ");"
+          val fragBarStyle = s"background-color:rgba${color.toString};"
           val fragBarProjectStyle = {
             Project.findByKey(aggregatedData.rootProjectId) match {
               case Full(project) => "background-color:" + project.color.get

@@ -23,15 +23,6 @@ object TaskService {
 
   def getTask(id: Long): Box[Task] = Task.findByKey(id)
 
-  def getColor(taskName: String, projectsDisplayName: String, active: Boolean): (Int, Int, Int, Int) = {
-    val random = new Random((taskName.trim + projectsDisplayName.trim).hashCode)
-    val red = if (active) random.nextInt(255) else 255
-    val green = if (active) random.nextInt(255) else 255
-    val blue = if (active) random.nextInt(255) else 255
-    val alpha = if (active) 1 else 1
-    (red, green, blue, alpha)
-  }
-
   private def getAllTasks(activeOnly: Boolean): List[ShowTaskData] = {
     val taskDtos = new ListBuffer[ShowTaskData]
     val rootProjects = Project.findAll.filter(_.parent.isEmpty)
