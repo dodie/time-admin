@@ -3,6 +3,7 @@ package snippet
 
 import java.text.Collator
 
+import net.liftweb.common.{Box, Empty, Full}
 import _root_.net.liftweb.util.{CssSel, Helpers}
 import code.model._
 import code.model.mixin.HierarchicalItem
@@ -27,9 +28,9 @@ class ProjectsSnippet {
 
   object showInactiveProjectsAndTasks extends SessionVar(false)
 
-  object selectedProject extends SessionVar[Project](null)
+  object selectedProject extends SessionVar[Box[Project]](Empty)
 
-  object selectedTask extends SessionVar[Task](null)
+  object selectedTask extends SessionVar[Box[Task]](Empty)
 
   def toggleInactiveView: CssSel = {
     "type=submit [value]" #> (if (showInactiveProjectsAndTasks.get) S.?("projects.hide_inactive") else S.?("projects.show_inactive")) &
@@ -45,9 +46,9 @@ class ProjectsSnippet {
 
   def moveToRoot: CssSel = {
     def moveProjectToRoot: JsCmd = {
-      if (selectedProject.get != null) {
-        ProjectService.moveToRoot(selectedProject.get)
-        selectedProject.set(null)
+      selectedProject.is.flatMap { sp =>
+        ProjectService.moveToRoot(sp)
+        selectedProject.set(Empty)
       }
       rerenderProjectTree
     }
@@ -404,43 +405,50 @@ class ProjectsSnippet {
   }
 
   private def selectProject(project: Project): JsCmd = {
-    selectedTask.set(null)
-    if (selectedProject.get == project) {
-      selectedProject.set(null)
-    } else {
-      selectedProject.set(project)
+    //TODO
+    selectedTask.set(Empty)
+    selectedProject.is.flatMap { sp =>
+      if (sp == project) {
+        selectedProject.set(Empty)
+      } else {
+        selectedProject.set(Some(project))
+      }
     }
+
     rerenderProjectTree
   }
 
   private def moveToProject(project: Project): JsCmd = {
-    if (selectedProject.get != null) {
-      ProjectService.move(selectedProject.get, project)
-      selectedProject.set(null)
-    } else if (selectedTask.get != null) {
-      TaskService.move(selectedTask.get, project)
-      selectedTask.set(null)
+    selectedProject.is.flatMap { sp =>
+      ProjectService.move(sp, project)
+      selectedProject.set(Empty)
     }
+    selectedTask.is.flatMap { st =>
+      TaskService.move(st, project)
+      selectedTask.set(Empty)
+    }
+
     rerenderProjectTree
   }
 
   private def mergeTask(task: Task): JsCmd = {
-    if (selectedTask.get != null) {
-      TaskService.merge(selectedTask.get, task)
-      selectedTask.set(null)
-    } else {
-      net.liftweb.http.js.JsCmds.Alert("No task selected!")
+    selectedTask.is.flatMap { st =>
+      TaskService.merge(st, task)
+      selectedTask.set(Empty)
     }
+
     rerenderProjectTree
   }
 
   private def selectTask(task: Task): JsCmd = {
-    selectedProject.set(null)
-    if (selectedTask.get == task) {
-      selectedTask.set(null)
-    } else {
-      selectedTask.set(task)
-    }
+    selectedProject.set(Empty)
+    selectedTask.set(Some(task))
+    // TODO
+    //if (selectedTask.get == task) {
+      //selectedTask.set(Empty)
+    //} else {
+      //selectedTask.set(task)
+    //}
     rerenderProjectTree
   }
 
