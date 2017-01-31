@@ -5,7 +5,6 @@ import java.net.URI
 
 import net.liftweb._
 import util._
-import Helpers._
 import common._
 import sitemap._
 import Loc._
@@ -23,6 +22,8 @@ import code.snippet.Params.{parseInterval, parseUser}
 import code.util.IO.{using, xlsxResponse}
 import net.liftweb.db.DBLogEntry
 import net.liftweb.http.js.JE
+import net.liftmodules.JQueryModule
+import js.jquery.JQueryArtifacts
 
 
 
@@ -134,7 +135,9 @@ class Boot extends Loggable {
     LiftRules.setSiteMapFunc(() => sitemapMutators(sitemap))
 
     // Use jQuery 1.4
-    LiftRules.jsArtifacts = net.liftweb.http.js.jquery.JQueryArtifacts
+    //LiftRules.jsArtifacts = net.liftweb.http.js.jquery.JQueryArtifacts
+    JQueryModule.InitParam.JQuery=JQueryModule.JQuery1113
+    JQueryModule.init()
 
     // Show the spinny image when an Ajax call starts
     LiftRules.ajaxStart = Full(() => LiftRules.jsArtifacts.show("ajax-loader").cmd)
@@ -154,15 +157,6 @@ class Boot extends Loggable {
     // Use user locale
     val oldLocaleCalculator = LiftRules.localeCalculator
     LiftRules.localeCalculator = (request: Box[HTTPRequest]) => User.currentUser.map(u => new Locale(u.locale.get)) openOr oldLocaleCalculator(request)
-
-    LiftRules.liftRequest.append {
-      case Req("classpath" :: _, _, _) => true
-      case Req("ajax_request" :: _, _, _) => true
-      case Req("comet_request" :: _, _, _) => true
-      case Req("favicon" :: Nil, "ico", GetRequest) => false
-      case Req(_, "css", GetRequest) => false
-      case Req(_, "js", GetRequest) => false
-    }
 
     // Make a transaction span the whole HTTP request
     S.addAround(DB.buildLoanWrapper)
@@ -209,6 +203,15 @@ class Boot extends Loggable {
             Full(xlsxResponse(contentStream, name.toLowerCase.replace(" ", "")))
           }
         }
+    }
+
+    LiftRules.securityRules = () => {
+      SecurityRules(content = Some(ContentSecurityPolicy(
+        scriptSources = List(
+            ContentSourceRestriction.Self, ContentSourceRestriction.UnsafeInline),
+        styleSources = List(
+            ContentSourceRestriction.Self, ContentSourceRestriction.UnsafeInline)
+            )))
     }
 
     val jsNotice =
