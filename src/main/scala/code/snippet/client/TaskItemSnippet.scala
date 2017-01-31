@@ -25,7 +25,7 @@ class TaskItemSnippet extends DateFunctions {
   lazy val taskItems: List[TaskItemWithDuration] = TaskItemService.getTaskItems(IntervalQuery(TimeUtils.offsetToDailyInterval(offsetInDays)))
 
   /** All tasks. */
-  lazy val tasks: Array[ShowTaskData] = TaskService.getTaskArray()
+  lazy val tasks: List[ShowTaskData] = TaskService.getAllActiveTasks
 
   /**
    * Renders the currently selected task as an information text.
@@ -139,7 +139,7 @@ class TaskItemSnippet extends DateFunctions {
    * Renders the tasks selectable by the user.
    */
   def selectableTasks(in: NodeSeq): NodeSeq = {
-      ".tasks" #> tasks.toList.map { t =>
+      ".tasks" #> tasks.map { t =>
         val color = Color.get(t.task.name.get, t.projectName, active = true)
         val projectColor = ProjectService.getRootProject(t.rootProject).color.get
         val onRowClick =

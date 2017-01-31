@@ -1,19 +1,16 @@
 package code
 package service
 
-import java.util.Random
 import java.text.Collator
 
-import scala.collection.mutable.ListBuffer
-import scala.util.Sorting
-import code.model.TaskItem
-import code.model.Project
-import code.model.Task
+import code.model.{Project, Task, TaskItem}
 import net.liftweb.common.Box
-import net.liftweb.mapper.MappedForeignKey.getObj
-import net.liftweb.mapper.By
-import net.liftweb.util.Props
 import net.liftweb.http.S
+import net.liftweb.mapper.By
+import net.liftweb.mapper.MappedForeignKey.getObj
+import net.liftweb.util.Props
+
+import scala.collection.mutable.ListBuffer
 
 /**
  * Task data transformation service.
@@ -23,17 +20,13 @@ object TaskService {
 
   def getTask(id: Long): Box[Task] = Task.findByKey(id)
 
-  private def getAllTasks(activeOnly: Boolean): List[ShowTaskData] = {
+  def getAllActiveTasks: List[ShowTaskData] = {
     val taskDtos = new ListBuffer[ShowTaskData]
     val rootProjects = Project.findAll.filter(_.parent.isEmpty)
 
     def addAllTasksForSubProject(rootProject: Project, project: Project, parentsName: String): Unit = {
-      if (!activeOnly || project.active.get) {
-        val tasks = if (activeOnly) {
-          Task.findAll(By(Task.parent, Project.find(By(Project.id, project.id.get))), By(Task.active, true))
-        } else {
-          Task.findAll(By(Task.parent, Project.find(By(Project.id, project.id.get))))
-        }
+      if (project.active.get) {
+        val tasks = Task.findAll(By(Task.parent, Project.find(By(Project.id, project.id.get))), By(Task.active, true))
 
         for (task <- tasks) {
           taskDtos.append(ShowTaskData(task, rootProject, parentsName))
@@ -47,24 +40,7 @@ object TaskService {
     for (rootProject <- rootProjects) {
       addAllTasksForSubProject(rootProject, rootProject, rootProject.name.get)
     }
-    taskDtos.toList
-  }
-
-  def getTaskArray(taskFilter: String = "", activeOnly: Boolean = true): Array[ShowTaskData] = {
-    val taskList = getAllTasks(activeOnly)
-      .filter(taskDto => {
-        taskFilter
-          .split(",")
-          .exists(filter =>
-            taskDto.task.name.get.toLowerCase.contains(filter.toLowerCase.trim) ||
-              taskDto.projectName.toLowerCase.contains(filter.toLowerCase.trim))
-      })
-      .map(taskDto =>
-        ShowTaskData(taskDto.task, taskDto.rootProject, taskDto.projectName))
-      .toArray
-
-    Sorting.quickSort(taskList)
-    taskList
+    taskDtos.toList.sorted
   }
 
   def getPreparedDescription(task: Task): String = {
