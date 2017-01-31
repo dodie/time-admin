@@ -5,7 +5,6 @@ import java.net.URI
 
 import net.liftweb._
 import util._
-import Helpers._
 import common._
 import sitemap._
 import Loc._
@@ -209,6 +208,15 @@ class Boot extends Loggable {
             Full(xlsxResponse(contentStream, name.toLowerCase.replace(" ", "")))
           }
         }
+    }
+
+    LiftRules.securityRules = () => {
+      SecurityRules(content = Some(ContentSecurityPolicy(
+        scriptSources = List(
+            ContentSourceRestriction.Self, ContentSourceRestriction.UnsafeInline),
+        styleSources = List(
+            ContentSourceRestriction.Self, ContentSourceRestriction.UnsafeInline)
+            )))
     }
 
     val jsNotice =

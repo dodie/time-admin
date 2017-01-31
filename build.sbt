@@ -21,7 +21,7 @@ Seq(webSettings :_*)
 scalacOptions ++= Seq("-deprecation", "-unchecked", "-Ywarn-unused-import")
 
 libraryDependencies ++= {
-  val liftVersion = "2.6.2"
+  val liftVersion = "3.0.1"
   Seq(
     "net.liftweb"                 %% "lift-webkit"              % liftVersion           % "compile",
     "net.liftweb"                 %% "lift-mapper"              % liftVersion           % "compile",
