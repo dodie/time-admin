@@ -32,10 +32,10 @@ libraryDependencies ++= {
     "org.eclipse.jetty.orbit"     % "javax.servlet"             % "3.0.0.v201112011016" % "compile,container,test,e2e" artifacts Artifact("javax.servlet", "jar", "jar"),
     "log4j"                       % "log4j"                     % "1.2.17",
     "org.slf4j"                   % "slf4j-log4j12"             % "1.7.21",
-    "org.specs2"                  %% "specs2"                   % "2.3.12"              % "test,it,e2e",
-    "org.scalatest"               % "scalatest_2.11"            % "2.2.4"               % "test,it,e2e",
+    "org.specs2"                  %% "specs2"                   % "3.7"                 % "test,it,e2e",
+    "org.scalatest"               %% "scalatest"                % "2.2.4"               % "test,it,e2e",
     "org.seleniumhq.selenium"     % "selenium-firefox-driver"   % "2.53.1"              % "test,it,e2e",
-    "info.cukes"                  % "cucumber-scala_2.11"       % "1.2.2"               % "e2e",
+    "info.cukes"                  %% "cucumber-scala"           % "1.2.2"               % "e2e",
     "info.cukes"                  % "cucumber-junit"            % "1.2.2"               % "e2e",
     "info.cukes"                  % "cucumber-picocontainer"    % "1.2.2"               % "e2e",
     "junit"                       % "junit"                     % "4.11"                % "e2e",
@@ -43,7 +43,7 @@ libraryDependencies ++= {
     "com.h2database"              % "h2"                        % "1.3.167",
     "postgresql"                  % "postgresql"                % "8.4-701.jdbc4",
     "com.github.nscala-time"      %% "nscala-time"              % "2.14.0",
-    "com.norbitltd"               % "spoiwo_2.11"               % "1.1.1",
+    "com.norbitltd"               %% "spoiwo"                   % "1.1.1",
     "org.apache.poi"              % "ooxml-schemas"             % "1.3"
   )
 }
