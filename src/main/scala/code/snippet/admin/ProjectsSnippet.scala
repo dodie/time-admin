@@ -405,14 +405,15 @@ class ProjectsSnippet {
   }
 
   private def selectProject(project: Project): JsCmd = {
-    //TODO
-    selectedTask.set(Empty)
-    selectedProject.is.flatMap { sp =>
-      if (sp == project) {
-        selectedProject.set(Empty)
-      } else {
-        selectedProject.set(Some(project))
+    selectedProject.is match {
+      case Full(sp) => {
+          if (sp == project) {
+            selectedProject.set(Empty)
+          } else {
+            selectedProject.set(Some(project))
+          }
       }
+      case Empty => selectedProject.set(Some(project))
     }
 
     rerenderProjectTree
@@ -441,14 +442,16 @@ class ProjectsSnippet {
   }
 
   private def selectTask(task: Task): JsCmd = {
-    selectedProject.set(Empty)
-    selectedTask.set(Some(task))
-    // TODO
-    //if (selectedTask.get == task) {
-      //selectedTask.set(Empty)
-    //} else {
-      //selectedTask.set(task)
-    //}
+    selectedTask.is match {
+      case Full(st) => {
+          if (st == task) {
+            selectedTask.set(Empty)
+          } else {
+            selectedTask.set(Some(task))
+          }
+      }
+      case Empty => selectedTask.set(Some(task))
+    }
     rerenderProjectTree
   }
 

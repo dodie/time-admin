@@ -6,7 +6,7 @@ version := "0.0.1"
 
 organization := "hu.advancedweb"
 
-scalaVersion := "2.11.2"
+scalaVersion := "2.11.7"
 
 parallelExecution in Test := false
 
@@ -26,7 +26,7 @@ libraryDependencies ++= {
     "net.liftweb"                 %% "lift-webkit"              % liftVersion           % "compile",
     "net.liftweb"                 %% "lift-mapper"              % liftVersion           % "compile",
     "net.liftweb"                 %% "lift-testkit"             % liftVersion           % "compile,test",
-    "net.liftmodules"             %% "lift-jquery-module_2.6"   % "2.8",
+    "net.liftmodules"             %% "lift-jquery-module_3.0"   % "2.9",
     "org.eclipse.jetty"           % "jetty-webapp"              % "8.1.7.v20120910"     % "compile,container,test,it,e2e",
     "org.eclipse.jetty"           % "jetty-plus"                % "8.1.7.v20120910"     % "compile,container,test,it,e2e",
     "org.eclipse.jetty.orbit"     % "javax.servlet"             % "3.0.0.v201112011016" % "compile,container,test,e2e" artifacts Artifact("javax.servlet", "jar", "jar"),
