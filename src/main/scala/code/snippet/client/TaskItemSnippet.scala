@@ -140,8 +140,6 @@ class TaskItemSnippet extends DateFunctions {
    */
   def selectableTasks(in: NodeSeq): NodeSeq = {
       ".tasks" #> tasks.map { t =>
-        val color = Color.get(t.task.name.get, t.projectName, active = true)
-        val projectColor = ProjectService.getRootProject(t.rootProject).color.get
         val onRowClick =
           if (offsetInDays == 0) s"sendForm('tskf_${t.task.id.get}', true)"
           else s"sendForm('tskf_${t.task.id.get}', false)"
@@ -150,9 +148,9 @@ class TaskItemSnippet extends DateFunctions {
           ".task [id]" #> s"tskr_${t.task.id.get}" &
           ".task [class]" #> { if (t.task.specifiable.get) Full("specifiable-task") else Empty } &
           ".InlineCommandsForm [id]" #> s"tskf_${t.task.id.get}" &
-          ".projectColorIndicator [style]" #> s"background-color:$projectColor" &
+          ".projectColorIndicator [style]" #> s"background-color:rgba${t.baseColor}" &
           "@selecttaskid [value]" #> t.task.id.get &
-          ".taskColorIndicator [style]" #> s"background-color:rgba${color.toString}" &
+          ".taskColorIndicator [style]" #> s"background-color:rgba${t.color}" &
           ".taskColorIndicator [onclick]" #> onRowClick &
           ".tasksProjectName *" #> t.projectName &
           ".tasksTaskName *" #> t.task.name &

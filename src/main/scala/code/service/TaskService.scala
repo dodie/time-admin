@@ -3,44 +3,32 @@ package service
 
 import java.text.Collator
 
+import code.model.mixin.HierarchicalItem
 import code.model.{Project, Task, TaskItem}
+import code.service.HierarchicalItemService.path
 import net.liftweb.common.Box
 import net.liftweb.http.S
 import net.liftweb.mapper.By
-import net.liftweb.mapper.MappedForeignKey.getObj
 import net.liftweb.util.Props
 
-import scala.collection.mutable.ListBuffer
+import scala.language.postfixOps
 
 /**
  * Task data transformation service.
  * @author David Csakvari
  */
 object TaskService {
-
   def getTask(id: Long): Box[Task] = Task.findByKey(id)
 
   def getAllActiveTasks: List[ShowTaskData] = {
-    val taskDtos = new ListBuffer[ShowTaskData]
-    val rootProjects = Project.findAll.filter(_.parent.isEmpty)
+    val ps = Project.findAll()
+    val ts = Task.findAll(By(Task.active, true))
 
-    def addAllTasksForSubProject(rootProject: Project, project: Project, parentsName: String): Unit = {
-      if (project.active.get) {
-        val tasks = Task.findAll(By(Task.parent, Project.find(By(Project.id, project.id.get))), By(Task.active, true))
-
-        for (task <- tasks) {
-          taskDtos.append(ShowTaskData(task, rootProject, parentsName))
-        }
-        for (project <- Project.findAll(By(Project.parent, Project.find(By(Project.id, project.id.get)).openOrThrowException("Project must be defined!")))) {
-          addAllTasksForSubProject(rootProject, project, parentsName + "-" + project.name)
-        }
-      }
-    }
-
-    for (rootProject <- rootProjects) {
-      addAllTasksForSubProject(rootProject, rootProject, rootProject.name.get)
-    }
-    taskDtos.toList.sorted
+    ts map { t =>
+      ShowTaskData(t, path(Nil, t.parent.box, ps))
+    } filter { t =>
+      t.path forall(_.active.get)
+    } sorted
   }
 
   def getPreparedDescription(task: Task): String = {
@@ -109,9 +97,15 @@ object TaskService {
 /**
  * Task wrapper that contains the display name of the whole parent project structure, and comparable.
  */
-case class ShowTaskData(task: Task, rootProject: Project, projectName: String) extends Ordered[ShowTaskData] {
-  def collator: Collator = Collator.getInstance(S.locale)
-  def compare(that: ShowTaskData): Int = collator.compare(getFullName, that.getFullName)
-  def getFullName: String = projectName + "-" + task.name.get
+case class ShowTaskData(task: Task, path: List[HierarchicalItem[_]]) extends Ordered[ShowTaskData] {
+  lazy val taskName: String = task.name.get
+  lazy val projectName: String = path map (_.name.get) mkString "-"
+  lazy val fullName: String = s"$projectName-$taskName"
+
+  lazy val color: Color = Color.get(taskName, projectName, task.active.get)
+  lazy val baseColor: Color = path.headOption map (_.color.get) flatMap Color.parse getOrElse Color.transparent
+
+  private lazy val collator = Collator.getInstance(S.locale)
+  def compare(that: ShowTaskData): Int = collator.compare(fullName, that.fullName)
 }
 

@@ -376,9 +376,7 @@ case class TaskItemWithDuration(taskItem: TaskItem, duration: Duration, path: Li
   lazy val fullName: String = task map { t => s"$projectName-${t.name.get}" } getOrElse ""
 
   lazy val color: Color = Color.get(taskName, projectName, task exists (_.active.get))
-  lazy val baseColor: Color = path.headOption map (_.color.get) flatMap {
-    s => Option(s) filter (c => c.nonEmpty && c.length == 7)
-  } map Color.parse getOrElse Color.transparent
+  lazy val baseColor: Color = path.headOption map (_.color.get) flatMap Color.parse getOrElse Color.transparent
 
   lazy val localTime: LocalTime = new DateTime(taskItem.start.get).toLocalTime
 }
