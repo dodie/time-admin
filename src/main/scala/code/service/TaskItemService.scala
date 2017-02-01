@@ -78,7 +78,7 @@ object TaskItemService {
           //compensate lost millisecond at the end of the day
           val duration = (if (previousTaskStart == dayEndInMs(previousTaskStart)) previousTaskStart + 1 else previousTaskStart) - start
           previousTaskStart = start
-          taskItemDtos += TaskItemWithDuration(taskItem, Duration.millis(duration), taskItem.task.obj map (t => path(Nil, t.parent.box, projects)) getOrElse Nil)
+          taskItemDtos += TaskItemWithDuration(taskItem, taskItem.task.obj map (t => path(Nil, t.parent.box, projects)) getOrElse Nil, Duration.millis(duration))
         }
       }
 
@@ -110,7 +110,7 @@ object TaskItemService {
 
     if (list.isEmpty) {
       // if the result is empty, then return a list that contains only a Pause item
-      List(TaskItemWithDuration(TaskItem.create.user(user).start(query.interval.startMillis + 1), 0 millis, Nil))
+      List(TaskItemWithDuration(TaskItem.create.user(user).start(query.interval.startMillis + 1), Nil, 0 millis))
     } else {
       list
     }
@@ -368,15 +368,8 @@ object TaskItemService {
  * TaskItem wrapper/DTO, witch contains the duration value of the given entry as it is usually needed.
  * The duration can be derived from the entry's and the following entry's start time.
  */
-case class TaskItemWithDuration(taskItem: TaskItem, duration: Duration, path: List[HierarchicalItem[_]]) {
+case class TaskItemWithDuration(taskItem: TaskItem, path: List[HierarchicalItem[_]], duration: Duration) extends TaskDto[TaskItemWithDuration](taskItem.task.obj, path) {
   lazy val task: Box[Task] = taskItem.task.obj
-
-  lazy val taskName: String = task map (_.name.get) getOrElse ""
-  lazy val projectName: String = path map (_.name.get) mkString "-"
-  lazy val fullName: String = task map { t => s"$projectName-${t.name.get}" } getOrElse ""
-
-  lazy val color: Color = Color.get(taskName, projectName, task exists (_.active.get))
-  lazy val baseColor: Color = path.headOption map (_.color.get) flatMap Color.parse getOrElse Color.transparent
 
   lazy val localTime: LocalTime = new DateTime(taskItem.start.get).toLocalTime
 }

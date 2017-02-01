@@ -6,7 +6,7 @@ import java.text.Collator
 import code.model.mixin.HierarchicalItem
 import code.model.{Project, Task, TaskItem}
 import code.service.HierarchicalItemService.path
-import net.liftweb.common.Box
+import net.liftweb.common.{Box, Full}
 import net.liftweb.http.S
 import net.liftweb.mapper.By
 import net.liftweb.util.Props
@@ -97,15 +97,17 @@ object TaskService {
 /**
  * Task wrapper that contains the display name of the whole parent project structure, and comparable.
  */
-case class ShowTaskData(task: Task, path: List[HierarchicalItem[_]]) extends Ordered[ShowTaskData] {
-  lazy val taskName: String = task.name.get
+abstract class TaskDto[T <: TaskDto[_]](task: Box[Task], path: List[HierarchicalItem[_]]) extends Ordered[T] {
+  lazy val taskName: String = task map (_.name.get) getOrElse ""
   lazy val projectName: String = path map (_.name.get) mkString "-"
-  lazy val fullName: String = s"$projectName-$taskName"
+  lazy val fullName: String = task map { t => s"$projectName-${t.name.get}" } getOrElse ""
 
-  lazy val color: Color = Color.get(taskName, projectName, task.active.get)
+  lazy val color: Color = Color.get(taskName, projectName, task exists (_.active.get))
   lazy val baseColor: Color = path.headOption map (_.color.get) flatMap Color.parse getOrElse Color.transparent
 
   private lazy val collator = Collator.getInstance(S.locale)
-  def compare(that: ShowTaskData): Int = collator.compare(fullName, that.fullName)
+  def compare(that: T): Int = collator.compare(fullName, that.fullName)
 }
+
+case class ShowTaskData(task: Task, path: List[HierarchicalItem[_]]) extends TaskDto[ShowTaskData](Full(task), path)
 
