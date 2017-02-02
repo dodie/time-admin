@@ -26,16 +26,14 @@ class ProjectsSnippet {
 
   private val collator: Collator = Collator.getInstance(S.locale)
 
-  object showInactiveProjectsAndTasks extends SessionVar(false)
-
-  object selectedProject extends SessionVar[Box[Project]](Empty)
+  object showInactiveTasks extends SessionVar(false)
 
   object selectedTask extends SessionVar[Box[Task]](Empty)
 
   def toggleInactiveView: CssSel = {
-    "type=submit [value]" #> (if (showInactiveProjectsAndTasks.get) S.?("projects.hide_inactive") else S.?("projects.show_inactive")) &
+    "type=submit [value]" #> (if (showInactiveTasks.get) S.?("projects.hide_inactive") else S.?("projects.show_inactive")) &
       "type=submit" #> SHtml.onSubmitUnit(() => {
-        showInactiveProjectsAndTasks.set(!showInactiveProjectsAndTasks.get)
+        showInactiveTasks.set(!showInactiveTasks.get)
         net.liftweb.http.js.JsCmds.Reload
       })
   }
@@ -45,15 +43,15 @@ class ProjectsSnippet {
   }
 
   def moveToRoot: CssSel = {
-    def moveProjectToRoot: JsCmd = {
-      selectedProject.is.flatMap { sp =>
+    def submit: JsCmd = {
+      selectedTask.is.flatMap { sp =>
         ProjectService.moveToRoot(sp)
-        selectedProject.set(Empty)
+        selectedTask.set(Empty)
       }
       rerenderProjectTree
     }
 
-    "a [onclick]" #> SHtml.ajaxInvoke(moveProjectToRoot _).toJsCmd
+    "a [onclick]" #> SHtml.ajaxInvoke(submit _).toJsCmd
   }
 
   def projects(in: NodeSeq): NodeSeq = {
@@ -70,24 +68,24 @@ class ProjectsSnippet {
     }
 
     val data = (if (parentId == -1) {
-      if (showInactiveProjectsAndTasks.get) {
-        Project.findAll.filter(_.parent.isEmpty)
+      if (showInactiveTasks.get) {
+        Task.findAll(By(Task.selectable, false)).filter(_.parent.isEmpty)
       } else {
-        Project.findAll(By(Project.active, true)).filter(_.parent.isEmpty)
+        Task.findAll(By(Task.active, true), By(Task.selectable, false)).filter(_.parent.isEmpty)
       }
     } else {
-      if (showInactiveProjectsAndTasks.get) {
-        Project.findAll(By(Project.parent, Project.find(By(Project.id, parentId)).openOrThrowException("Project must be defined!")))
+      if (showInactiveTasks.get) {
+        Task.findAll(By(Task.selectable, false), By(Task.parent, Task.find(By(Task.id, parentId)).openOrThrowException("Parent must be defined!")))
       } else {
-        Project.findAll(By(Project.parent, Project.find(By(Project.id, parentId)).openOrThrowException("Project must be defined!")), By(Project.active, true))
+        Task.findAll(By(Task.selectable, false), By(Task.parent, Task.find(By(Task.id, parentId)).openOrThrowException("Parent must be defined!")), By(Task.active, true))
       }
     }).toArray
 
     if (parentId == -1 && data.isEmpty) {
       <lift:embed what="no_data"/>
     } else {
-      Sorting.quickSort(data)(new Ordering[Project] {
-        def compare(x: Project, y: Project): Int = {
+      Sorting.quickSort(data)(new Ordering[Task] {
+        def compare(x: Task, y: Task): Int = {
           collator.compare(x.name.get, y.name.get)
         }
       })
@@ -95,7 +93,7 @@ class ProjectsSnippet {
     }
   }
 
-  private def renderProject(project: Project) = {
+  private def renderProject(project: Task) = {
     val displayName =
       if (project.active.get)
         project.name.get
@@ -103,7 +101,7 @@ class ProjectsSnippet {
         project.name.get + " (" + S.?("projects.inactive") + ")"
 
     var rootClass = "project"
-    if (selectedProject.get == project) rootClass += " selected"
+    if (selectedTask.get == project) rootClass += " selected"
 
     var innerClass = "projectName"
     if (!project.active.get) innerClass += " inactive"
@@ -180,12 +178,12 @@ class ProjectsSnippet {
     }
 
     if (parentId != -1L) {
-      val parentProject = Project.find(By(Project.id, parentId))
+      val parentProject = Task.find(By(Task.id, parentId))
 
-      val tasks = if (!showInactiveProjectsAndTasks.get) {
-        Task.findAll(By(Task.parent, parentProject), By(Task.active, true))
+      val tasks = if (!showInactiveTasks.get) {
+        Task.findAll(By(Task.parent, parentProject), By(Task.active, true), By(Task.selectable, true))
       } else {
-        Task.findAll(By(Task.parent, parentProject))
+        Task.findAll(By(Task.parent, parentProject), By(Task.selectable, true))
       }
 
       val data = tasks.toArray
@@ -236,26 +234,18 @@ class ProjectsSnippet {
     object color extends TransientRequestVar(hierarchicalItem.color.get)
     object active extends TransientRequestVar(hierarchicalItem.active.get)
     object specifiable extends TransientRequestVar(hierarchicalItem.specifiable.get)
+    object selectable extends TransientRequestVar(hierarchicalItem.selectable.get)
 
     def submit: JsCmd = {
-      hierarchicalItem match {
-        case _: Project =>
-          Project.findByKey(hierarchicalItem.id.get).openOrThrowException("Project must be defined!")
-            .name(name.get)
-            .description(description.get)
-            .color(color.get)
-            .active(active.get)
-            .specifiable(specifiable.get)
-            .save
-        case _: Task =>
-          Task.findByKey(hierarchicalItem.id.get).openOrThrowException("Project must be defined!")
-            .name(name.get)
-            .description(description.get)
-            .color(color.get)
-            .active(active.get)
-            .specifiable(specifiable.get)
-            .save
-      }
+      Task.findByKey(hierarchicalItem.id.get).openOrThrowException("Item must be defined!")
+        .name(name.get)
+        .description(description.get)
+        .color(color.get)
+        .active(active.get)
+        .specifiable(specifiable.get)
+        .selectable(selectable.get)
+        .save
+
       rerenderProjectTree &
       closeDialog
     }
@@ -286,16 +276,17 @@ class ProjectsSnippet {
           ".name *" #> S.?("projects.popup.active") &
           ".field" #> SHtml.checkboxElem(active))
 
+    val fieldBindings2 =
+      fieldbindingsWithActive ++
+      renderProperty(
+          ".name *" #> S.?("projects.popup.specifiable") &
+          ".field" #> SHtml.checkboxElem(specifiable))
+
     val fieldBindings =
-      hierarchicalItem match {
-        case _: Project =>
-          fieldbindingsWithActive
-        case _: Task =>
-          fieldbindingsWithActive ++
-          renderProperty(
-              ".name *" #> S.?("projects.popup.specifiable") &
-              ".field" #> SHtml.checkboxElem(specifiable))
-      }
+      fieldBindings2 ++
+      renderProperty(
+          ".name *" #> S.?("projects.popup.selectable") &
+          ".field" #> SHtml.checkboxElem(selectable))
 
     SetHtml("inject",
       (
@@ -314,7 +305,7 @@ class ProjectsSnippet {
     object color extends TransientRequestVar("")
 
     def submit: JsCmd = {
-      Project.create
+      Task.create
         .name(name.get)
         .description(description.get)
         .color(color.get)
@@ -360,18 +351,19 @@ class ProjectsSnippet {
     </div>
 
 
-  private def addChild(parent: Project, isProject: Boolean): JsCmd = {
+  private def addChild(parent: Task, isProject: Boolean): JsCmd = {
     object name extends TransientRequestVar("")
     object description extends TransientRequestVar("")
 
     def submit: JsCmd = {
       if (isProject)
-        Project.create
+        Task.create
           .parent(parent)
           .name(name.get)
           .description(description.get)
           .active(true)
           .specifiable(true)
+          .selectable(false)
           .save
       else
         Task.create
@@ -380,6 +372,7 @@ class ProjectsSnippet {
           .description(description.get)
           .active(true)
           .specifiable(true)
+          .selectable(true)
           .save
 
       rerenderProjectTree &
@@ -404,26 +397,22 @@ class ProjectsSnippet {
     openDialog
   }
 
-  private def selectProject(project: Project): JsCmd = {
-    selectedProject.is match {
+  private def selectProject(project: Task): JsCmd = {
+    selectedTask.is match {
       case Full(sp) => {
           if (sp == project) {
-            selectedProject.set(Empty)
+            selectedTask.set(Empty)
           } else {
-            selectedProject.set(Some(project))
+            selectedTask.set(Some(project))
           }
       }
-      case Empty => selectedProject.set(Some(project))
+      case Empty => selectedTask.set(Some(project))
     }
 
     rerenderProjectTree
   }
 
-  private def moveToProject(project: Project): JsCmd = {
-    selectedProject.is.flatMap { sp =>
-      ProjectService.move(sp, project)
-      selectedProject.set(Empty)
-    }
+  private def moveToProject(project: Task): JsCmd = {
     selectedTask.is.flatMap { st =>
       TaskService.move(st, project)
       selectedTask.set(Empty)
@@ -455,7 +444,7 @@ class ProjectsSnippet {
     rerenderProjectTree
   }
 
-  private def deleteProject(project: Project): JsCmd = {
+  private def deleteProject(project: Task): JsCmd = {
     def submit: JsCmd = {
       try {
         ProjectService.delete(project)

@@ -4,7 +4,7 @@ package service
 import code.commons.TimeUtils
 import code.commons.TimeUtils.dayEndInMs
 import code.model.mixin.HierarchicalItem
-import code.model.{Project, Task, TaskItem, User}
+import code.model.{Task, TaskItem, User}
 import code.service.HierarchicalItemService.path
 import com.github.nscala_time.time.Imports._
 import net.liftweb.common.Box.box2Option
@@ -37,7 +37,7 @@ object TaskItemService {
    * The ordering is determined by the item's start time.
    */
   def getTaskItems(query: IntervalQuery, user: Box[User] = User.currentUser): List[TaskItemWithDuration] = {
-    lazy val projects = Project.findAll
+    lazy val projects = Task.findAll(By(Task.selectable, false))
 
     def toTimeline(taskItems: List[TaskItem]): List[TaskItemWithDuration] = {
       val taskItemDtos = new ListBuffer[TaskItemWithDuration]

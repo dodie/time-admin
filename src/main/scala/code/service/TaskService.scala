@@ -4,7 +4,7 @@ package service
 import java.text.Collator
 
 import code.model.mixin.HierarchicalItem
-import code.model.{Project, Task, TaskItem}
+import code.model.{Task, TaskItem}
 import code.service.HierarchicalItemService.path
 import net.liftweb.common.{Box, Full}
 import net.liftweb.http.S
@@ -21,8 +21,8 @@ object TaskService {
   def getTask(id: Long): Box[Task] = Task.findByKey(id)
 
   def getAllActiveTasks: List[ShowTaskData] = {
-    val ps = Project.findAll()
-    val ts = Task.findAll(By(Task.active, true))
+    val ps = Task.findAll(By(Task.selectable, false))
+    val ts = Task.findAll(By(Task.active, true), By(Task.selectable, true))
 
     ts map { t =>
       ShowTaskData(t, path(Nil, t.parent.box, ps))
@@ -44,7 +44,7 @@ object TaskService {
     }
   }
 
-  def move(what: Task, newParent: Project): Boolean = {
+  def move(what: Task, newParent: Task): Boolean = {
     what.parent(newParent).save
   }
 
@@ -67,10 +67,10 @@ object TaskService {
     if (!task.specifiable.get) {
       throw new RuntimeException("Task is not specifiable!")
     }
-    val parent = Project.find(By(Project.parent, task.parent.get), By(Project.name, task.name.get))
+    val parent = Task.find(By(Task.parent, task.parent.get), By(Task.name, task.name.get)) // TODO
     val parentProject = if (parent.isEmpty) {
-      val rootProject = Project.find(By(Project.id, task.parent.get)).openOrThrowException("Project must be defined!")
-      val newParent = Project.create.name(task.name.get).active(true).parent(rootProject)
+      val rootProject = Task.find(By(Task.id, task.parent.get)).openOrThrowException("Root must be defined!")
+      val newParent = Task.create.name(task.name.get).active(true).parent(rootProject)
       newParent.save
       newParent
     } else {

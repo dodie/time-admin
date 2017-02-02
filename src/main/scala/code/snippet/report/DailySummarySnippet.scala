@@ -3,7 +3,6 @@ package code.snippet
 import java.util.Date
 
 import code.commons.TimeUtils
-import code.model.Project
 import code.service.TaskItemService.IntervalQuery
 import code.service.{Color, ReportService, TaskItemService, TaskService}
 import code.snippet.mixin.DateFunctions
@@ -11,6 +10,7 @@ import net.liftweb.common._
 import net.liftweb.http.S
 import net.liftweb.util.Helpers._
 
+import code.model.Task
 import scala.xml.NodeSeq
 
 /**
@@ -123,7 +123,7 @@ class DailySummarySnippet extends DateFunctions {
 
           val fragBarStyle = s"background-color:rgba${color.toString};"
           val fragBarProjectStyle = {
-            Project.findByKey(aggregatedData.rootProjectId) match {
+            Task.findByKey(aggregatedData.rootProjectId) match {
               case Full(project) => "background-color:" + project.color.get
               case _ => "background-color: white"
             }
