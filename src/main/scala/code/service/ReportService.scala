@@ -5,13 +5,16 @@ import java.text.Collator
 import java.util.Date
 
 import code.commons.TimeUtils
+import code.commons.TimeUtils.offsetToDailyInterval
 import code.model.{Project, User}
 import code.service.TaskItemService.{IntervalQuery, getTaskItems}
+import code.service.UserPreferenceNames.{timesheetLeaveAdditionalTime, timesheetLeaveOfftime}
+import code.service.UserPreferenceService.getUserPreference
 import code.util.ListToReducedMap._
 import com.github.nscala_time.time.Imports._
 import net.liftweb.common._
 import net.liftweb.http.S
-import org.joda.time.{DateTime, Duration, Interval, _}
+import org.joda.time.{DateTime, Duration, Interval, LocalDate, _}
 
 import scala.collection.immutable.Seq
 import scala.collection.mutable.ListBuffer
@@ -29,8 +32,8 @@ object ReportService {
    * based on user preferences and the given offtime.
    */
   def calculateTimeRemovalFromLeaveTime(offtime: Long): Long = {
-    val removeOfftimeFromLeaveTime = UserPreferenceService.getUserPreference(UserPreferenceNames.timesheetLeaveOfftime).toBoolean
-    val additionalLeaveTime = UserPreferenceService.getUserPreference(UserPreferenceNames.timesheetLeaveAdditionalTime).toLong * 1000 * 60
+    val removeOfftimeFromLeaveTime = getUserPreference(timesheetLeaveOfftime).toBoolean
+    val additionalLeaveTime = getUserPreference(timesheetLeaveAdditionalTime).toLong * 1000 * 60
 
     (if (removeOfftimeFromLeaveTime) {
       offtime
@@ -49,61 +52,46 @@ object ReportService {
     // calculate first and last days of the month
     val monthStartOffset = TimeUtils.currentMonthStartInOffset(offset) + offset
     val monthEndOffset = TimeUtils.currentMonthEndInOffset(offset) + offset
+    val i = IntervalQuery(offsetToDailyInterval(monthStartOffset).start to offsetToDailyInterval(monthEndOffset).end)
+    (for {
+      (d, ts) <- getTaskItems(i).sortBy(_.taskItem.start.get).groupBy(t => new LocalDate(t.taskItem.start.get))
+      if trim(ts).nonEmpty
+    } yield {
+      val breaks = calculateTimeRemovalFromLeaveTime(ts.find(_.task.isEmpty).map(_.duration).foldLeft(Duration.ZERO)(_ + _).getMillis)
 
-    // for all days, get all task items and produce data tuples
-    (for (currentOffset <- monthStartOffset until monthEndOffset + 1) yield {
-      val taskItemsForDay = getTaskItems(IntervalQuery(TimeUtils.offsetToDailyInterval(currentOffset)))
+      val last = ts.lastOption
+      val first = ts.headOption
 
-      val offtimeToRemoveFromLeaveTime = {
-        val aggregatedArray = createAggregatedDatas(taskItemsForDay)
-        val pause = aggregatedArray.find(_.taskId == 0)
-        val pauseTime = if (pause.isEmpty) {
-          0L
-        } else {
-          pause.get.duration
-        }
-        calculateTimeRemovalFromLeaveTime(pauseTime)
-      }
-
-      if (trim(taskItemsForDay).nonEmpty && (currentOffset <= 0)) {
-        val last = taskItemsForDay.lastOption
-        val first = taskItemsForDay.headOption
-
-        val day = (math.abs(monthStartOffset) - math.abs(currentOffset) + 1).toString
-
-        val arrive = if (first.isEmpty) {
-          Left("-")
-        } else {
-          val date = new Date(first.get.taskItem.start.get)
-          Right(date.getTime)
-        }
-
-        val leave = if (last.isEmpty) {
-          Left("-")
-        } else {
-          if (last.get.taskItem.task.get == 0) {
-            val date = new Date(last.get.taskItem.start.get - offtimeToRemoveFromLeaveTime)
-            Right(date.getTime)
-          } else {
-            Left("...")
-          }
-        }
-
-        def transform(e: Either[String, Long]) = e match {
-          case Right(time) => TimeUtils.format(TimeUtils.TIME_FORMAT, time)
-          case Left(err) => err
-        }
-
-        val sum = (arrive, leave) match {
-          case (Right(arriveTime), Right(leaveTime)) => (leaveTime - arriveTime) / (1000D * 60D * 60D)
-          case _ => 0.0d
-        }
-
-        (day, transform(arrive), transform(leave), sum)
+      val arrive = if (first.isEmpty) {
+        Left("-")
       } else {
-        null
+        val date = new Date(first.get.taskItem.start.get)
+        Right(date.getTime)
       }
-    }).filter(_ != null).toList
+
+      val leave = if (last.isEmpty) {
+        Left("-")
+      } else {
+        if (last.get.taskItem.task.get == 0) {
+          val date = new Date(last.get.taskItem.start.get - breaks)
+          Right(date.getTime)
+        } else {
+          Left("...")
+        }
+      }
+
+      def transform(e: Either[String, Long]) = e match {
+        case Right(time) => TimeUtils.format(TimeUtils.TIME_FORMAT, time)
+        case Left(err) => err
+      }
+
+      val sum = (arrive, leave) match {
+        case (Right(arriveTime), Right(leaveTime)) => (leaveTime - arriveTime) / (1000D * 60D * 60D)
+        case _ => 0.0d
+      }
+
+      (d.getDayOfMonth.toString, transform(arrive), transform(leave), sum)
+    }).toList.sortBy(_._1)
   }
 
   type TaskSheet = Map[ReadablePartial, Map[TaskSheetItem,Duration]]

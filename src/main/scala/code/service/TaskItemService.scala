@@ -130,7 +130,7 @@ object TaskItemService {
     def loop(zs: List[TaskItem], ts: List[TaskItem], i: StepInterval): List[TaskItem] = ts match {
       case t1 :: t2 :: ts =>
         val s = nextStep(t1.start.get, i)
-        if (s.step.contains(new Interval(t1.start.get, t2.start.get))) loop(t1 :: zs, t2 :: ts, i)
+        if (t1.task.box.isEmpty || s.step.contains(new Interval(t1.start.get, t2.start.get))) loop(t1 :: zs, t2 :: ts, i)
         else loop(pause(t1, s) :: t1 :: zs, task(t1, s) :: t2 :: ts, i)
       case t :: Nil =>  (t :: zs).reverse
       case Nil => zs.reverse
