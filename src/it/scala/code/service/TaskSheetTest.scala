@@ -1,9 +1,5 @@
 package code.service
 
-import java.util.Date
-
-import code.commons.TimeUtils
-import code.commons.TimeUtils.{ISO_DATE_FORMAT, parse}
 import code.model.{Task, TaskItem, User}
 import code.service.ReportService.taskSheetData
 import code.service.TaskItemService.IntervalQuery
@@ -15,7 +11,7 @@ import net.liftweb.mapper.By
 
 import scala.language.postfixOps
 
-class ReportServiceTest extends BaseSuite {
+class TaskSheetTest extends BaseSuite {
 
   describe("Task sheet data report for any daily interval and user") {
     val interval = new Interval(date(2016, 1, 29).toInterval.start, date(2016, 1, 31).toInterval.end)
@@ -155,17 +151,6 @@ class ReportServiceTest extends BaseSuite {
     it("should contain all discrete dates for the interval") {
       dates(ts) should contain theSameElementsAs List(yearMonth(2015, 12), yearMonth(2016, 1), yearMonth(2016, 2))
     }
-  }
-
-  describe("Time sheet data for any month") {
-    lazy val ts = ReportService.getTimesheetData(TimeUtils.deltaInDays(new Date(), parse(ISO_DATE_FORMAT, "2016-01-01")))
-
-    it("it should contain all entries for the given month") { withS(Empty, defaultUser()) {
-      ts map { t => (t._1, t._2, t._3, f"${t._4}%1.1f") } shouldBe List(
-        ("30", "08:30", "16:59", "8.5"),
-        ("31", "00:00", "08:59", "9.0")
-      )
-    }}
   }
 
   def defaultUser(): Box[User] = User.find(By(User.email, "default@mail.com"))
