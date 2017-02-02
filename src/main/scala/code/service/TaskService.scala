@@ -3,7 +3,6 @@ package service
 
 import java.text.Collator
 
-import code.model.mixin.HierarchicalItem
 import code.model.{Task, TaskItem}
 import code.service.HierarchicalItemService.path
 import net.liftweb.common.{Box, Full}
@@ -21,11 +20,10 @@ object TaskService {
   def getTask(id: Long): Box[Task] = Task.findByKey(id)
 
   def getAllActiveTasks: List[ShowTaskData] = {
-    val ps = Task.findAll(By(Task.selectable, false))
-    val ts = Task.findAll(By(Task.active, true), By(Task.selectable, true))
+    val ts = Task.findAll(By(Task.active, true))
 
     ts map { t =>
-      ShowTaskData(t, path(Nil, t.parent.box, ps))
+      ShowTaskData(t, path(Nil, t.parent.box, ts))
     } filter { t =>
       t.path forall(_.active.get)
     } sorted
@@ -67,22 +65,10 @@ object TaskService {
     if (!task.specifiable.get) {
       throw new RuntimeException("Task is not specifiable!")
     }
-    val parent = Task.find(By(Task.parent, task.parent.get), By(Task.name, task.name.get)) // TODO
-    val parentProject = if (parent.isEmpty) {
-      val rootProject = Task.find(By(Task.id, task.parent.get)).openOrThrowException("Root must be defined!")
-      val newParent = Task.create.name(task.name.get).active(true).parent(rootProject)
-      newParent.save
-      newParent
-    } else {
-      if (!parent.openOrThrowException("Project must be defined!").active.get) {
-        parent.openOrThrowException("Project must be defined!").active(true).save
-      }
-      parent.openOrThrowException("Project must be defined!")
-    }
 
-    val targetTask = Task.find(By(Task.parent, parentProject.id.get), By(Task.name, taskName))
+    val targetTask = Task.find(By(Task.parent, task.id.get), By(Task.name, taskName))
     if (targetTask.isEmpty) {
-      val specifiedTask = Task.create.name(taskName).active(true).specifiable(true).parent(parentProject)
+      val specifiedTask = Task.create.name(taskName).active(true).specifiable(true).selectable(true).parent(task)
       specifiedTask.save
       specifiedTask
     } else {
@@ -95,9 +81,9 @@ object TaskService {
 }
 
 /**
- * Task wrapper that contains the display name of the whole parent project structure, and comparable.
+ * Task wrapper that contains the display name of the whole parent structure, and comparable.
  */
-abstract class TaskDto[T <: TaskDto[_]](task: Box[Task], path: List[HierarchicalItem[_]]) extends Ordered[T] {
+abstract class TaskDto[T <: TaskDto[_]](task: Box[Task], path: List[Task]) extends Ordered[T] {
   lazy val taskName: String = task map (_.name.get) getOrElse ""
   lazy val projectName: String = path map (_.name.get) mkString "-"
   lazy val fullName: String = task map { t => s"$projectName-${t.name.get}" } getOrElse ""
@@ -109,5 +95,5 @@ abstract class TaskDto[T <: TaskDto[_]](task: Box[Task], path: List[Hierarchical
   def compare(that: T): Int = collator.compare(fullName, that.fullName)
 }
 
-case class ShowTaskData(task: Task, path: List[HierarchicalItem[_]]) extends TaskDto[ShowTaskData](Full(task), path)
+case class ShowTaskData(task: Task, path: List[Task]) extends TaskDto[ShowTaskData](Full(task), path)
 

@@ -1,6 +1,6 @@
 package code.service
 
-import code.model.Project
+import code.model.Task
 import code.test.utils.BaseSuite
 import net.liftweb.mapper.By
 
@@ -63,6 +63,6 @@ class ProjectServiceTest extends BaseSuite {
           project("bottom")))) foreach(_.save())
   }
 
-  def projectByName(n: String): Project = Project.find(By(Project.name, n)).openOrThrowException("Test entity must be presented!")
+  def projectByName(n: String): Task = Task.find(By(Task.name, n)).openOrThrowException("Test entity must be presented!")
 
 }

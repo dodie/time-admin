@@ -368,7 +368,7 @@ object TaskItemService {
  * TaskItem wrapper/DTO, witch contains the duration value of the given entry as it is usually needed.
  * The duration can be derived from the entry's and the following entry's start time.
  */
-case class TaskItemWithDuration(taskItem: TaskItem, path: List[HierarchicalItem[_]], duration: Duration) extends TaskDto[TaskItemWithDuration](taskItem.task.obj, path) {
+case class TaskItemWithDuration(taskItem: TaskItem, path: List[Task], duration: Duration) extends TaskDto[TaskItemWithDuration](taskItem.task.obj, path) {
   lazy val task: Box[Task] = taskItem.task.obj
 
   lazy val localTime: LocalTime = new DateTime(taskItem.start.get).toLocalTime

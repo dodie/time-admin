@@ -23,7 +23,6 @@ object Db {
     DB.defineConnectionManager(mapper.DefaultConnectionIdentifier, vendor)
 
     Schemifier.schemify(true, Schemifier.infoF _, User)
-    Schemifier.schemify(true, Schemifier.infoF _, Project)
     Schemifier.schemify(true, Schemifier.infoF _, Role)
     Schemifier.schemify(true, Schemifier.infoF _, Task)
     Schemifier.schemify(true, Schemifier.infoF _, TaskItem)
@@ -34,7 +33,6 @@ object Db {
 
   def clear: Unit = {
     User.bulkDelete_!!(mapper.DefaultConnectionIdentifier)
-    Project.bulkDelete_!!(mapper.DefaultConnectionIdentifier)
     Role.bulkDelete_!!(mapper.DefaultConnectionIdentifier)
     Task.bulkDelete_!!(mapper.DefaultConnectionIdentifier)
     TaskItem.bulkDelete_!!(mapper.DefaultConnectionIdentifier)

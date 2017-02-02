@@ -1,10 +1,10 @@
 package code.service
 
-import code.model.mixin.HierarchicalItem
+import code.model.Task
 import net.liftweb.common.Box
 
 object HierarchicalItemService {
-  def path(z: List[HierarchicalItem[_]], pid: Box[Long], ps: List[HierarchicalItem[_]]): List[HierarchicalItem[_]] =
+  def path(z: List[Task], pid: Box[Long], ps: List[Task]): List[Task] =
     (for {
       id <- pid
       p <- ps find (_.id.get == id)

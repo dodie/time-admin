@@ -2,7 +2,7 @@ package code.test.utils
 
 import java.util.concurrent.atomic.AtomicReference
 
-import code.model.{Project, Task, User}
+import code.model.{Task, User}
 import net.liftweb.common.{Box, Empty, Full}
 import net.liftweb.http.{LiftSession, S}
 import net.liftweb.mocks.MockHttpServletRequest
@@ -53,15 +53,15 @@ trait BaseSuite extends FunSpec with Matchers with BeforeAndAfter with BeforeAnd
 
   def get(uri: String): Box[MockHttpServletRequest] = Full(new MockHttpServletRequest(uri, ""))
 
-  def traverse(ps: project*): List[Project] = {
-    def traverse_(pa: Project, ps: List[project]): List[Project] =
+  def traverse(ps: project*): List[Task] = {
+    def traverse_(pa: Task, ps: List[project]): List[Task] =
       ps flatMap { case project(n, b, ps) =>
-        val h = Project.create.name(n).active(b).parent(pa)
+        val h = Task.create.name(n).active(b).parent(pa)
         h :: traverse_(h, ps)
       }
 
     ps flatMap { case project(n, b, ps) =>
-      val h = Project.create.name(n).active(b)
+      val h = Task.create.name(n).active(b)
       h :: traverse_(h, ps)
     } toList
   }
@@ -79,9 +79,9 @@ trait BaseSuite extends FunSpec with Matchers with BeforeAndAfter with BeforeAnd
   def list(ts: task*): List[Task] =
     ts map { case task(n, b, p) => Task.create.name(n).parent(p).active(b) } toList
 
-  case class task(n: String, b: Boolean, p: Project)
+  case class task(n: String, b: Boolean, p: Task)
 
   object task {
-    def apply(n: String, p: Project): task = task(n, true, p)
+    def apply(n: String, p: Task): task = task(n, true, p)
   }
 }

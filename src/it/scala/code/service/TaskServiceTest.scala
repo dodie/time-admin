@@ -1,6 +1,6 @@
 package code.service
 
-import code.model.{Project, Task, TaskItem}
+import code.model.{Task, TaskItem}
 import code.test.utils.BaseSuite
 import net.liftweb.common.Full
 import net.liftweb.mapper.By
@@ -15,7 +15,7 @@ class TaskServiceTest extends BaseSuite {
   }
 
   it("only specifiable tasks can be specified") {
-    val project = Project.create.name("Any Project")
+    val project = Task.create.name("Any Project")
     project.save()
     val unspecifiableTask = Task.create.name("Any Task").parent(project).active(true)
     unspecifiableTask.save()
@@ -26,7 +26,7 @@ class TaskServiceTest extends BaseSuite {
   }
 
   it("specify task for the first time") {
-    val project = Project.create.name("My Project")
+    val project = Task.create.name("My Project")
     project.save()
     val genericSupportTask = Task.create.name("Support").parent(project).active(true).specifiable(true)
     genericSupportTask.save()
@@ -39,7 +39,7 @@ class TaskServiceTest extends BaseSuite {
   }
 
   it("specify multiple subtasks") {
-    val project = Project.create.name("My Project")
+    val project = Task.create.name("My Project")
     project.save()
     val genericSupportTask = Task.create.name("Support").parent(project).active(true).specifiable(true)
     genericSupportTask.save()
@@ -55,7 +55,7 @@ class TaskServiceTest extends BaseSuite {
   }
 
   it("specify task with same name multiple times") {
-    val project = Project.create.name("My Project")
+    val project = Task.create.name("My Project")
     project.save()
     val genericSupportTask = Task.create.name("Support").parent(project).active(true).specifiable(true)
     genericSupportTask.save()
@@ -72,7 +72,7 @@ class TaskServiceTest extends BaseSuite {
   }
 
   it("merge removes merged Task") {
-    val project = Project.create.name("My Project")
+    val project = Task.create.name("My Project")
     project.save()
     val mainTask = Task.create.name("Main task").parent(project)
     mainTask.save()
@@ -85,7 +85,7 @@ class TaskServiceTest extends BaseSuite {
   }
 
   it("merge transfers TaskItems to the target Task") {
-    val project = Project.create.name("My Project")
+    val project = Task.create.name("My Project")
     project.save()
     val mainTask = Task.create.name("Main task").parent(project)
     mainTask.save()
@@ -99,7 +99,7 @@ class TaskServiceTest extends BaseSuite {
     assert(taskItem.task.get == mainTask.id.get)
   }
 
-  def getProject(id: Long): Project = Project.find(By(Project.id, id)).openOrThrowException("project not found")
+  def getProject(id: Long): Task = Task.find(By(Task.id, id)).openOrThrowException("project not found")
 
   given {
     val p1 :: p11 :: p12 :: p2 :: _ = traverse(
