@@ -102,18 +102,14 @@ class TaskServiceTest extends BaseSuite {
   def getProject(id: Long): Project = Project.find(By(Project.id, id)).openOrThrowException("project not found")
 
   given {
+    val p1 :: p11 :: p12 :: p2 :: _ = traverse(
+      project("p1",
+        project("p11", false),
+        project("p12")),
+      project("p2")) map (_.saveMe())
 
-    val p1 :: p11 :: p12 :: _ = givenProjects("p1" -> true, "p11" -> false, "p12" -> true) map (_.saveMe())
-    val p2 :: _ = givenProjects("p2" -> true) map (_.saveMe())
-
-    givenTasks(("t1", p1, true), ("t2", p1, true), ("t3", p11, true), ("t4", p12, true), ("t5", p2, true), ("t6", p2, true), ("t7", p2, false)) map (_.saveMe()) map (Full(_))
+    list(
+      task("t1", p1), task("t2", p1), task("t3", p11), task("t4", p12), task("t5", p2), task("t6", p2), task("t7", false, p2)
+    ) map (_.saveMe()) map (Full(_))
   }
-
-  def givenProjects(parent: (String, Boolean), children: (String, Boolean)*): List[Project] =
-    List(Project.create.name(parent._1).active(parent._2)) flatMap { p =>
-      p :: { children map { case (n, b) => Project.create.name(n).parent(p).active(b) } toList }
-    }
-
-  def givenTasks(ts: (String, Project, Boolean)*): List[Task] =
-    ts map { case (t, p, b) => Task.create.name(t).parent(p).active(b) } toList
 }

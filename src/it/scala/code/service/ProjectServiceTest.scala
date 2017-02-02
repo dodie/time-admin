@@ -5,58 +5,64 @@ import code.test.utils.BaseSuite
 import net.liftweb.mapper.By
 
 class ProjectServiceTest extends BaseSuite {
+  describe("Project Service") {
+    it("Display name of the top level project") {
+      assert(ProjectService.getDisplayName(projectByName("top")) == "top")
+    }
 
-  it("Display name of the top level project") {
-    assert(ProjectService.getDisplayName(project("top")) == "top")
-  }
+    it("Display name of the middle level project") {
+      assert(ProjectService.getDisplayName(projectByName("middle")) == "top-middle")
+    }
 
-  it("Display name of the middle level project") {
-    assert(ProjectService.getDisplayName(project("middle")) == "top-middle")
-  }
+    it("Display name of the bottom level project") {
+      assert(ProjectService.getDisplayName(projectByName("bottom")) == "top-middle-bottom")
+    }
 
-  it("Display name of the bottom level project") {
-    assert(ProjectService.getDisplayName(project("bottom")) == "top-middle-bottom")
-  }
+    it("Move bottom project to any parent project") {
+      ProjectService.move(projectByName("bottom"), projectByName("any project"))
 
-  it("Move bottom project to any parent project") {
-    ProjectService.move(project("bottom"), project("any project"))
+      assert(ProjectService.getDisplayName(projectByName("bottom")) == "top-any project-bottom")
+    }
 
-    assert(ProjectService.getDisplayName(project("bottom")) == "top-any project-bottom")
-  }
+    it("Move bottom project to root") {
+      ProjectService.moveToRoot(projectByName("bottom"))
 
-  it("Move bottom project to root") {
-    ProjectService.moveToRoot(project("bottom"))
+      assert(ProjectService.getDisplayName(projectByName("bottom")) == "bottom")
+    }
 
-    assert(ProjectService.getDisplayName(project("bottom")) == "bottom")
-  }
+    it("The top level project is not empty") {
+      assert(!ProjectService.isEmpty(projectByName("top")))
+    }
 
-  it("The top level project is not empty") {
-    assert(!ProjectService.isEmpty(project("top")))
-  }
+    it("The bottom level project is empty") {
+      assert(ProjectService.isEmpty(projectByName("bottom")))
+    }
 
-  it("The bottom level project is empty") {
-    assert(ProjectService.isEmpty(project("bottom")))
-  }
+    it("Delete a bottom level project") {
+      assert(ProjectService.delete(projectByName("bottom")))
+    }
 
-  it("Delete a bottom level project") {
-    assert(ProjectService.delete(project("bottom")))
-  }
+    it("Delete an active top level project") {
+      ProjectService.delete(projectByName("top"))
+      assert(!projectByName("top").active.get)
+    }
 
-  it("Try to delete a top level project") {
-    intercept[IllegalArgumentException] {
-      ProjectService.delete(project("top"))
+    it("Try to delete an inactivated top level project") {
+      val me = projectByName("top").active(false).saveMe()
+      intercept[IllegalArgumentException] {
+        ProjectService.delete(me)
+      }
     }
   }
 
   given {
-    Project.create.name("top").save()
-    lazy val top = Project.find(By(Project.name, "top"))
-    Project.create.name("any project").parent(top).save()
-    Project.create.name("middle").parent(top).save()
-    lazy val middle = Project.find(By(Project.name, "middle"))
-    Project.create.name("bottom").parent(middle).save()
+    traverse(
+      project("top",
+        project("any project"),
+        project("middle",
+          project("bottom")))) foreach(_.save())
   }
 
-  def project(n: String): Project = Project.find(By(Project.name, n)).openOrThrowException("Test entity must be presented!")
+  def projectByName(n: String): Project = Project.find(By(Project.name, n)).openOrThrowException("Test entity must be presented!")
 
 }

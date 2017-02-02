@@ -1,6 +1,10 @@
 package code.service
 
-import code.model.{Project, Task, TaskItem, User}
+import java.util.Date
+
+import code.commons.TimeUtils
+import code.commons.TimeUtils.{ISO_DATE_FORMAT, parse}
+import code.model.{Task, TaskItem, User}
 import code.service.ReportService.taskSheetData
 import code.service.TaskItemService.IntervalQuery
 import code.test.utils.BaseSuite
@@ -153,15 +157,31 @@ class ReportServiceTest extends BaseSuite {
     }
   }
 
+  describe("Time sheet data for any month") {
+    lazy val ts = ReportService.getTimesheetData(TimeUtils.deltaInDays(new Date(), parse(ISO_DATE_FORMAT, "2016-01-01")))
+
+    it("it should contain all entries for the given month") { withS(Empty, defaultUser()) {
+      ts map { t => (t._1, t._2, t._3, f"${t._4}%1.1f") } shouldBe List(
+        ("30", "08:30", "16:59", "8.5"),
+        ("31", "00:00", "08:59", "9.0")
+      )
+    }}
+  }
+
   def defaultUser(): Box[User] = User.find(By(User.email, "default@mail.com"))
 
   given {
     val u1 :: u2 :: _ = givenUsers("default", "other") map (_.saveMe())
 
-    val p1 :: p11 :: p12 :: _ = givenProjects("p1", "p11", "p12") map (_.saveMe())
-    val p2 :: _ = givenProjects("p2") map (_.saveMe())
+    val p1 :: p11 :: p12 :: p2 :: _ = traverse(
+      project("p1",
+        project("p11"),
+        project("p12")),
+      project("p2")) map (_.saveMe())
 
-    val t1 :: t2 :: t3 :: t4 :: t5 :: t6 :: t7 :: _ = givenTasks("t1" -> p1, "t2" -> p1, "t3" -> p11, "t4" -> p12, "t5" -> p2, "t6" -> p2, "t7" -> p2) map (_.saveMe()) map (Full(_))
+    val t1 :: t2 :: t3 :: t4 :: t5 :: t6 :: t7 :: _ = list(
+      task("t1", p1), task("t2", p1), task("t3", p11), task("t4", p12), task("t5", p2), task("t6", p2), task("t7", p2)
+    ) map (_.saveMe()) map (Full(_))
 
     val pause = Empty
 
@@ -187,14 +207,6 @@ class ReportServiceTest extends BaseSuite {
 
   def givenUsers(names: String*): List[User] =
     names map { n => User.create.firstName(n).lastName(n).email(n + "@mail.com").password("abc123").validated(true).superUser(true) } toList
-
-  def givenProjects(name: String, children: String*): List[Project] =
-    List(Project.create.name(name).active(true)) flatMap { p =>
-      p :: { children map (n => Project.create.name(n).parent(p).active(true)) toList }
-    }
-
-  def givenTasks(ts: (String, Project)*): List[Task] =
-    ts map { case (t, p) => Task.create.name(t).parent(p).active(true) } toList
 
   def givenTaskItems(u: User, ld: LocalDate, tis: (Box[Task], LocalTime)*): List[TaskItem] =
     tis map { case (t, lt) => TaskItem.create.user(u).task(t).start(ld.toDateTime(lt).getMillis) } toList
