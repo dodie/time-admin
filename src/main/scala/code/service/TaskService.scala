@@ -20,10 +20,11 @@ object TaskService {
   def getTask(id: Long): Box[Task] = Task.findByKey(id)
 
   def getAllActiveTasks: List[ShowTaskData] = {
-    val ts = Task.findAll(By(Task.active, true))
+    val ps = Task.findAll
+    val ts = Task.findAll(By(Task.active, true), By(Task.selectable, true))
 
     ts map { t =>
-      ShowTaskData(t, path(Nil, t.parent.box, ts))
+      ShowTaskData(t, path(Nil, t.parent.box, ps))
     } filter { t =>
       t.path forall(_.active.get)
     } sorted

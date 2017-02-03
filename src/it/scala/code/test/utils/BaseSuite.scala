@@ -56,12 +56,12 @@ trait BaseSuite extends FunSpec with Matchers with BeforeAndAfter with BeforeAnd
   def traverse(ps: project*): List[Task] = {
     def traverse_(pa: Task, ps: List[project]): List[Task] =
       ps flatMap { case project(n, b, ps) =>
-        val h = Task.create.name(n).active(b).parent(pa)
+        val h = Task.create.name(n).active(b).parent(pa).selectable(false)
         h :: traverse_(h, ps)
       }
 
     ps flatMap { case project(n, b, ps) =>
-      val h = Task.create.name(n).active(b)
+      val h = Task.create.name(n).active(b).selectable(false)
       h :: traverse_(h, ps)
     } toList
   }
@@ -77,7 +77,7 @@ trait BaseSuite extends FunSpec with Matchers with BeforeAndAfter with BeforeAnd
   }
 
   def list(ts: task*): List[Task] =
-    ts map { case task(n, b, p) => Task.create.name(n).parent(p).active(b) } toList
+    ts map { case task(n, b, p) => Task.create.name(n).parent(p).active(b).selectable(true) } toList
 
   case class task(n: String, b: Boolean, p: Task)
 
