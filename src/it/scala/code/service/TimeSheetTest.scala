@@ -9,15 +9,13 @@ import net.liftweb.common.{Box, Empty, Full}
 import net.liftweb.mapper.By
 import org.joda.time.{LocalDate, LocalTime, YearMonth}
 
+import scala.language.postfixOps
+
 class TimeSheetTest extends BaseSuite {
   describe("Time sheet data for any month") {
     lazy val ts = ReportService.getTimesheetData(deltaInDays(new Date(), parse(ISO_DATE_FORMAT, "2016-01-01")))
 
     it("should have log entries subtracted by the breaks") { withS(Empty, defaultUser()) {
-      User.currentUser foreach(
-        _.subtractBreaks.get shouldBe false
-      )
-
       ts map { t => (t._1, t._2, t._3, f"${t._4}%1.1f") } shouldBe List(
         ("29", "08:30", "16:30", "8.0"),
         ("30", "17:00", "23:29", "6.5"),
