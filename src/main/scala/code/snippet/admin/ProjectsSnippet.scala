@@ -54,7 +54,7 @@ class ProjectsSnippet {
   }
 
   def projects(in: NodeSeq): NodeSeq = {
-    projectTemplate
+    projectTemplate ++ taskTemplate
   }
 
   def projectList(in: NodeSeq): NodeSeq = {
@@ -138,6 +138,7 @@ class ProjectsSnippet {
               <li><a class="delete"><lift:loc>projects.delete</lift:loc></a></li>
               <li><a class="select"><lift:loc>projects.select</lift:loc></a></li>
               <li><a class="moveto"><lift:loc>projects.moveto</lift:loc></a></li>
+              <li><a class="merge"><lift:loc>projects.mergeinto</lift:loc></a></li>
             </ul>
           </span>
         </span>
@@ -176,27 +177,31 @@ class ProjectsSnippet {
       }
     }
 
-    if (parentId != -1L) {
+    val tasks = if (parentId != -1L) {
       val parentProject = Task.find(By(Task.id, parentId))
 
-      val tasks = if (!showInactiveTasks.get) {
+      if (!showInactiveTasks.get) {
         Task.findAll(By(Task.parent, parentProject), By(Task.active, true), By(Task.selectable, true))
       } else {
         Task.findAll(By(Task.parent, parentProject), By(Task.selectable, true))
       }
-
-      val data = tasks.toArray
-
-      Sorting.quickSort(data)(new Ordering[Task] {
-        def compare(x: Task, y: Task): Int = {
-          collator.compare(x.name.get, y.name.get)
-        }
-      })
-
-      data.toSeq.flatMap(task => renderTask(task)(in))
     } else {
-      <div class="childTask"></div>
+      if (!showInactiveTasks.get) {
+        Task.findAll(By(Task.parent, Empty), By(Task.active, true), By(Task.selectable, true))
+      } else {
+        Task.findAll(By(Task.parent, Empty), By(Task.selectable, true))
+      }
     }
+
+    val data = tasks.toArray
+
+    Sorting.quickSort(data)(new Ordering[Task] {
+      def compare(x: Task, y: Task): Int = {
+        collator.compare(x.name.get, y.name.get)
+      }
+    })
+
+    data.toSeq.flatMap(task => renderTask(task)(in))
   }
 
   private def renderTask(task: Task):CssSel = {

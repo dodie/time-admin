@@ -29,8 +29,6 @@ object TaskService {
     case _ => task
   }
 
-
-
   def path(z: List[Task], pid: Box[Long], ps: List[Task]): List[Task] =
     (for {
       id <- pid
@@ -79,6 +77,8 @@ object TaskService {
 
   def merge(what: Task, into: Task): Boolean = {
     TaskItem.findAll(By(TaskItem.task, what)).foreach((ti: TaskItem) => ti.task(into).save)
+    Task.findAll(By(Task.parent, what)).foreach((task: Task) => move(task, into))
+
     delete(what)
   }
 
