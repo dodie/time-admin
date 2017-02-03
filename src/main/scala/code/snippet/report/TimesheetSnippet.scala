@@ -1,5 +1,7 @@
 package code.snippet
 
+import code.commons.TimeUtils
+
 import scala.xml.NodeSeq
 import code.service.ReportService
 import code.snippet.mixin.DateFunctions
