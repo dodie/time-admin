@@ -6,30 +6,6 @@ import net.liftweb.mapper.By
 
 class ProjectServiceTest extends BaseSuite {
   describe("Project Service") {
-    it("Display name of the top level project") {
-      assert(ProjectService.getDisplayName(projectByName("top")) == "top")
-    }
-
-    it("Display name of the middle level project") {
-      assert(ProjectService.getDisplayName(projectByName("middle")) == "top-middle")
-    }
-
-    it("Display name of the bottom level project") {
-      assert(ProjectService.getDisplayName(projectByName("bottom")) == "top-middle-bottom")
-    }
-
-    it("Move bottom project to any parent project") {
-      ProjectService.move(projectByName("bottom"), projectByName("any project"))
-
-      assert(ProjectService.getDisplayName(projectByName("bottom")) == "top-any project-bottom")
-    }
-
-    it("Move bottom project to root") {
-      ProjectService.moveToRoot(projectByName("bottom"))
-
-      assert(ProjectService.getDisplayName(projectByName("bottom")) == "bottom")
-    }
-
     it("The top level project is not empty") {
       assert(!ProjectService.isEmpty(projectByName("top")))
     }
