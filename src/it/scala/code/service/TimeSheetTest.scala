@@ -14,6 +14,10 @@ class TimeSheetTest extends BaseSuite {
     lazy val ts = ReportService.getTimesheetData(deltaInDays(new Date(), parse(ISO_DATE_FORMAT, "2016-01-01")))
 
     it("should have log entries subtracted by the breaks") { withS(Empty, defaultUser()) {
+      User.currentUser foreach(
+        _.subtractBreaks.get shouldBe false
+      )
+
       ts map { t => (t._1, t._2, t._3, f"${t._4}%1.1f") } shouldBe List(
         ("29", "08:30", "16:30", "8.0"),
         ("30", "17:00", "23:29", "6.5"),
@@ -24,7 +28,7 @@ class TimeSheetTest extends BaseSuite {
 
   describe("Time sheet data for any month with disabled break subtraction") {
     lazy val ts = {
-      UserPreferenceService.setUserPreference(UserPreferenceNames.timesheetLeaveOfftime, "false")
+      User.currentUser map (_.subtractBreaks(true)) foreach (_.save())
       ReportService.getTimesheetData(deltaInDays(new Date(), parse(ISO_DATE_FORMAT, "2016-01-01")))
     }
 
@@ -33,22 +37,6 @@ class TimeSheetTest extends BaseSuite {
         ("29", "08:30", "17:00", "8.5"),
         ("30", "17:00", "23:59", "7.0"),
         ("31", "00:00", "00:30", "0.5")
-      )
-    }}
-  }
-
-  describe("Time sheet data for any month with specified additional leave time") {
-    lazy val ts = {
-      UserPreferenceService.setUserPreference(UserPreferenceNames.timesheetLeaveOfftime, "false")
-      UserPreferenceService.setUserPreference(UserPreferenceNames.timesheetLeaveAdditionalTime, "-15")
-      ReportService.getTimesheetData(deltaInDays(new Date(), parse(ISO_DATE_FORMAT, "2016-01-01")))
-    }
-
-    it("should have log entries subtracted by the given time") { withS(Empty, defaultUser()) {
-      ts map { t => (t._1, t._2, t._3, f"${t._4}%1.2f") } shouldBe List(
-        ("29", "08:30", "16:45", "8.25"),
-        ("30", "17:00", "23:44", "6.75"),
-        ("31", "00:00", "00:15", "0.25")
       )
     }}
   }

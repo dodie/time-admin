@@ -7,8 +7,6 @@ import code.commons.TimeUtils
 import code.commons.TimeUtils.offsetToDailyInterval
 import code.model.{Project, User}
 import code.service.TaskItemService.{IntervalQuery, getTaskItems}
-import code.service.UserPreferenceNames.{timesheetLeaveAdditionalTime, timesheetLeaveOfftime}
-import code.service.UserPreferenceService.getUserPreference
 import code.util.ListToReducedMap._
 import com.github.nscala_time.time.Imports._
 import net.liftweb.common._
@@ -28,16 +26,8 @@ object ReportService {
    * Calculates the number of milliseconds to be subtracted from leave time for a day,
    * based on user preferences and the given offtime.
    */
-  def calculateTimeRemovalFromLeaveTime(offtime: Long): Long = {
-    val removeOfftimeFromLeaveTime = getUserPreference(timesheetLeaveOfftime).toBoolean
-    val additionalLeaveTime = getUserPreference(timesheetLeaveAdditionalTime).toLong * 1000 * 60
-
-    (if (removeOfftimeFromLeaveTime) {
-      offtime
-    } else {
-      0L
-    }) - additionalLeaveTime
-  }
+  def calculateTimeRemovalFromLeaveTime(offtime: Long): Long =
+    User.currentUser filter (!_.subtractBreaks.get) map (_ => offtime) getOrElse 0L
 
   /**
    * Processes the TaskItems in the given month defined by the offset (in days) from the current day,
