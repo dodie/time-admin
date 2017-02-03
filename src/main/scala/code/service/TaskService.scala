@@ -103,7 +103,9 @@ abstract class TaskDto[T <: TaskDto[_]](task: Box[Task], path: List[Hierarchical
   lazy val fullName: String = task map { t => s"$projectName-${t.name.get}" } getOrElse ""
 
   lazy val color: Color = Color.get(taskName, projectName, task exists (_.active.get))
-  lazy val baseColor: Color = path.headOption map (_.color.get) flatMap Color.parse getOrElse Color.transparent
+  lazy val baseColor: Color =
+    if (task.isEmpty) Color.white
+    else path.headOption map (_.color.get) flatMap Color.parse getOrElse Color.transparent
 
   private lazy val collator = Collator.getInstance(S.locale)
   def compare(that: T): Int = collator.compare(fullName, that.fullName)

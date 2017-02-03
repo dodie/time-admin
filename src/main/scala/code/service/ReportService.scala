@@ -1,7 +1,6 @@
 package code
 package service
 
-import java.text.Collator
 import java.util.Date
 
 import code.commons.TimeUtils
@@ -13,11 +12,9 @@ import code.service.UserPreferenceService.getUserPreference
 import code.util.ListToReducedMap._
 import com.github.nscala_time.time.Imports._
 import net.liftweb.common._
-import net.liftweb.http.S
 import org.joda.time.{DateTime, Duration, Interval, LocalDate, _}
 
 import scala.collection.immutable.Seq
-import scala.collection.mutable.ListBuffer
 import scala.language.postfixOps
 
 /**
@@ -121,60 +118,9 @@ object ReportService {
     (TaskSheetItem(t.task map (_.id.get) getOrElse 0L, t.fullName), new Duration(t.duration))
 
   /**
-   * Aggregates the given TaskItem DTOs.
-   * Every task in the input set represented by exactly one AggregatedTaskItemData
-   * witch duration is the sum of the corresponding TaskItemWithDuration durations.
-   * @param taskItemsToGroup input TaskItemWithDuration sequence
-   * @return array of AggregatedTaskItemData
-   */
-  def createAggregatedDatas(taskItemsToGroup: Seq[TaskItemWithDuration]): Array[AggregatedTaskItemData] = {
-    val aggregatedDatas = new ListBuffer[AggregatedTaskItemData]
-
-    for (aggregated <- trim(taskItemsToGroup).groupBy(_.taskItem.task.get)) {
-      val duration = aggregated._2.foldLeft(Duration.ZERO)(_ + _.duration)
-
-      val task = TaskService.getTask(aggregated._2.head.taskItem.task.get)
-      val taskName: String = task match {
-        case Full(t) => t.name.get
-        case _ => S.?("task.pause")
-      }
-
-      val project = task match {
-        case Full(t) => Project.findByKey(t.parent.get)
-        case _ => Empty
-      }
-
-      val projectName: String = project match {
-        case Full(p) => ProjectService.getDisplayName(p)
-        case _ => ""
-      }
-
-      val rootProjectId: Long = project match {
-        case Full(p) => ProjectService.getRootProject(p).id.get
-        case _ => -1
-      }
-
-      aggregatedDatas.append(AggregatedTaskItemData(aggregated._1, rootProjectId, duration.getMillis, projectName, taskName, task.isEmpty))
-    }
-
-    aggregatedDatas.toList.sortBy((t: AggregatedTaskItemData) => t.projectName + t.taskName).toArray
-    //Sorting.quickSort(data)
-    //data.sorted
-  }
-
-  /**
    * Removes the Pause tasks from the begining and the end of the sequence.
    */
   def trim(in: Seq[TaskItemWithDuration]): Seq[TaskItemWithDuration] = {
     in.dropWhile(_.taskItem.task.get == 0).reverse.dropWhile(_.taskItem.task.get == 0).reverse
   }
-}
-
-/**
- * TaskItem DTO that represents aggregated task items of a task for a given period.
- */
-case class AggregatedTaskItemData(taskId: Long, rootProjectId: Long, duration: Long, projectName: String, taskName: String, isPause: Boolean = false) extends Ordered[AggregatedTaskItemData] {
-  def collator: Collator = Collator.getInstance(S.locale)
-  def compare(that: AggregatedTaskItemData): Int = collator.compare(projectName + taskName, that.projectName + that.taskName)
-  def durationInMinutes: Long = (duration / 60D / 1000).toLong
 }

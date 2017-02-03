@@ -1,25 +1,11 @@
 package code
 package service
 
-import code.model.Project
-import code.model.Task
+import code.model.{Project, Task}
+import net.liftweb.common.Empty
 import net.liftweb.mapper.By
-import net.liftweb.common.{Box, Full, Empty}
 
 object ProjectService {
-
-  def getDisplayName(project: Project): String = projectPath(Nil, Full(project)).map(_.name).mkString("-")
-
-  private def projectPath(z: List[Project], project: Box[Project]): List[Project] = project match {
-    case Full(p) => projectPath(p :: z, Project.findByKey(p.parent.get))
-    case _ => z
-  }
-
-  def getRootProject(project: Project): Project = Project.findByKey(project.parent.get) match {
-    case Full(parent) => getRootProject(parent)
-    case _ => project
-  }
-
   def move(project: Project, parent: Project): Boolean = project.parent(parent).save()
 
   def moveToRoot(project: Project): Boolean = project.parent(Empty).save()
