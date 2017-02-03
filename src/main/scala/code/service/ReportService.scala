@@ -158,12 +158,12 @@ object ReportService {
       }
 
       val projectName: String = project match {
-        case Full(p) => ProjectService.getDisplayName(p)
+        case Full(p) => TaskService.getDisplayName(p)
         case _ => ""
       }
 
       val rootProjectId: Long = project match {
-        case Full(p) => ProjectService.getRootProject(p).id.get
+        case Full(p) => TaskService.getRoot(p).id.get
         case _ => -1
       }
 

@@ -44,7 +44,7 @@ class ProjectsSnippet {
   def moveToRoot: CssSel = {
     def submit: JsCmd = {
       selectedTask.is.flatMap { sp =>
-        ProjectService.moveToRoot(sp)
+        TaskService.moveToRoot(sp)
         selectedTask.set(Empty)
       }
       rerenderProjectTree
@@ -446,7 +446,7 @@ class ProjectsSnippet {
   private def deleteProject(project: Task): JsCmd = {
     def submit: JsCmd = {
       try {
-        ProjectService.delete(project)
+        TaskService.delete(project)
         rerenderProjectTree &
         closeDialog
       } catch {

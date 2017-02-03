@@ -14,8 +14,8 @@ case class Color(red: Int, green: Int, blue: Int, alpha: Int = 1) {
 object Color {
   val transparent: Color = Color(0, 0, 0, 0)
 
-  def get(taskName: String, projectsDisplayName: String, active: Boolean): Color = {
-    val random = new Random((taskName.trim + projectsDisplayName.trim).hashCode)
+  def get(taskName: String, parentsDisplayName: String, active: Boolean): Color = {
+    val random = new Random((taskName.trim + parentsDisplayName.trim).hashCode)
     Color(
       red = if (active) random.nextInt(255) else 255,
       green = if (active) random.nextInt(255) else 255,

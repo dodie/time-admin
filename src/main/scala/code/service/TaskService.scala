@@ -4,7 +4,7 @@ package service
 import java.text.Collator
 
 import code.model.{Task, TaskItem}
-import net.liftweb.common.{Box, Full}
+import net.liftweb.common.{Box, Full, Empty}
 import net.liftweb.http.S
 import net.liftweb.mapper.By
 import net.liftweb.util.Props
@@ -16,6 +16,21 @@ import scala.language.postfixOps
  * @author David Csakvari
  */
 object TaskService {
+
+  def getDisplayName(task: Task): String = projectPath(Nil, Full(task)).map(_.name).mkString("-")
+
+  private def projectPath(z: List[Task], task: Box[Task]): List[Task] = task match {
+    case Full(t) => projectPath(t :: z, Task.findByKey(t.parent.get))
+    case _ => z
+  }
+
+  def getRoot(task: Task): Task = Task.findByKey(task.parent.get) match {
+    case Full(parent) => getRoot(parent)
+    case _ => task
+  }
+
+
+
   def path(z: List[Task], pid: Box[Long], ps: List[Task]): List[Task] =
     (for {
       id <- pid
@@ -48,11 +63,11 @@ object TaskService {
     }
   }
 
-  def move(what: Task, newParent: Task): Boolean = {
-    what.parent(newParent).save
-  }
+  def move(what: Task, newParent: Task): Boolean = what.parent(newParent).save()
 
-  def isEmpty(task: Task): Boolean = TaskItem.findAll(By(TaskItem.task, task)).isEmpty
+  def moveToRoot(task: Task): Boolean = task.parent(Empty).save()
+
+  def isEmpty(task: Task): Boolean = TaskItem.findAll(By(TaskItem.task, task)).isEmpty && Task.findAll(By(Task.parent, task)).isEmpty
 
   def delete(task: Task): Boolean =
     if (task.active.get)
@@ -60,7 +75,7 @@ object TaskService {
     else if (isEmpty(task))
       task.delete_!
     else
-      throw new IllegalArgumentException("Tasks with TaskItems can not be deleted.")
+      throw new IllegalArgumentException("Tasks with TaskItems or SubTasks can not be deleted.")
 
   def merge(what: Task, into: Task): Boolean = {
     TaskItem.findAll(By(TaskItem.task, what)).foreach((ti: TaskItem) => ti.task(into).save)

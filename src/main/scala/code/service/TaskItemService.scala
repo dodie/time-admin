@@ -36,7 +36,7 @@ object TaskItemService {
    * The ordering is determined by the item's start time.
    */
   def getTaskItems(query: IntervalQuery, user: Box[User] = User.currentUser): List[TaskItemWithDuration] = {
-    lazy val projects = Task.findAll(By(Task.selectable, false))
+    lazy val allTasks = Task.findAll
 
     def toTimeline(taskItems: List[TaskItem]): List[TaskItemWithDuration] = {
       val taskItemDtos = new ListBuffer[TaskItemWithDuration]
@@ -77,7 +77,7 @@ object TaskItemService {
           //compensate lost millisecond at the end of the day
           val duration = (if (previousTaskStart == dayEndInMs(previousTaskStart)) previousTaskStart + 1 else previousTaskStart) - start
           previousTaskStart = start
-          taskItemDtos += TaskItemWithDuration(taskItem, taskItem.task.obj map (t => path(Nil, t.parent.box, projects)) getOrElse Nil, Duration.millis(duration))
+          taskItemDtos += TaskItemWithDuration(taskItem, taskItem.task.obj map (t => path(Nil, t.parent.box, allTasks)) getOrElse Nil, Duration.millis(duration))
         }
       }
 
