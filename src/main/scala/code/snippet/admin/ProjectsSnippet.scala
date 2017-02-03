@@ -117,6 +117,7 @@ class ProjectsSnippet {
     ".delete [onclick]" #> SHtml.ajaxInvoke(() => deleteProject(project)).toJsCmd &
     ".select [onclick]" #> SHtml.ajaxInvoke(() => selectProject(project)).toJsCmd &
     ".moveto [onclick]" #> SHtml.ajaxInvoke(() => moveToProject(project)).toJsCmd &
+    ".merge [onclick]" #> SHtml.ajaxInvoke(() => mergeTask(project)).toJsCmd &
     ".subprojects *" #> subsCssSel(projectTemplate) &
     ".subtasks *" #> subsCssSel(taskTemplate)
   }
@@ -159,12 +160,17 @@ class ProjectsSnippet {
             </a>
             <ul class="dropdown-menu">
               <li><a class="edit"><lift:loc>projects.edit</lift:loc></a></li>
+              <li><a class="add-subproject"><lift:loc>projects.add_subproject</lift:loc></a></li>
+              <li><a class="add-subtask"><lift:loc>projects.add_task</lift:loc></a></li>
               <li><a class="delete"><lift:loc>projects.delete</lift:loc></a></li>
               <li><a class="select"><lift:loc>projects.select</lift:loc></a></li>
+              <li><a class="moveto"><lift:loc>projects.moveto</lift:loc></a></li>
               <li><a class="merge"><lift:loc>projects.mergeinto</lift:loc></a></li>
             </ul>
           </span>
         </span>
+        <div class="subprojects"></div>
+        <div class="subtasks"></div>
       </div>
     </div>
 
@@ -223,25 +229,32 @@ class ProjectsSnippet {
       else
         "taskName inactive"
 
+    val subsCssSel:CssSel = ".parentId *" #> task.id.toString
+
     ".name" #> displayName &
     ".task-root [class]" #> rootClass &
     ".task-inner [class]" #> innerClass &
     ".edit [onclick]" #> SHtml.ajaxInvoke(() => editor(task)).toJsCmd &
     ".delete [onclick]" #> SHtml.ajaxInvoke(() => deleteTask(task)).toJsCmd &
     ".select [onclick]" #> SHtml.ajaxInvoke(() => selectTask(task)).toJsCmd &
-    ".merge [onclick]" #> SHtml.ajaxInvoke(() => mergeTask(task)).toJsCmd
+    ".add-subproject [onclick]" #> SHtml.ajaxInvoke(() => addChild(task, isProject = true)).toJsCmd &
+    ".add-subtask [onclick]" #> SHtml.ajaxInvoke(() => addChild(task, isProject = false)).toJsCmd &
+    ".merge [onclick]" #> SHtml.ajaxInvoke(() => mergeTask(task)).toJsCmd &
+    ".moveto [onclick]" #> SHtml.ajaxInvoke(() => moveToProject(task)).toJsCmd &
+    ".subprojects *" #> subsCssSel(projectTemplate) &
+    ".subtasks *" #> subsCssSel(taskTemplate)
   }
 
-  private def editor(hierarchicalItem: Task): JsCmd = {
-    object name extends TransientRequestVar(hierarchicalItem.name.get)
-    object description extends TransientRequestVar(hierarchicalItem.description.get)
-    object color extends TransientRequestVar(hierarchicalItem.color.get)
-    object active extends TransientRequestVar(hierarchicalItem.active.get)
-    object specifiable extends TransientRequestVar(hierarchicalItem.specifiable.get)
-    object selectable extends TransientRequestVar(hierarchicalItem.selectable.get)
+  private def editor(task: Task): JsCmd = {
+    object name extends TransientRequestVar(task.name.get)
+    object description extends TransientRequestVar(task.description.get)
+    object color extends TransientRequestVar(task.color.get)
+    object active extends TransientRequestVar(task.active.get)
+    object specifiable extends TransientRequestVar(task.specifiable.get)
+    object selectable extends TransientRequestVar(task.selectable.get)
 
     def submit: JsCmd = {
-      Task.findByKey(hierarchicalItem.id.get).openOrThrowException("Item must be defined!")
+      Task.findByKey(task.id.get).openOrThrowException("Item must be defined!")
         .name(name.get)
         .description(description.get)
         .color(color.get)
@@ -263,7 +276,7 @@ class ProjectsSnippet {
         ".field" #> SHtml.textElem(description, "class" -> "form-control"))
 
     val fieldBindigsWithColor =
-      if (!hierarchicalItem.parent.defined_?)
+      if (!task.parent.defined_?)
         defaultFieldBindings ++
         renderProperty(
           ".name *" #> S.?("projects.popup.color") &
@@ -272,7 +285,7 @@ class ProjectsSnippet {
         defaultFieldBindings
 
     val fieldbindingsWithActive =
-      if (hierarchicalItem.active.get)
+      if (task.active.get)
         fieldBindigsWithColor
       else
         fieldBindigsWithColor ++
@@ -280,14 +293,11 @@ class ProjectsSnippet {
           ".name *" #> S.?("projects.popup.active") &
           ".field" #> SHtml.checkboxElem(active))
 
-    val fieldBindings2 =
+    val fieldBindings =
       fieldbindingsWithActive ++
       renderProperty(
           ".name *" #> S.?("projects.popup.specifiable") &
-          ".field" #> SHtml.checkboxElem(specifiable))
-
-    val fieldBindings =
-      fieldBindings2 ++
+          ".field" #> SHtml.checkboxElem(specifiable)) ++
       renderProperty(
           ".name *" #> S.?("projects.popup.selectable") &
           ".field" #> SHtml.checkboxElem(selectable))

@@ -61,7 +61,12 @@ object TaskService {
     }
   }
 
-  def move(what: Task, newParent: Task): Boolean = what.parent(newParent).save()
+  def move(what: Task, newParent: Task): Boolean = {
+    if(!projectPath(Nil, Full(newParent)).contains(what))
+      what.parent(newParent).save()
+    else
+      false
+  }
 
   def moveToRoot(task: Task): Boolean = task.parent(Empty).save()
 
@@ -79,7 +84,7 @@ object TaskService {
     TaskItem.findAll(By(TaskItem.task, what)).foreach((ti: TaskItem) => ti.task(into).save)
     Task.findAll(By(Task.parent, what)).foreach((task: Task) => move(task, into))
 
-    delete(what)
+    what.delete_!
   }
 
   def specify(task: Task, taskName: String): Task = {
