@@ -112,8 +112,7 @@ class ProjectsSnippet {
     ".root-class [class]" #> rootClass &
     ".inner-class [class]" #> innerClass &
     ".edit [onclick]" #> SHtml.ajaxInvoke(() => editor(project)).toJsCmd &
-    ".add-subproject [onclick]" #> SHtml.ajaxInvoke(() => addChild(project, isProject = true)).toJsCmd &
-    ".add-subtask [onclick]" #> SHtml.ajaxInvoke(() => addChild(project, isProject = false)).toJsCmd &
+    ".add-subtask [onclick]" #> SHtml.ajaxInvoke(() => addChild(project)).toJsCmd &
     ".delete [onclick]" #> SHtml.ajaxInvoke(() => deleteProject(project)).toJsCmd &
     ".select [onclick]" #> SHtml.ajaxInvoke(() => selectProject(project)).toJsCmd &
     ".moveto [onclick]" #> SHtml.ajaxInvoke(() => moveToProject(project)).toJsCmd &
@@ -134,7 +133,6 @@ class ProjectsSnippet {
             </a>
             <ul class="dropdown-menu">
               <li><a class="edit"><lift:loc>projects.edit</lift:loc></a></li>
-              <li><a class="add-subproject"><lift:loc>projects.add_subproject</lift:loc></a></li>
               <li><a class="add-subtask"><lift:loc>projects.add_task</lift:loc></a></li>
               <li><a class="delete"><lift:loc>projects.delete</lift:loc></a></li>
               <li><a class="select"><lift:loc>projects.select</lift:loc></a></li>
@@ -160,7 +158,6 @@ class ProjectsSnippet {
             </a>
             <ul class="dropdown-menu">
               <li><a class="edit"><lift:loc>projects.edit</lift:loc></a></li>
-              <li><a class="add-subproject"><lift:loc>projects.add_subproject</lift:loc></a></li>
               <li><a class="add-subtask"><lift:loc>projects.add_task</lift:loc></a></li>
               <li><a class="delete"><lift:loc>projects.delete</lift:loc></a></li>
               <li><a class="select"><lift:loc>projects.select</lift:loc></a></li>
@@ -237,8 +234,7 @@ class ProjectsSnippet {
     ".edit [onclick]" #> SHtml.ajaxInvoke(() => editor(task)).toJsCmd &
     ".delete [onclick]" #> SHtml.ajaxInvoke(() => deleteTask(task)).toJsCmd &
     ".select [onclick]" #> SHtml.ajaxInvoke(() => selectTask(task)).toJsCmd &
-    ".add-subproject [onclick]" #> SHtml.ajaxInvoke(() => addChild(task, isProject = true)).toJsCmd &
-    ".add-subtask [onclick]" #> SHtml.ajaxInvoke(() => addChild(task, isProject = false)).toJsCmd &
+    ".add-subtask [onclick]" #> SHtml.ajaxInvoke(() => addChild(task)).toJsCmd &
     ".merge [onclick]" #> SHtml.ajaxInvoke(() => mergeTask(task)).toJsCmd &
     ".moveto [onclick]" #> SHtml.ajaxInvoke(() => moveToProject(task)).toJsCmd &
     ".subprojects *" #> subsCssSel(projectTemplate) &
@@ -365,29 +361,21 @@ class ProjectsSnippet {
     </div>
 
 
-  private def addChild(parent: Task, isProject: Boolean): JsCmd = {
+  private def addChild(parent: Task): JsCmd = {
     object name extends TransientRequestVar("")
     object description extends TransientRequestVar("")
+    object specifiable extends TransientRequestVar(true)
+    object selectable extends TransientRequestVar(true)
 
     def submit: JsCmd = {
-      if (isProject)
-        Task.create
-          .parent(parent)
-          .name(name.get)
-          .description(description.get)
-          .active(true)
-          .specifiable(true)
-          .selectable(false)
-          .save
-      else
-        Task.create
-          .parent(parent)
-          .name(name.get)
-          .description(description.get)
-          .active(true)
-          .specifiable(true)
-          .selectable(true)
-          .save
+      Task.create
+        .parent(parent)
+        .name(name.get)
+        .description(description.get)
+        .active(true)
+        .specifiable(specifiable.get)
+        .selectable(selectable.get)
+        .save
 
       rerenderProjectTree &
       closeDialog
@@ -402,8 +390,15 @@ class ProjectsSnippet {
               ".field" #> SHtml.textElem(name, "class" -> "form-control")) ++
             renderProperty(
               ".name" #> S.?("projects.popup.description") &
-              ".field" #> SHtml.textElem(description, "class" -> "form-control"))) &
-        ".title *" #> (if (isProject) S.?("projects.add_subproject") else S.?("projects.add_task")) &
+              ".field" #> SHtml.textElem(description, "class" -> "form-control")) ++
+            renderProperty(
+                ".name *" #> S.?("projects.popup.specifiable") &
+                ".field" #> SHtml.checkboxElem(specifiable)) ++
+            renderProperty(
+                ".name *" #> S.?("projects.popup.selectable") &
+                ".field" #> SHtml.checkboxElem(selectable))
+            ) &
+        ".title *" #> S.?("projects.add_task") &
         ".submit-button" #> SHtml.ajaxSubmit(S.?("button.save"), submit _, "class" -> "btn btn-primary") &
         ".close-button" #> SHtml.ajaxSubmit(S.?("button.close"), closeDialog _, "class" -> "btn btn-default")
       )(editorTemplate)
