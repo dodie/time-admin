@@ -114,8 +114,8 @@ abstract class TaskDto[T <: TaskDto[_]](task: Box[Task], path: List[Task]) exten
   lazy val projectName: String = path map (_.name.get) mkString "-"
   lazy val fullName: String = task map { t => s"$projectName-${t.name.get}" } getOrElse ""
 
-  lazy val color: Color = Color.get(taskName, projectName, task exists (_.active.get))
-  lazy val baseColor: Color = path.headOption map (_.color.get) flatMap Color.parse getOrElse Color.transparent
+  lazy val color: Color = task map { t => Color.parse(t.color.get) getOrElse Color.get(taskName, projectName, task exists (_.active.get))} getOrElse Color.get(taskName, projectName, task exists (_.active.get))
+  lazy val baseColor: Color = (path ++ task).headOption map (_.color.get) flatMap Color.parse getOrElse Color.transparent
 
   private lazy val collator = Collator.getInstance(S.locale)
   def compare(that: T): Int = collator.compare(fullName, that.fullName)

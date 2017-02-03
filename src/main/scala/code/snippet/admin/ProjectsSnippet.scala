@@ -269,22 +269,16 @@ class ProjectsSnippet {
         ".field" #> SHtml.textElem(name, "class" -> "form-control")) ++
       renderProperty(
         ".name *" #> S.?("projects.popup.description") &
-        ".field" #> SHtml.textElem(description, "class" -> "form-control"))
-
-    val fieldBindigsWithColor =
-      if (!task.parent.defined_?)
-        defaultFieldBindings ++
-        renderProperty(
-          ".name *" #> S.?("projects.popup.color") &
-          ".field" #> SHtml.textElem(color, "type" -> "color"))
-      else
-        defaultFieldBindings
+        ".field" #> SHtml.textElem(description, "class" -> "form-control")) ++
+      renderProperty(
+        ".name *" #> S.?("projects.popup.color") &
+        ".field" #> SHtml.textElem(color, "type" -> "color"))
 
     val fieldbindingsWithActive =
       if (task.active.get)
-        fieldBindigsWithColor
+        defaultFieldBindings
       else
-        fieldBindigsWithColor ++
+        defaultFieldBindings ++
         renderProperty(
           ".name *" #> S.?("projects.popup.active") &
           ".field" #> SHtml.checkboxElem(active))
