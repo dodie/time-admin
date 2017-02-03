@@ -1,9 +1,7 @@
 package code.service
 
-import java.util.Date
-
-import code.commons.TimeUtils.{ISO_DATE_FORMAT, deltaInDays, parse}
 import code.model.{Task, TaskItem, User}
+import code.service.TaskItemService.IntervalQuery
 import code.test.utils.BaseSuite
 import net.liftweb.common.{Box, Empty, Full}
 import net.liftweb.mapper.By
@@ -13,7 +11,7 @@ import scala.language.postfixOps
 
 class TimeSheetTest extends BaseSuite {
   describe("Time sheet data for any month") {
-    lazy val ts = ReportService.getTimesheetData(deltaInDays(new Date(), parse(ISO_DATE_FORMAT, "2016-01-01")))
+    lazy val ts = ReportService.getTimesheetData(IntervalQuery(yearMonth(2016, 1).toInterval))
 
     it("should have log entries subtracted by the breaks") { withS(Empty, defaultUser()) {
       ts map { t => (t._1, t._2, t._3, f"${t._4}%1.1f") } shouldBe List(
@@ -27,7 +25,7 @@ class TimeSheetTest extends BaseSuite {
   describe("Time sheet data for any month with disabled break subtraction") {
     lazy val ts = {
       User.currentUser map (_.subtractBreaks(true)) foreach (_.save())
-      ReportService.getTimesheetData(deltaInDays(new Date(), parse(ISO_DATE_FORMAT, "2016-01-01")))
+      ReportService.getTimesheetData(IntervalQuery(yearMonth(2016, 1).toInterval))
     }
 
     it("should have log entries with breaks") { withS(Empty, defaultUser()) {

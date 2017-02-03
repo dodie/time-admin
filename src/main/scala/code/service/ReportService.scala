@@ -34,12 +34,7 @@ object ReportService {
    * and returns data that can be used in time sheets.
    * @return a sequence of (dayOfMonth: String, arriveTime: String, leaveTime: String) tuples. Arrive and leave time strings are in hh:mm format.
    */
-  def getTimesheetData(offset: Int): List[(String,String,String,Double)] = {
-
-    // calculate first and last days of the month
-    val monthStartOffset = TimeUtils.currentMonthStartInOffset(offset) + offset
-    val monthEndOffset = TimeUtils.currentMonthEndInOffset(offset) + offset
-    val i = IntervalQuery(offsetToDailyInterval(monthStartOffset).start to offsetToDailyInterval(monthEndOffset).end)
+  def getTimesheetData(i: IntervalQuery): List[(String,String,String,Double)] = {
     (for {
       (d, ts) <- getTaskItems(i).sortBy(_.taskItem.start.get).groupBy(t => new LocalDate(t.taskItem.start.get))
       if trim(ts).nonEmpty

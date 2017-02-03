@@ -4,8 +4,10 @@ import code.commons.TimeUtils
 
 import scala.xml.NodeSeq
 import code.service.ReportService
+import code.service.TaskItemService.IntervalQuery
 import code.snippet.mixin.DateFunctions
 import net.liftweb.util.Helpers._
+import org.joda.time.YearMonth
 
 import scala.util.Try
 
@@ -28,7 +30,7 @@ class TimesheetSnippet extends DateFunctions {
    * Timesheet display.
    */
   def timesheet(in: NodeSeq): NodeSeq = {
-    val timesheetData = ReportService.getTimesheetData(offsetInDays)
+    val timesheetData = ReportService.getTimesheetData(IntervalQuery(new YearMonth(TimeUtils.currentYear(offsetInDays), TimeUtils.currentMonth(offsetInDays) + 1).toInterval))
     if (timesheetData.nonEmpty) {
       (
         ".item *" #> timesheetData.map(
