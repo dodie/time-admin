@@ -6,7 +6,6 @@ import java.text.Collator
 import net.liftweb.common.{Box, Empty, Full}
 import _root_.net.liftweb.util.{CssSel, Helpers}
 import code.model._
-import code.model.mixin.HierarchicalItem
 import code.service._
 import net.liftweb.http.js.JE.JsRaw
 import net.liftweb.http.js.JsCmd
@@ -228,7 +227,7 @@ class ProjectsSnippet {
     ".merge [onclick]" #> SHtml.ajaxInvoke(() => mergeTask(task)).toJsCmd
   }
 
-  private def editor(hierarchicalItem: HierarchicalItem[_]): JsCmd = {
+  private def editor(hierarchicalItem: Task): JsCmd = {
     object name extends TransientRequestVar(hierarchicalItem.name.get)
     object description extends TransientRequestVar(hierarchicalItem.description.get)
     object color extends TransientRequestVar(hierarchicalItem.color.get)

@@ -4,7 +4,6 @@ package service
 import java.text.Collator
 
 import code.model.{Task, TaskItem}
-import code.service.HierarchicalItemService.path
 import net.liftweb.common.{Box, Full}
 import net.liftweb.http.S
 import net.liftweb.mapper.By
@@ -17,6 +16,12 @@ import scala.language.postfixOps
  * @author David Csakvari
  */
 object TaskService {
+  def path(z: List[Task], pid: Box[Long], ps: List[Task]): List[Task] =
+    (for {
+      id <- pid
+      p <- ps find (_.id.get == id)
+    } yield path(p :: z, p.parent.box, ps)) getOrElse z
+
   def getTask(id: Long): Box[Task] = Task.findByKey(id)
 
   def getAllActiveTasks: List[ShowTaskData] = {

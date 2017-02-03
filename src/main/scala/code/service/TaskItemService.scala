@@ -3,9 +3,8 @@ package service
 
 import code.commons.TimeUtils
 import code.commons.TimeUtils.dayEndInMs
-import code.model.mixin.HierarchicalItem
 import code.model.{Task, TaskItem, User}
-import code.service.HierarchicalItemService.path
+import code.service.TaskService.path
 import com.github.nscala_time.time.Imports._
 import net.liftweb.common.Box.box2Option
 import net.liftweb.common.{Box, Full}
