@@ -47,7 +47,7 @@ class ProjectsSnippet {
         TaskService.moveToRoot(sp)
         selectedTask.set(Empty)
       }
-      rerenderProjectTree
+      rerenderTree
     }
 
     "a [onclick]" #> SHtml.ajaxInvoke(submit _).toJsCmd
@@ -88,35 +88,35 @@ class ProjectsSnippet {
           collator.compare(x.name.get, y.name.get)
         }
       })
-      data.toSeq.flatMap(project => renderProject(project)(in))
+      data.toSeq.flatMap(task => renderProject(task)(in))
     }
   }
 
-  private def renderProject(project: Task) = {
+  private def renderProject(task: Task) = {
     val displayName =
-      if (project.active.get)
-        project.name.get
+      if (task.active.get)
+        task.name.get
       else
-        project.name.get + " (" + S.?("projects.inactive") + ")"
+        task.name.get + " (" + S.?("projects.inactive") + ")"
 
     var rootClass = "project"
-    if (selectedTask.get == project) rootClass += " selected"
+    if (selectedTask.get == task) rootClass += " selected"
 
     var innerClass = "projectName"
-    if (!project.active.get) innerClass += " inactive"
+    if (!task.active.get) innerClass += " inactive"
 
     // TODO Remove snippet based recursion.
-    val subsCssSel:CssSel = ".parentId *" #> project.id.toString
+    val subsCssSel:CssSel = ".parentId *" #> task.id.toString
 
     ".name" #> displayName &
     ".root-class [class]" #> rootClass &
     ".inner-class [class]" #> innerClass &
-    ".edit [onclick]" #> SHtml.ajaxInvoke(() => editor(project)).toJsCmd &
-    ".add-subtask [onclick]" #> SHtml.ajaxInvoke(() => addChild(project)).toJsCmd &
-    ".delete [onclick]" #> SHtml.ajaxInvoke(() => deleteProject(project)).toJsCmd &
-    ".select [onclick]" #> SHtml.ajaxInvoke(() => selectProject(project)).toJsCmd &
-    ".moveto [onclick]" #> SHtml.ajaxInvoke(() => moveToProject(project)).toJsCmd &
-    ".merge [onclick]" #> SHtml.ajaxInvoke(() => mergeTask(project)).toJsCmd &
+    ".edit [onclick]" #> SHtml.ajaxInvoke(() => editor(task)).toJsCmd &
+    ".add-subtask [onclick]" #> SHtml.ajaxInvoke(() => addChild(task)).toJsCmd &
+    ".delete [onclick]" #> SHtml.ajaxInvoke(() => deleteTask(task)).toJsCmd &
+    ".select [onclick]" #> SHtml.ajaxInvoke(() => selectTask(task)).toJsCmd &
+    ".moveto [onclick]" #> SHtml.ajaxInvoke(() => moveTo(task)).toJsCmd &
+    ".merge [onclick]" #> SHtml.ajaxInvoke(() => mergeTask(task)).toJsCmd &
     ".subprojects *" #> subsCssSel(projectTemplate) &
     ".subtasks *" #> subsCssSel(taskTemplate)
   }
@@ -181,12 +181,12 @@ class ProjectsSnippet {
     }
 
     val tasks = if (parentId != -1L) {
-      val parentProject = Task.find(By(Task.id, parentId))
+      val parent = Task.find(By(Task.id, parentId))
 
       if (!showInactiveTasks.get) {
-        Task.findAll(By(Task.parent, parentProject), By(Task.active, true), By(Task.selectable, true))
+        Task.findAll(By(Task.parent, parent), By(Task.active, true), By(Task.selectable, true))
       } else {
-        Task.findAll(By(Task.parent, parentProject), By(Task.selectable, true))
+        Task.findAll(By(Task.parent, parent), By(Task.selectable, true))
       }
     } else {
       if (!showInactiveTasks.get) {
@@ -236,7 +236,7 @@ class ProjectsSnippet {
     ".select [onclick]" #> SHtml.ajaxInvoke(() => selectTask(task)).toJsCmd &
     ".add-subtask [onclick]" #> SHtml.ajaxInvoke(() => addChild(task)).toJsCmd &
     ".merge [onclick]" #> SHtml.ajaxInvoke(() => mergeTask(task)).toJsCmd &
-    ".moveto [onclick]" #> SHtml.ajaxInvoke(() => moveToProject(task)).toJsCmd &
+    ".moveto [onclick]" #> SHtml.ajaxInvoke(() => moveTo(task)).toJsCmd &
     ".subprojects *" #> subsCssSel(projectTemplate) &
     ".subtasks *" #> subsCssSel(taskTemplate)
   }
@@ -266,7 +266,7 @@ class ProjectsSnippet {
         .selectable(selectable.get)
         .save
 
-      rerenderProjectTree &
+      rerenderTree &
       closeDialog
     }
 
@@ -333,7 +333,7 @@ class ProjectsSnippet {
         .specifiable(true)
         .save
 
-      rerenderProjectTree &
+      rerenderTree &
       closeDialog
     }
 
@@ -387,7 +387,7 @@ class ProjectsSnippet {
         .selectable(selectable.get)
         .save
 
-      rerenderProjectTree &
+      rerenderTree &
       closeDialog
     }
 
@@ -416,28 +416,13 @@ class ProjectsSnippet {
     openDialog
   }
 
-  private def selectProject(project: Task): JsCmd = {
-    selectedTask.is match {
-      case Full(sp) => {
-          if (sp == project) {
-            selectedTask.set(Empty)
-          } else {
-            selectedTask.set(Some(project))
-          }
-      }
-      case Empty => selectedTask.set(Some(project))
-    }
-
-    rerenderProjectTree
-  }
-
-  private def moveToProject(project: Task): JsCmd = {
+  private def moveTo(task: Task): JsCmd = {
     selectedTask.is.flatMap { st =>
-      TaskService.move(st, project)
+      TaskService.move(st, task)
       selectedTask.set(Empty)
     }
 
-    rerenderProjectTree
+    rerenderTree
   }
 
   private def mergeTask(task: Task): JsCmd = {
@@ -446,7 +431,7 @@ class ProjectsSnippet {
       selectedTask.set(Empty)
     }
 
-    rerenderProjectTree
+    rerenderTree
   }
 
   private def selectTask(task: Task): JsCmd = {
@@ -460,43 +445,14 @@ class ProjectsSnippet {
       }
       case Empty => selectedTask.set(Some(task))
     }
-    rerenderProjectTree
-  }
-
-  private def deleteProject(project: Task): JsCmd = {
-    def submit: JsCmd = {
-      try {
-        TaskService.delete(project)
-        rerenderProjectTree &
-        closeDialog
-      } catch {
-        case e: Exception => net.liftweb.http.js.JsCmds.Alert(e.getMessage)
-      }
-    }
-
-    SetHtml("inject",
-      (
-        ".fields *" #>
-          (
-            renderProperty(
-              ".name *" #> S.?("projects.popup.name") &
-              ".field" #> project.name) ++
-            renderProperty(
-              ".name *" #> S.?("projects.popup.description") &
-              ".field" #> project.description)) &
-        ".title *" #> S.?("projects.delete") &
-        ".submit-button" #> SHtml.ajaxSubmit(S.?("button.delete"), submit _, "class" -> "btn btn-primary") &
-        ".close-button" #> SHtml.ajaxSubmit(S.?("button.close"), closeDialog _, "class" -> "btn btn-default")
-      )(editorTemplate)
-    ) &
-    openDialog
+    rerenderTree
   }
 
   private def deleteTask(task: Task): JsCmd = {
     def submit: JsCmd = {
       try {
         TaskService.delete(task)
-        rerenderProjectTree &
+        rerenderTree &
         closeDialog
       } catch {
         case e: Exception => net.liftweb.http.js.JsCmds.Alert(e.getMessage)
@@ -527,8 +483,7 @@ class ProjectsSnippet {
 
   def openDialog: JsCmd = JsRaw("$('.modal').modal()").cmd
 
-  def rerenderProjectTree: JsCmd = SetHtml("project-tree", projects(NodeSeq.Empty))
-
+  def rerenderTree: JsCmd = SetHtml("project-tree", projects(NodeSeq.Empty))
 
   val editorTemplate: NodeSeq =
     <div class="modal fade" data-backdrop="static" data-keyboard="false">
