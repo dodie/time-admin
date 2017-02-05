@@ -14,6 +14,8 @@ import code.model._
 import net.liftweb.util.Props
 import net.liftweb.http.S
 import code.service.ReportService
+import code.service.TaskItemService.IntervalQuery
+import org.joda.time.YearMonth
 
 /**
  * Excel export features.
@@ -36,7 +38,7 @@ object ExcelExport {
       // parameters
       val userName = user.lastName + " " + user.firstName
       val monthText = TimeUtils.currentYear(offset) + " " + TimeUtils.monthNumberToText(TimeUtils.currentMonth(offset))
-      val dates = ReportService.getTimesheetData(offset)
+      val dates = ReportService.getTimesheetData(IntervalQuery(new YearMonth(TimeUtils.currentYear(offset), TimeUtils.currentMonth(offset) + 1).toInterval))
 
       // spreadsheet to export
       val sheet = workbook.getSheet("Timesheet")

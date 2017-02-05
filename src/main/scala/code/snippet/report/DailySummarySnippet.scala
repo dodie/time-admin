@@ -4,9 +4,9 @@ import java.util.Date
 
 import code.commons.TimeUtils
 import code.service.TaskItemService.IntervalQuery
-import code.service.{Color, ReportService, TaskItemService, TaskService}
+import code.service.{ReportService, TaskItemService, TaskItemWithDuration}
 import code.snippet.mixin.DateFunctions
-import net.liftweb.common._
+import com.github.nscala_time.time.Imports._
 import net.liftweb.http.S
 import net.liftweb.util.Helpers._
 
@@ -24,41 +24,28 @@ class DailySummarySnippet extends DateFunctions {
    */
   def summaryForToday(in: NodeSeq): NodeSeq = {
 
-    // All task today for current user
     val taskItems = TaskItemService.getTaskItems(IntervalQuery(TimeUtils.offsetToDailyInterval(offsetInDays)))
+    // All task today for current user
+    val aggregatedTaskItems = taskItems
+      .groupBy(_.task)
+      .mapValues { case h :: t =>
+        t.foldLeft(h) { (z, t) =>
+          TaskItemWithDuration(t.taskItem, t.path, z.duration + t.duration)
+        }
+      }.collect{ case (_, t) => t }.toList.sortBy(_.taskItem.start.get)
 
-    // aggregated data items
-    val aggregatedArray = ReportService.createAggregatedDatas(taskItems)
-
-    // diagram width (longest aggregated data)
-    var diagramTotalTime: Long = 0
-    for (aggregatedData <- aggregatedArray) {
-      if (aggregatedData.duration > diagramTotalTime) {
-        diagramTotalTime = aggregatedData.duration
-      }
-    }
-
-    if (aggregatedArray.isEmpty) {
+    if (aggregatedTaskItems.isEmpty) {
       NodeSeq.Empty
     } else {
-      val pause = aggregatedArray.find(_.taskId == 0)
-      val pauseDuration = if (pause.isEmpty) {
-        0
-      } else {
-        pause.get.duration
-      }
-      val pauseTime = pauseDuration / 1000 / 60
+      val pauseDuration = aggregatedTaskItems.find(_.task.isEmpty).map(_.duration).foldLeft(0.milli.toDuration)(_ + _)
 
-      val last = taskItems.lastOption
-      val first = taskItems.headOption
-
+      val sum = aggregatedTaskItems.filter(_.task.isDefined).foldLeft(0.milli.toDuration)((du, t) => du + t.duration)
       val sumTime = {
-        if (first.isEmpty || last.isEmpty) {
+        if (sum == 0.milli.toDuration) {
           "-"
         } else {
-          val deltaInMs = last.get.taskItem.start.get - first.get.taskItem.start.get - ReportService.calculateTimeRemovalFromLeaveTime(pauseDuration)
-          val h = deltaInMs / 1000 / 60 / 60
-          val m = (deltaInMs / 1000 / 60) - (h * 60)
+          val h = sum.hours
+          val m = sum.minutes - h * 60
           h + S.?("hour.short") + " " + m + S.?("minute.short")
         }
       }
@@ -76,6 +63,9 @@ class DailySummarySnippet extends DateFunctions {
         counter
       }
 
+      val first = taskItems.headOption
+      val last = taskItems.lastOption
+
       val arrival = {
         if (first.isEmpty) {
           "-"
@@ -90,7 +80,7 @@ class DailySummarySnippet extends DateFunctions {
           "- (-)"
         } else {
           if (last.get.taskItem.task.get == 0) {
-            val date = new Date(last.get.taskItem.start.get - ReportService.calculateTimeRemovalFromLeaveTime(pauseDuration))
+            val date = new Date(last.get.taskItem.start.get - ReportService.calculateTimeRemovalFromLeaveTime(pauseDuration.getMillis))
             TimeUtils.format(TimeUtils.TIME_FORMAT, date.getTime)
           } else {
             S.?("tasks.there_is_active_task")
@@ -104,7 +94,7 @@ class DailySummarySnippet extends DateFunctions {
         } else {
           if (last.get.taskItem.task.get == 0) {
             val date = new Date(last.get.taskItem.start.get)
-            val date2 = new Date(last.get.taskItem.start.get - ReportService.calculateTimeRemovalFromLeaveTime(pauseDuration))
+            val date2 = new Date(last.get.taskItem.start.get - ReportService.calculateTimeRemovalFromLeaveTime(pauseDuration.getMillis))
 
             if (date.getTime != date2.getTime) {
               "(" + S.?("dailysummary.time_of_leave_real") + TimeUtils.format(TimeUtils.TIME_FORMAT, date.getTime) + ")"
@@ -118,24 +108,14 @@ class DailySummarySnippet extends DateFunctions {
       }
 
       (
-        ".fragWrapper *" #> aggregatedArray.map(aggregatedData => {
-          val color = Color.get(aggregatedData.taskName, aggregatedData.projectName, !aggregatedData.isPause)
-
-          val fragBarStyle = s"background-color:rgba${color.toString};"
-          val fragBarProjectStyle = {
-            Task.findByKey(aggregatedData.rootProjectId) match {
-              case Full(project) => "background-color:" + project.color.get
-              case _ => "background-color: white"
-            }
-          }
-
-          ".minutes *" #> (math.round(aggregatedData.duration / 60D / 1000)) &
-          ".name *" #> (if (aggregatedData.projectName.isEmpty) aggregatedData.taskName else aggregatedData.projectName + "-" + aggregatedData.taskName) &
-          ".taskColorIndicator [style]" #> fragBarStyle &
-          ".projectColorIndicator [style]" #> fragBarProjectStyle
-        }) &
+        ".fragWrapper *" #> aggregatedTaskItems.map { t =>
+          ".minutes *" #> t.duration.minutes &
+          ".name *" #> (if (t.fullName.isEmpty) S.?("task.pause") else t.fullName) &
+          ".taskColorIndicator [style]" #> s"background-color:rgba${t.color};" &
+          ".projectColorIndicator [style]" #> s"background-color:rgba${t.baseColor};"
+        } &
         ".SumTime *" #> sumTime &
-        ".PauseTime *" #> pauseTime &
+        ".PauseTime *" #> pauseDuration.minutes &
         ".FlowBreak *" #> flowBreak &
         ".Arrival *" #> arrival &
         ".Leave *" #> leave &
