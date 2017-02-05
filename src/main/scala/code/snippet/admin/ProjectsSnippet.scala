@@ -248,12 +248,19 @@ class ProjectsSnippet {
     object active extends TransientRequestVar(task.active.get)
     object specifiable extends TransientRequestVar(task.specifiable.get)
     object selectable extends TransientRequestVar(task.selectable.get)
+    object useGeneratedColor extends TransientRequestVar(
+      if (!task.color.get.isEmpty)
+        S.?("projects.popup.use_custom_color")
+      else
+        S.?("projects.popup.use_generated_color")
+      )
 
     def submit: JsCmd = {
+      val selectedColor = if (useGeneratedColor.get == S.?("projects.popup.use_custom_color")) color.get else ""
       Task.findByKey(task.id.get).openOrThrowException("Item must be defined!")
         .name(name.get)
         .description(description.get)
-        .color(color.get)
+        .color(selectedColor)
         .active(active.get)
         .specifiable(specifiable.get)
         .selectable(selectable.get)
@@ -272,7 +279,16 @@ class ProjectsSnippet {
         ".field" #> SHtml.textElem(description, "class" -> "form-control")) ++
       renderProperty(
         ".name *" #> S.?("projects.popup.color") &
-        ".field" #> SHtml.textElem(color, "type" -> "color"))
+        ".field" #> (
+          <br/> ++
+          (SHtml.radioElem(List(
+              S.?("projects.popup.use_generated_color"),
+              S.?("projects.popup.use_custom_color")),
+            Full(useGeneratedColor.get))
+            {_.map(v => useGeneratedColor.set(v))}
+          ).toForm ++
+          SHtml.textElem(color, "type" -> "color"))
+      )
 
     val fieldbindingsWithActive =
       if (task.active.get)
