@@ -1,7 +1,7 @@
 Getting started
 ---------------
 
-Timeadmin based on the [Lift web framework](http://liftweb.net/) and the
+Timeadmin is based on the [Lift web framework](http://liftweb.net/) and the
 [Simple Build Tool (SBT)](http://www.scala-sbt.org/).
 Various build tasks can be issued from the *SBT shell* (```./sbt``` or ```sbt.bat```
 in the project root directory).
@@ -35,8 +35,8 @@ Test suite
 Timeadmin has a multitude of automated tests. Unit tests (*test scope*) check functions
 and independent classes or small clusters of classes without initializing Lift or accessing
 the database. Integration tests (*it scope*) check whole services and modules, so these
-tests are using database and check parts of the rendering by running snippet code.
-End-to-End (*e2e scope*) tests excersizes the whole application through a real browser.
+tests are using the database and check parts of the rendering by running snippet code.
+End-to-End (*e2e scope*) tests exercises the whole application through a real browser.
 
 The tests can be started with the following goals in the SBT shell:
 
@@ -57,17 +57,17 @@ Application structure in nutshell
 
 - scala/bootstrap.liftweb.Boot:
 Configures the Timeadmin, eg. sets DB access based on the configuration and initializes the sitemap and available URLs.
-Responsible for defining authorization rules at page level.
+Responsible for defining authorization rules at the page level.
 - scala/code.model._:
 Data model classes. Timeadmin uses Schemifier.
 - scala/code.service._:
-Place of utilities, complex calculations and data queries and derived data representation.
+Place of utilities, complex calculations, and data queries and derived data representation.
 - scala/code.snippet._:
-Snippets are rendering components that provides dynamic data on the pages. Most of the snippets are stateless.
+Snippets are rendering components that provide dynamic data on the pages. Most of the snippets are stateless.
 - webapp/admin, webapp/client, webapp/index.html and freshuser.html:
 Page templates. Defines layout and snippets for each page.
 - webapp/templates-hidden:
 Page base templates and common templates, localization files.
 
 Authorization rules are defined at page and URL level granularity,
-services and snippets generally does not check for further permissions.
+services and snippets generally do not check for further permissions.
