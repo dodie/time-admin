@@ -132,9 +132,16 @@ class ProjectsSnippet {
 
     val innerClass =
       if (task.active.get)
-        "taskName"
+        if (task.selectable.get)
+          "taskName"
+        else
+          "projectName"
       else
-        "taskName inactive"
+        if (task.selectable.get)
+          "taskName inactive"
+        else
+          "projectName inactive"
+
 
     val subsCssSel:CssSel = ".parentId *" #> task.id.toString
 
