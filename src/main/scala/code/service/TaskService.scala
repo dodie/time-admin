@@ -17,18 +17,6 @@ import scala.language.postfixOps
  */
 object TaskService {
 
-  def getDisplayName(task: Task): String = projectPath(Nil, Full(task)).map(_.name).mkString("-")
-
-  private def projectPath(z: List[Task], task: Box[Task]): List[Task] = task match {
-    case Full(t) => projectPath(t :: z, Task.findByKey(t.parent.get))
-    case _ => z
-  }
-
-  def getRoot(task: Task): Task = Task.findByKey(task.parent.get) match {
-    case Full(parent) => getRoot(parent)
-    case _ => task
-  }
-
   def path(z: List[Task], pid: Box[Long], ps: List[Task]): List[Task] =
     (for {
       id <- pid
@@ -66,6 +54,11 @@ object TaskService {
       what.parent(newParent).save()
     else
       false
+  }
+
+  private def projectPath(z: List[Task], task: Box[Task]): List[Task] = task match {
+    case Full(t) => projectPath(t :: z, Task.findByKey(t.parent.get))
+    case _ => z
   }
 
   def moveToRoot(task: Task): Boolean = task.parent(Empty).save()
