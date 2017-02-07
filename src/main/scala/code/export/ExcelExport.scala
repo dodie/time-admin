@@ -66,7 +66,7 @@ object ExcelExport {
       findCell("{ta_month}") foreach { cell => cell.setCellValue(monthText) }
       for (i <- 1 to 31) {
         val data = if (dates.size >= i) dates(i - 1) else (null, null, null, null)
-        findCell("{ta_date_" + i + "}") foreach { cell => cell.setCellValue(data._1) }
+        findCell("{ta_date_" + i + "}") foreach { cell => cell.setCellValue(data._1.toString) }
         findCell("{ta_arrive_" + i + "}") foreach { cell => cell.setCellValue(data._2) }
         findCell("{ta_leave_" + i + "}") foreach { cell => cell.setCellValue(data._3) }
       }

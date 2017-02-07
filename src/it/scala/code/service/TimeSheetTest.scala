@@ -1,6 +1,5 @@
 package code.service
 
-import code.commons.TimeUtils.deltaInDays
 import code.model.{Task, TaskItem, User}
 import code.service.TaskItemService.IntervalQuery
 import code.test.utils.BaseSuite
@@ -13,7 +12,7 @@ class TimeSheetTest extends BaseSuite {
     lazy val ts = ReportService.getTimesheetData(IntervalQuery(yearMonth(2016, 1).toInterval))
 
     it("should have log entries subtracted by the breaks") { withS(Empty, defaultUser()) {
-      ts map { t => (t._1, t._2, t._3, f"${t._4}%1.1f") } shouldBe List(
+      ts map { t => (t._1.toString, t._2, t._3, f"${t._4}%1.1f") } shouldBe List(
         ("29", "08:30", "16:30", "8.0"),
         ("30", "17:00", "23:29", "6.5"),
         ("31", "00:00", "00:30", "0.5")
@@ -28,7 +27,7 @@ class TimeSheetTest extends BaseSuite {
     }
 
     it("should have log entries with breaks") { withS(Empty, defaultUser()) {
-      ts map { t => (t._1, t._2, t._3, f"${t._4}%1.1f") } shouldBe List(
+      ts map { t => (t._1.toString, t._2, t._3, f"${t._4}%1.1f") } shouldBe List(
         ("29", "08:30", "17:00", "8.5"),
         ("30", "17:00", "23:59", "7.0"),
         ("31", "00:00", "00:30", "0.5")
@@ -44,7 +43,7 @@ class TimeSheetTest extends BaseSuite {
     }
 
     it("should have log entries subtracted by the given time") { withS(Empty, defaultUser()) {
-      ts map { t => (t._1, t._2, t._3, f"${t._4}%1.2f") } shouldBe List(
+      ts map { t => (t._1.toString, t._2, t._3, f"${t._4}%1.2f") } shouldBe List(
         ("29", "08:30", "16:45", "8.25"),
         ("30", "17:00", "23:44", "6.75"),
         ("31", "00:00", "00:15", "0.25")
