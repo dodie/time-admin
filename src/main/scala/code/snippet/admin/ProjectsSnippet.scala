@@ -3,14 +3,14 @@ package snippet
 
 import java.text.Collator
 
-import net.liftweb.common.{Box, Empty, Full}
-import _root_.net.liftweb.util.{CssSel, Helpers}
+import _root_.net.liftweb.util.CssSel
 import code.model._
 import code.service._
+import net.liftweb.common.{Box, Empty, Full}
 import net.liftweb.http.js.JE.JsRaw
 import net.liftweb.http.js.JsCmd
 import net.liftweb.http.js.JsCmds.SetHtml
-import net.liftweb.http.{S, SHtml, Templates, _}
+import net.liftweb.http.{S, SHtml, _}
 import net.liftweb.mapper.By
 import net.liftweb.util.Helpers._
 
@@ -37,7 +37,7 @@ class ProjectsSnippet {
       })
   }
 
-  def addRoot: CssSel = {
+  def addRoot(): CssSel = {
     ".add-root [onclick]" #> SHtml.ajaxInvoke(() => addChild(Empty)).toJsCmd
   }
 
@@ -125,7 +125,7 @@ class ProjectsSnippet {
         task.name.get + " (" + S.?("projects.inactive") + ")"
 
     val rootClass =
-      if (selectedTask.get == task)
+      if (selectedTask.get === task)
         "task selected"
       else
         "task"
@@ -197,12 +197,12 @@ class ProjectsSnippet {
         ".name *" #> S.?("projects.popup.color") &
         ".field" #> (
           <br/> ++
-          (SHtml.radioElem(List(
-              S.?("projects.popup.use_generated_color"),
-              S.?("projects.popup.use_custom_color")),
-            Full(useGeneratedColor.get))
-            {_.map(v => useGeneratedColor.set(v))}
-          ).toForm ++
+          SHtml.radioElem(List(
+            S.?("projects.popup.use_generated_color"),
+            S.?("projects.popup.use_custom_color")),
+            Full(useGeneratedColor.get)) {
+            _.map(v => useGeneratedColor.set(v))
+          }.toForm ++
           SHtml.textElem(color, "type" -> "color"))
       )
 
@@ -304,13 +304,12 @@ class ProjectsSnippet {
 
   private def selectTask(task: Task): JsCmd = {
     selectedTask.is match {
-      case Full(st) => {
-          if (st == task) {
-            selectedTask.set(Empty)
-          } else {
-            selectedTask.set(Some(task))
-          }
-      }
+      case Full(st) =>
+        if (st == task) {
+          selectedTask.set(Empty)
+        } else {
+          selectedTask.set(Some(task))
+        }
       case Empty => selectedTask.set(Some(task))
     }
     rerenderTree
