@@ -4,12 +4,14 @@ package service
 import java.util.Date
 
 import code.commons.TimeUtils
+import code.model.{Task, User}
 import code.commons.TimeUtils.offsetToDailyInterval
-import code.model.{Project, User}
 import code.service.TaskItemService.{IntervalQuery, getTaskItems}
 import code.util.ListToReducedMap._
 import com.github.nscala_time.time.Imports._
 import net.liftweb.common._
+import net.liftweb.http.S
+import net.liftweb.mapper.By
 import org.joda.time.{DateTime, Duration, Interval, LocalDate, _}
 
 import scala.collection.immutable.Seq
@@ -79,7 +81,7 @@ object ReportService {
   type TaskSheet = Map[ReadablePartial, Map[TaskSheetItem,Duration]]
 
   def taskSheetData(i: IntervalQuery, u: Box[User]): TaskSheet = {
-    val ps = Project.findAll
+    val ps = Task.findAll(By(Task.selectable, false))
 
     val ds = dates(i.interval, i.scale).map(d => d -> (Nil: List[TaskItemWithDuration])).toMap
 
@@ -99,7 +101,7 @@ object ReportService {
   def taskItemsExceptPause(i: IntervalQuery, u: Box[User]): List[TaskItemWithDuration] =
     getTaskItems(i, u) filter (_.taskName != "")
 
-  def taskSheetItemWithDuration(t: TaskItemWithDuration, ps: List[Project]): (TaskSheetItem, Duration) =
+  def taskSheetItemWithDuration(t: TaskItemWithDuration, ps: List[Task]): (TaskSheetItem, Duration) =
     (TaskSheetItem(t.task map (_.id.get) getOrElse 0L, t.fullName), new Duration(t.duration))
 
   /**

@@ -42,15 +42,18 @@ class TimeSheetTest extends BaseSuite {
   given {
     val u1 :: _ = givenUsers("default") map (_.saveMe())
 
-    val p1 :: p11 :: p12 :: p2 :: _ = traverse(
+    val _ :: t1 :: t2 :: _ :: t3 :: _ :: t4 :: _ :: t5 :: t6 :: t7 :: _ = traverse(
       project("p1",
-        project("p11"),
-        project("p12")),
-      project("p2")) map (_.saveMe())
-
-    val t1 :: t2 :: t3 :: t4 :: t5 :: t6 :: t7 :: _ = list(
-      task("t1", p1), task("t2", p1), task("t3", p11), task("t4", p12), task("t5", p2), task("t6", p2), task("t7", p2)
-    ) map (_.saveMe()) map (Full(_))
+        task("t1"),
+        task("t2"),
+        project("p11",
+          task("t3")),
+        project("p12",
+          task("t4"))),
+      project("p2",
+        task("t5"),
+        task("t6"),
+        task("t7"))) map (_.saveMe()) map (Full(_))
 
     val pause = Empty
 

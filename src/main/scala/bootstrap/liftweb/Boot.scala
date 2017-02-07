@@ -63,7 +63,6 @@ class Boot extends Loggable {
 
     // Entities (Mapper)
     Schemifier.schemify(true, Schemifier.infoF _, User)
-    Schemifier.schemify(true, Schemifier.infoF _, Project)
     Schemifier.schemify(true, Schemifier.infoF _, Role)
     Schemifier.schemify(true, Schemifier.infoF _, Task)
     Schemifier.schemify(true, Schemifier.infoF _, TaskItem)

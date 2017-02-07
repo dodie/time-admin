@@ -3,15 +3,35 @@
 	<div class="projectsPage">
 		<h1><lift:loc>page.projects</lift:loc></h1>
 		<div>
-			<span class="lift:projectsSnippet.addRoot"><a class="btn btn-success add-root"><lift:loc>projects.new_project</lift:loc></a></span>
-			<span class="lift:projectsSnippet.moveToRoot"><a class="btn btn-primary"><lift:loc>projects.move_to_root</lift:loc></a></span>
-
 			<form class="button lift:ProjectsSnippet.toggleInactiveView?form=post">
 				<input class="btn btn-primary" type="submit" value="Submit">
 			</form>
 		</div><br/>
-		<div id="project-tree">
-			<div class="lift:projectsSnippet.projects"></div>
+		<div>
+			<div>
+				<div>
+					<div class="project">
+						<span class="projectName">
+							<span class="dropdown">
+								<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+									<lift:loc>page.tasks</lift:loc>
+									<span class="caret"></span>
+								</a>
+
+								<ul class="dropdown-menu">
+									<li class="lift:projectsSnippet.addRoot"><a class="add-root"><lift:loc>projects.add_task</lift:loc></a></li>
+									<li class="lift:projectsSnippet.moveToRoot"><a class="move-to-root"><lift:loc>projects.moveto</lift:loc></a></li>
+								</ul>
+							</span>
+						</span>
+						<div class="subprojects">
+							<div id="project-tree">
+								<div class="lift:projectsSnippet.tasks"></div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
 		</div>
 	</div>
 

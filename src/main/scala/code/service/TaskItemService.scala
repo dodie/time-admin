@@ -3,9 +3,8 @@ package service
 
 import code.commons.TimeUtils
 import code.commons.TimeUtils.dayEndInMs
-import code.model.mixin.HierarchicalItem
-import code.model.{Project, Task, TaskItem, User}
-import code.service.HierarchicalItemService.path
+import code.model.{Task, TaskItem, User}
+import code.service.TaskService.path
 import com.github.nscala_time.time.Imports._
 import net.liftweb.common.Box.box2Option
 import net.liftweb.common.{Box, Full}
@@ -37,7 +36,7 @@ object TaskItemService {
    * The ordering is determined by the item's start time.
    */
   def getTaskItems(query: IntervalQuery, user: Box[User] = User.currentUser): List[TaskItemWithDuration] = {
-    lazy val projects = Project.findAll
+    lazy val allTasks = Task.findAll
 
     def toTimeline(taskItems: List[TaskItem]): List[TaskItemWithDuration] = {
       val taskItemDtos = new ListBuffer[TaskItemWithDuration]
@@ -78,7 +77,7 @@ object TaskItemService {
           //compensate lost millisecond at the end of the day
           val duration = (if (previousTaskStart == dayEndInMs(previousTaskStart)) previousTaskStart + 1 else previousTaskStart) - start
           previousTaskStart = start
-          taskItemDtos += TaskItemWithDuration(taskItem, taskItem.task.obj map (t => path(Nil, t.parent.box, projects)) getOrElse Nil, Duration.millis(duration))
+          taskItemDtos += TaskItemWithDuration(taskItem, taskItem.task.obj map (t => path(Nil, t.parent.box, allTasks)) getOrElse Nil, Duration.millis(duration))
         }
       }
 
@@ -368,7 +367,7 @@ object TaskItemService {
  * TaskItem wrapper/DTO, witch contains the duration value of the given entry as it is usually needed.
  * The duration can be derived from the entry's and the following entry's start time.
  */
-case class TaskItemWithDuration(taskItem: TaskItem, path: List[HierarchicalItem[_]], duration: Duration) extends TaskDto[TaskItemWithDuration](taskItem.task.obj, path) {
+case class TaskItemWithDuration(taskItem: TaskItem, path: List[Task], duration: Duration) extends TaskDto[TaskItemWithDuration](taskItem.task.obj, path) {
   lazy val task: Box[Task] = taskItem.task.obj
 
   lazy val localTime: LocalTime = new DateTime(taskItem.start.get).toLocalTime

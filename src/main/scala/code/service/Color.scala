@@ -15,8 +15,8 @@ object Color {
   val transparent: Color = Color(0, 0, 0, 0)
   val white: Color = Color(255, 255, 255, 1)
 
-  def get(taskName: String, projectsDisplayName: String, active: Boolean): Color = {
-    val seed = taskName.trim + projectsDisplayName.trim
+  def get(taskName: String, parentsDisplayName: String, active: Boolean): Color = {
+    val seed = taskName.trim + parentsDisplayName.trim
     val random = new Random(seed.hashCode)
     Color(
       red = if (active) random.nextInt(255) else 255,
