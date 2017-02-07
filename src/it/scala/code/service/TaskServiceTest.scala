@@ -2,7 +2,6 @@ package code.service
 
 import code.model.{Task, TaskItem}
 import code.test.utils.BaseSuite
-import net.liftweb.common.Full
 import net.liftweb.mapper.By
 
 import scala.language.postfixOps
@@ -33,8 +32,8 @@ class TaskServiceTest extends BaseSuite {
 
     val specificSupportTask = TaskService.specify(genericSupportTask, "fix random bug")
 
-    assert(specificSupportTask.name == "fix random bug")
-    assert(getProject(specificSupportTask.parent.get).name == "Support")
+    assert(specificSupportTask.name.get == "fix random bug")
+    assert(getProject(specificSupportTask.parent.get).name.get == "Support")
     assert(getProject(getProject(specificSupportTask.parent.get).parent.get) == project)
   }
 
@@ -45,12 +44,12 @@ class TaskServiceTest extends BaseSuite {
     genericSupportTask.save()
 
     val specificSupportTask = TaskService.specify(genericSupportTask, "fix random bug")
-    assert(specificSupportTask.name == "fix random bug")
-    assert(getProject(specificSupportTask.parent.get).name == "Support")
+    assert(specificSupportTask.name.get == "fix random bug")
+    assert(getProject(specificSupportTask.parent.get).name.get == "Support")
     assert(getProject(getProject(specificSupportTask.parent.get).parent.get) == project)
 
     val anotherSpecificSupportTask = TaskService.specify(genericSupportTask, "fix another bug")
-    assert(anotherSpecificSupportTask.name == "fix another bug")
+    assert(anotherSpecificSupportTask.name.get == "fix another bug")
     assert(getProject(anotherSpecificSupportTask.parent.get) == getProject(specificSupportTask.parent.get))
   }
 
@@ -62,8 +61,8 @@ class TaskServiceTest extends BaseSuite {
 
     val specificSupportTask = TaskService.specify(genericSupportTask, "fix random bug")
 
-    assert(specificSupportTask.name == "fix random bug")
-    assert(getProject(specificSupportTask.parent.get).name == "Support")
+    assert(specificSupportTask.name.get == "fix random bug")
+    assert(getProject(specificSupportTask.parent.get).name.get == "Support")
     assert(getProject(getProject(specificSupportTask.parent.get).parent.get) == project)
 
     val accidentallyReSpecifiedSupportTask = TaskService.specify(genericSupportTask, "fix random bug")
@@ -99,17 +98,51 @@ class TaskServiceTest extends BaseSuite {
     assert(taskItem.task.get == mainTask.id.get)
   }
 
+  it("The top level project is not empty") {
+    assert(!TaskService.isEmpty(projectByName("top")))
+  }
+
+  it("The bottom level project is empty") {
+    assert(TaskService.isEmpty(projectByName("bottom")))
+  }
+
+  it("Delete a bottom level project") {
+    assert(TaskService.delete(projectByName("bottom")))
+  }
+
+  it("Delete an active top level project") {
+    TaskService.delete(projectByName("top"))
+    assert(!projectByName("top").active.get)
+  }
+
+  it("Try to delete an inactivated top level project") {
+    val me = projectByName("top").active(false).saveMe()
+    intercept[IllegalArgumentException] {
+      TaskService.delete(me)
+    }
+  }
+
+  def projectByName(n: String): Task = Task.find(By(Task.name, n)).openOrThrowException("Test entity must be presented!")
+
+
   def getProject(id: Long): Task = Task.find(By(Task.id, id)).openOrThrowException("project not found")
 
   given {
-    val p1 :: p11 :: p12 :: p2 :: _ = traverse(
+    traverse(
+      project("top",
+        project("any project"),
+        project("middle",
+          project("bottom"))),
       project("p1",
-        project("p11", false),
-        project("p12")),
-      project("p2")) map (_.saveMe())
-
-    list(
-      task("t1", p1), task("t2", p1), task("t3", p11), task("t4", p12), task("t5", p2), task("t6", p2), task("t7", false, p2)
-    ) map (_.saveMe()) map (Full(_))
+        task("t1"),
+        task("t2"),
+        project("p11", active = false,
+          task("t3")),
+        project("p12",
+          task("t4"))),
+      project("p2",
+        task("t5"),
+        task("t6"),
+        task("t7", active = false))) foreach (_.save())
   }
 }

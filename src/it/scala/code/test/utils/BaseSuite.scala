@@ -53,35 +53,46 @@ trait BaseSuite extends FunSpec with Matchers with BeforeAndAfter with BeforeAnd
 
   def get(uri: String): Box[MockHttpServletRequest] = Full(new MockHttpServletRequest(uri, ""))
 
-  def traverse(ps: project*): List[Task] = {
-    def traverse_(pa: Task, ps: List[project]): List[Task] =
-      ps flatMap { case project(n, b, ps) =>
-        val h = Task.create.name(n).active(b).parent(pa).selectable(false)
-        h :: traverse_(h, ps)
+  def traverse(ps: entity*): List[Task] = {
+    def traverse_(pa: Task, ps: List[entity]): List[Task] =
+      ps flatMap { t =>
+        val h = t.asEntity.parent(pa)
+        h :: traverse_(h, t.children)
       }
 
-    ps flatMap { case project(n, b, ps) =>
-      val h = Task.create.name(n).active(b).selectable(false)
-      h :: traverse_(h, ps)
+    ps flatMap { t =>
+      val h = t.asEntity
+      h :: traverse_(h, t.children)
     } toList
   }
 
-  case class project(n: String, b: Boolean, ps: List[project])
+  abstract class entity(name: String, active: Boolean, ts: List[entity]) {
+    def children: List[entity] = ts
 
-  object project {
-    def apply(n: String): project = project(n, true, Nil)
-    def apply(n: String, b: Boolean): project = project(n, b, Nil)
-    def apply(n: String, ps: List[project]): project = project(n, true, ps)
-    def apply(n: String, ps: project*): project = project(n, true, ps.toList)
-    def apply(n: String, b: Boolean, ps: project*): project = project(n, b, ps.toList)
+    def asEntity: Task
   }
 
-  def list(ts: task*): List[Task] =
-    ts map { case task(n, b, p) => Task.create.name(n).parent(p).active(b).selectable(true) } toList
+  case class project(name: String, active: Boolean, ts: List[entity]) extends entity(name, active, ts) {
+    def asEntity: Task = Task.create.name(name).active(active).selectable(false)
+  }
 
-  case class task(n: String, b: Boolean, p: Task)
+  object project {
+    def apply(name: String): project = project(name, active = true, Nil)
+    def apply(name: String, active: Boolean): project = project(name, active, Nil)
+    def apply(name: String, ts: List[entity]): project = project(name, active = true, ts)
+    def apply(name: String, ts: entity*): project = project(name, active = true, ts.toList)
+    def apply(name: String, active: Boolean, ts: entity*): project = project(name, active, ts.toList)
+  }
+
+  case class task(name: String, active: Boolean, ts: List[entity]) extends entity(name, active, ts) {
+    def asEntity: Task = Task.create.name(name).active(active).selectable(true)
+  }
 
   object task {
-    def apply(n: String, p: Task): task = task(n, true, p)
+    def apply(name: String): task = task(name, active = true, Nil)
+    def apply(name: String, active: Boolean): task = task(name, active, Nil)
+    def apply(name: String, ts: List[entity]): task = task(name, active = true, ts)
+    def apply(name: String, ts: entity*): task = task(name, active = true, ts.toList)
+    def apply(name: String, active: Boolean, ts: entity*): task = task(name, active, ts.toList)
   }
 }
