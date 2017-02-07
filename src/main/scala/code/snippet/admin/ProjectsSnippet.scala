@@ -3,15 +3,14 @@ package snippet
 
 import java.text.Collator
 
-import net.liftweb.common.{Box, Empty, Full}
-import _root_.net.liftweb.util.{CssSel, Helpers}
+import _root_.net.liftweb.util.CssSel
 import code.model._
-import code.model.mixin.HierarchicalItem
 import code.service._
+import net.liftweb.common.{Box, Empty, Full}
 import net.liftweb.http.js.JE.JsRaw
 import net.liftweb.http.js.JsCmd
 import net.liftweb.http.js.JsCmds.SetHtml
-import net.liftweb.http.{S, SHtml, Templates, _}
+import net.liftweb.http.{S, SHtml, _}
 import net.liftweb.mapper.By
 import net.liftweb.util.Helpers._
 
@@ -19,135 +18,44 @@ import scala.util.Sorting
 import scala.xml.NodeSeq
 
 /**
- * Project snippet.
+ * Task administration snippet.
  * @author David Csakvari
  */
 class ProjectsSnippet {
 
   private val collator: Collator = Collator.getInstance(S.locale)
 
-  object showInactiveProjectsAndTasks extends SessionVar(false)
-
-  object selectedProject extends SessionVar[Box[Project]](Empty)
+  object showInactiveTasks extends SessionVar(false)
 
   object selectedTask extends SessionVar[Box[Task]](Empty)
 
   def toggleInactiveView: CssSel = {
-    "type=submit [value]" #> (if (showInactiveProjectsAndTasks.get) S.?("projects.hide_inactive") else S.?("projects.show_inactive")) &
+    "type=submit [value]" #> (if (showInactiveTasks.get) S.?("projects.hide_inactive") else S.?("projects.show_inactive")) &
       "type=submit" #> SHtml.onSubmitUnit(() => {
-        showInactiveProjectsAndTasks.set(!showInactiveProjectsAndTasks.get)
+        showInactiveTasks.set(!showInactiveTasks.get)
         net.liftweb.http.js.JsCmds.Reload
       })
   }
 
-  def addRoot: CssSel = {
-    ".add-root [onclick]" #> SHtml.ajaxInvoke(addRootEditor).toJsCmd
+  def addRoot(): CssSel = {
+    ".add-root [onclick]" #> SHtml.ajaxInvoke(() => addChild(Empty)).toJsCmd
   }
 
   def moveToRoot: CssSel = {
-    def moveProjectToRoot: JsCmd = {
-      selectedProject.is.flatMap { sp =>
-        ProjectService.moveToRoot(sp)
-        selectedProject.set(Empty)
+    def submit: JsCmd = {
+      selectedTask.is.flatMap { sp =>
+        TaskService.moveToRoot(sp)
+        selectedTask.set(Empty)
       }
-      rerenderProjectTree
+      rerenderTree
     }
 
-    "a [onclick]" #> SHtml.ajaxInvoke(moveProjectToRoot _).toJsCmd
+    "a [onclick]" #> SHtml.ajaxInvoke(submit _).toJsCmd
   }
 
-  def projects(in: NodeSeq): NodeSeq = {
-    projectTemplate
+  def tasks(in: NodeSeq): NodeSeq = {
+    taskTemplate
   }
-
-  def projectList(in: NodeSeq): NodeSeq = {
-    val parentId: Long = {
-      try {
-        (in \ "div" \ "div").filter(_.attribute("class").get.text == "parentId").text.toLong
-      } catch {
-        case _: Exception => -1
-      }
-    }
-
-    val data = (if (parentId == -1) {
-      if (showInactiveProjectsAndTasks.get) {
-        Project.findAll.filter(_.parent.isEmpty)
-      } else {
-        Project.findAll(By(Project.active, true)).filter(_.parent.isEmpty)
-      }
-    } else {
-      if (showInactiveProjectsAndTasks.get) {
-        Project.findAll(By(Project.parent, Project.find(By(Project.id, parentId)).openOrThrowException("Project must be defined!")))
-      } else {
-        Project.findAll(By(Project.parent, Project.find(By(Project.id, parentId)).openOrThrowException("Project must be defined!")), By(Project.active, true))
-      }
-    }).toArray
-
-    if (parentId == -1 && data.isEmpty) {
-      <lift:embed what="no_data"/>
-    } else {
-      Sorting.quickSort(data)(new Ordering[Project] {
-        def compare(x: Project, y: Project): Int = {
-          collator.compare(x.name.get, y.name.get)
-        }
-      })
-      data.toSeq.flatMap(project => renderProject(project)(in))
-    }
-  }
-
-  private def renderProject(project: Project) = {
-    val displayName =
-      if (project.active.get)
-        project.name.get
-      else
-        project.name.get + " (" + S.?("projects.inactive") + ")"
-
-    var rootClass = "project"
-    if (selectedProject.get == project) rootClass += " selected"
-
-    var innerClass = "projectName"
-    if (!project.active.get) innerClass += " inactive"
-
-    // TODO Remove snippet based recursion.
-    val subsCssSel:CssSel = ".parentId *" #> project.id.toString
-
-    ".name" #> displayName &
-    ".root-class [class]" #> rootClass &
-    ".inner-class [class]" #> innerClass &
-    ".edit [onclick]" #> SHtml.ajaxInvoke(() => editor(project)).toJsCmd &
-    ".add-subproject [onclick]" #> SHtml.ajaxInvoke(() => addChild(project, isProject = true)).toJsCmd &
-    ".add-subtask [onclick]" #> SHtml.ajaxInvoke(() => addChild(project, isProject = false)).toJsCmd &
-    ".delete [onclick]" #> SHtml.ajaxInvoke(() => deleteProject(project)).toJsCmd &
-    ".select [onclick]" #> SHtml.ajaxInvoke(() => selectProject(project)).toJsCmd &
-    ".moveto [onclick]" #> SHtml.ajaxInvoke(() => moveToProject(project)).toJsCmd &
-    ".subprojects *" #> subsCssSel(projectTemplate) &
-    ".subtasks *" #> subsCssSel(taskTemplate)
-  }
-
-  private val projectTemplate: NodeSeq =
-    <div class="lift:projectsSnippet.projectList">
-      <div class="root-class">
-        <div class="parentId" style="display:none;"></div>
-        <span class="inner-class">
-          <span class="dropdown">
-            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
-              <span class="name"></span>
-              <span class="caret"></span>
-            </a>
-            <ul class="dropdown-menu">
-              <li><a class="edit"><lift:loc>projects.edit</lift:loc></a></li>
-              <li><a class="add-subproject"><lift:loc>projects.add_subproject</lift:loc></a></li>
-              <li><a class="add-subtask"><lift:loc>projects.add_task</lift:loc></a></li>
-              <li><a class="delete"><lift:loc>projects.delete</lift:loc></a></li>
-              <li><a class="select"><lift:loc>projects.select</lift:loc></a></li>
-              <li><a class="moveto"><lift:loc>projects.moveto</lift:loc></a></li>
-            </ul>
-          </span>
-        </span>
-        <div class="subprojects"></div>
-        <div class="subtasks"></div>
-      </div>
-    </div>
 
   private val taskTemplate: NodeSeq =
     <div class="lift:projectsSnippet.taskList">
@@ -161,12 +69,15 @@ class ProjectsSnippet {
             </a>
             <ul class="dropdown-menu">
               <li><a class="edit"><lift:loc>projects.edit</lift:loc></a></li>
+              <li><a class="add-subtask"><lift:loc>projects.add_task</lift:loc></a></li>
               <li><a class="delete"><lift:loc>projects.delete</lift:loc></a></li>
               <li><a class="select"><lift:loc>projects.select</lift:loc></a></li>
+              <li><a class="moveto"><lift:loc>projects.moveto</lift:loc></a></li>
               <li><a class="merge"><lift:loc>projects.mergeinto</lift:loc></a></li>
             </ul>
           </span>
         </span>
+        <div class="subtasks"></div>
       </div>
     </div>
 
@@ -179,27 +90,31 @@ class ProjectsSnippet {
       }
     }
 
-    if (parentId != -1L) {
-      val parentProject = Project.find(By(Project.id, parentId))
+    val tasks = if (parentId != -1L) {
+      val parent = Task.find(By(Task.id, parentId))
 
-      val tasks = if (!showInactiveProjectsAndTasks.get) {
-        Task.findAll(By(Task.parent, parentProject), By(Task.active, true))
+      if (!showInactiveTasks.get) {
+        Task.findAll(By(Task.parent, parent), By(Task.active, true))
       } else {
-        Task.findAll(By(Task.parent, parentProject))
+        Task.findAll(By(Task.parent, parent))
       }
-
-      val data = tasks.toArray
-
-      Sorting.quickSort(data)(new Ordering[Task] {
-        def compare(x: Task, y: Task): Int = {
-          collator.compare(x.name.get, y.name.get)
-        }
-      })
-
-      data.toSeq.flatMap(task => renderTask(task)(in))
     } else {
-      <div class="childTask"></div>
+      if (!showInactiveTasks.get) {
+        Task.findAll(By(Task.parent, Empty), By(Task.active, true))
+      } else {
+        Task.findAll(By(Task.parent, Empty))
+      }
     }
+
+    val data = tasks.toArray
+
+    Sorting.quickSort(data)(new Ordering[Task] {
+      def compare(x: Task, y: Task): Int = {
+        collator.compare(x.name.get, y.name.get)
+      }
+    })
+
+    data.toSeq.flatMap(task => renderTask(task)(in))
   }
 
   private def renderTask(task: Task):CssSel = {
@@ -210,16 +125,25 @@ class ProjectsSnippet {
         task.name.get + " (" + S.?("projects.inactive") + ")"
 
     val rootClass =
-      if (selectedTask.get == task)
+      if (selectedTask.get === task)
         "task selected"
       else
         "task"
 
     val innerClass =
       if (task.active.get)
-        "taskName"
+        if (task.selectable.get)
+          "taskName"
+        else
+          "projectName"
       else
-        "taskName inactive"
+        if (task.selectable.get)
+          "taskName inactive"
+        else
+          "projectName inactive"
+
+
+    val subsCssSel:CssSel = ".parentId *" #> task.id.toString
 
     ".name" #> displayName &
     ".task-root [class]" #> rootClass &
@@ -227,36 +151,38 @@ class ProjectsSnippet {
     ".edit [onclick]" #> SHtml.ajaxInvoke(() => editor(task)).toJsCmd &
     ".delete [onclick]" #> SHtml.ajaxInvoke(() => deleteTask(task)).toJsCmd &
     ".select [onclick]" #> SHtml.ajaxInvoke(() => selectTask(task)).toJsCmd &
-    ".merge [onclick]" #> SHtml.ajaxInvoke(() => mergeTask(task)).toJsCmd
+    ".add-subtask [onclick]" #> SHtml.ajaxInvoke(() => addChild(Full(task))).toJsCmd &
+    ".merge [onclick]" #> SHtml.ajaxInvoke(() => mergeTask(task)).toJsCmd &
+    ".moveto [onclick]" #> SHtml.ajaxInvoke(() => moveTo(task)).toJsCmd &
+    ".subtasks *" #> subsCssSel(taskTemplate)
   }
 
-  private def editor(hierarchicalItem: HierarchicalItem[_]): JsCmd = {
-    object name extends TransientRequestVar(hierarchicalItem.name.get)
-    object description extends TransientRequestVar(hierarchicalItem.description.get)
-    object color extends TransientRequestVar(hierarchicalItem.color.get)
-    object active extends TransientRequestVar(hierarchicalItem.active.get)
-    object specifiable extends TransientRequestVar(hierarchicalItem.specifiable.get)
+  private def editor(task: Task): JsCmd = {
+    object name extends TransientRequestVar(task.name.get)
+    object description extends TransientRequestVar(task.description.get)
+    object color extends TransientRequestVar(task.color.get)
+    object active extends TransientRequestVar(task.active.get)
+    object specifiable extends TransientRequestVar(task.specifiable.get)
+    object selectable extends TransientRequestVar(task.selectable.get)
+    object useGeneratedColor extends TransientRequestVar(
+      if (!task.color.get.isEmpty)
+        S.?("projects.popup.use_custom_color")
+      else
+        S.?("projects.popup.use_generated_color")
+      )
 
     def submit: JsCmd = {
-      hierarchicalItem match {
-        case _: Project =>
-          Project.findByKey(hierarchicalItem.id.get).openOrThrowException("Project must be defined!")
-            .name(name.get)
-            .description(description.get)
-            .color(color.get)
-            .active(active.get)
-            .specifiable(specifiable.get)
-            .save
-        case _: Task =>
-          Task.findByKey(hierarchicalItem.id.get).openOrThrowException("Project must be defined!")
-            .name(name.get)
-            .description(description.get)
-            .color(color.get)
-            .active(active.get)
-            .specifiable(specifiable.get)
-            .save
-      }
-      rerenderProjectTree &
+      val selectedColor = if (useGeneratedColor.get == S.?("projects.popup.use_custom_color")) color.get else ""
+      Task.findByKey(task.id.get).openOrThrowException("Item must be defined!")
+        .name(name.get)
+        .description(description.get)
+        .color(selectedColor)
+        .active(active.get)
+        .specifiable(specifiable.get)
+        .selectable(selectable.get)
+        .save
+
+      rerenderTree &
       closeDialog
     }
 
@@ -266,36 +192,37 @@ class ProjectsSnippet {
         ".field" #> SHtml.textElem(name, "class" -> "form-control")) ++
       renderProperty(
         ".name *" #> S.?("projects.popup.description") &
-        ".field" #> SHtml.textElem(description, "class" -> "form-control"))
-
-    val fieldBindigsWithColor =
-      if (!hierarchicalItem.parent.defined_?)
-        defaultFieldBindings ++
-        renderProperty(
-          ".name *" #> S.?("projects.popup.color") &
-          ".field" #> SHtml.textElem(color, "type" -> "color"))
-      else
-        defaultFieldBindings
+        ".field" #> SHtml.textElem(description, "class" -> "form-control")) ++
+      renderProperty(
+        ".name *" #> S.?("projects.popup.color") &
+        ".field" #> (
+          <br/> ++
+          SHtml.radioElem(List(
+            S.?("projects.popup.use_generated_color"),
+            S.?("projects.popup.use_custom_color")),
+            Full(useGeneratedColor.get)) {
+            _.map(v => useGeneratedColor.set(v))
+          }.toForm ++
+          SHtml.textElem(color, "type" -> "color"))
+      )
 
     val fieldbindingsWithActive =
-      if (hierarchicalItem.active.get)
-        fieldBindigsWithColor
+      if (task.active.get)
+        defaultFieldBindings
       else
-        fieldBindigsWithColor ++
+        defaultFieldBindings ++
         renderProperty(
           ".name *" #> S.?("projects.popup.active") &
           ".field" #> SHtml.checkboxElem(active))
 
     val fieldBindings =
-      hierarchicalItem match {
-        case _: Project =>
-          fieldbindingsWithActive
-        case _: Task =>
-          fieldbindingsWithActive ++
-          renderProperty(
-              ".name *" #> S.?("projects.popup.specifiable") &
-              ".field" #> SHtml.checkboxElem(specifiable))
-      }
+      fieldbindingsWithActive ++
+      renderProperty(
+          ".name *" #> S.?("projects.popup.specifiable") &
+          ".field" #> SHtml.checkboxElem(specifiable)) ++
+      renderProperty(
+          ".name *" #> S.?("projects.popup.selectable") &
+          ".field" #> SHtml.checkboxElem(selectable))
 
     SetHtml("inject",
       (
@@ -308,81 +235,27 @@ class ProjectsSnippet {
     openDialog
   }
 
-  private def addRootEditor(): JsCmd = {
-    object name extends TransientRequestVar("")
-    object description extends TransientRequestVar("")
-    object color extends TransientRequestVar("")
-
-    def submit: JsCmd = {
-      Project.create
-        .name(name.get)
-        .description(description.get)
-        .color(color.get)
-        .active(true)
-        .specifiable(true)
-        .save
-
-      rerenderProjectTree &
-      closeDialog
-    }
-
-    SetHtml("inject",
-      (
-        ".fields *" #>
-          (
-            renderProperty(
-              ".name *" #> S.?("projects.popup.name") &
-              ".field" #> SHtml.textElem(name, "class" -> "form-control")) ++
-            renderProperty(
-              ".name *" #> S.?("projects.popup.description") &
-              ".field" #> SHtml.textElem(description, "class" -> "form-control")) ++
-            renderProperty(
-              ".name *" #> S.?("projects.popup.color") &
-              ".field" #> SHtml.textElem(color, "class" -> "form-control", "type" -> "color"))
-            ) &
-        ".title *" #> S.?("projects.new_project") &
-        ".submit-button" #> SHtml.ajaxSubmit(S.?("button.save"), submit _, "class" -> "btn btn-primary") &
-        ".close-button" #> SHtml.ajaxSubmit(S.?("button.close"), closeDialog _, "class" -> "btn btn-default")
-
-      )(editorTemplate)
-    ) &
-    openDialog
-  }
-
-  def renderProperty(cssSel: CssSel): NodeSeq = {
+  private def renderProperty(cssSel: CssSel): NodeSeq = {
     cssSel(editorPropertyTemplate)
   }
 
-  val editorPropertyTemplate: NodeSeq =
-    <div class="form-group">
-      <label class="name"></label>
-      <input class="field"/>
-    </div>
-
-
-  private def addChild(parent: Project, isProject: Boolean): JsCmd = {
+  private def addChild(parent: Box[Task]): JsCmd = {
     object name extends TransientRequestVar("")
     object description extends TransientRequestVar("")
+    object specifiable extends TransientRequestVar(true)
+    object selectable extends TransientRequestVar(true)
 
     def submit: JsCmd = {
-      if (isProject)
-        Project.create
-          .parent(parent)
-          .name(name.get)
-          .description(description.get)
-          .active(true)
-          .specifiable(true)
-          .save
-      else
-        Task.create
-          .parent(parent)
-          .name(name.get)
-          .description(description.get)
-          .active(true)
-          .specifiable(true)
-          .save
+      Task.create
+        .parent(parent)
+        .name(name.get)
+        .description(description.get)
+        .active(true)
+        .specifiable(specifiable.get)
+        .selectable(selectable.get)
+        .save
 
-      rerenderProjectTree &
+      rerenderTree &
       closeDialog
     }
 
@@ -395,8 +268,15 @@ class ProjectsSnippet {
               ".field" #> SHtml.textElem(name, "class" -> "form-control")) ++
             renderProperty(
               ".name" #> S.?("projects.popup.description") &
-              ".field" #> SHtml.textElem(description, "class" -> "form-control"))) &
-        ".title *" #> (if (isProject) S.?("projects.add_subproject") else S.?("projects.add_task")) &
+              ".field" #> SHtml.textElem(description, "class" -> "form-control")) ++
+            renderProperty(
+                ".name *" #> S.?("projects.popup.specifiable") &
+                ".field" #> SHtml.checkboxElem(specifiable)) ++
+            renderProperty(
+                ".name *" #> S.?("projects.popup.selectable") &
+                ".field" #> SHtml.checkboxElem(selectable))
+            ) &
+        ".title *" #> S.?("projects.add_task") &
         ".submit-button" #> SHtml.ajaxSubmit(S.?("button.save"), submit _, "class" -> "btn btn-primary") &
         ".close-button" #> SHtml.ajaxSubmit(S.?("button.close"), closeDialog _, "class" -> "btn btn-default")
       )(editorTemplate)
@@ -404,32 +284,13 @@ class ProjectsSnippet {
     openDialog
   }
 
-  private def selectProject(project: Project): JsCmd = {
-    selectedProject.is match {
-      case Full(sp) => {
-          if (sp == project) {
-            selectedProject.set(Empty)
-          } else {
-            selectedProject.set(Some(project))
-          }
-      }
-      case Empty => selectedProject.set(Some(project))
-    }
-
-    rerenderProjectTree
-  }
-
-  private def moveToProject(project: Project): JsCmd = {
-    selectedProject.is.flatMap { sp =>
-      ProjectService.move(sp, project)
-      selectedProject.set(Empty)
-    }
+  private def moveTo(task: Task): JsCmd = {
     selectedTask.is.flatMap { st =>
-      TaskService.move(st, project)
+      TaskService.move(st, task)
       selectedTask.set(Empty)
     }
 
-    rerenderProjectTree
+    rerenderTree
   }
 
   private def mergeTask(task: Task): JsCmd = {
@@ -438,57 +299,27 @@ class ProjectsSnippet {
       selectedTask.set(Empty)
     }
 
-    rerenderProjectTree
+    rerenderTree
   }
 
   private def selectTask(task: Task): JsCmd = {
     selectedTask.is match {
-      case Full(st) => {
-          if (st == task) {
-            selectedTask.set(Empty)
-          } else {
-            selectedTask.set(Some(task))
-          }
-      }
+      case Full(st) =>
+        if (st == task) {
+          selectedTask.set(Empty)
+        } else {
+          selectedTask.set(Some(task))
+        }
       case Empty => selectedTask.set(Some(task))
     }
-    rerenderProjectTree
-  }
-
-  private def deleteProject(project: Project): JsCmd = {
-    def submit: JsCmd = {
-      try {
-        ProjectService.delete(project)
-        rerenderProjectTree &
-        closeDialog
-      } catch {
-        case e: Exception => net.liftweb.http.js.JsCmds.Alert(e.getMessage)
-      }
-    }
-
-    SetHtml("inject",
-      (
-        ".fields *" #>
-          (
-            renderProperty(
-              ".name *" #> S.?("projects.popup.name") &
-              ".field" #> project.name) ++
-            renderProperty(
-              ".name *" #> S.?("projects.popup.description") &
-              ".field" #> project.description)) &
-        ".title *" #> S.?("projects.delete") &
-        ".submit-button" #> SHtml.ajaxSubmit(S.?("button.delete"), submit _, "class" -> "btn btn-primary") &
-        ".close-button" #> SHtml.ajaxSubmit(S.?("button.close"), closeDialog _, "class" -> "btn btn-default")
-      )(editorTemplate)
-    ) &
-    openDialog
+    rerenderTree
   }
 
   private def deleteTask(task: Task): JsCmd = {
     def submit: JsCmd = {
       try {
         TaskService.delete(task)
-        rerenderProjectTree &
+        rerenderTree &
         closeDialog
       } catch {
         case e: Exception => net.liftweb.http.js.JsCmds.Alert(e.getMessage)
@@ -514,13 +345,11 @@ class ProjectsSnippet {
     openDialog
   }
 
-
   def closeDialog: JsCmd = JsRaw("$('.modal').modal('hide')").cmd
 
   def openDialog: JsCmd = JsRaw("$('.modal').modal()").cmd
 
-  def rerenderProjectTree: JsCmd = SetHtml("project-tree", projects(NodeSeq.Empty))
-
+  def rerenderTree: JsCmd = SetHtml("project-tree", tasks(NodeSeq.Empty))
 
   val editorTemplate: NodeSeq =
     <div class="modal fade" data-backdrop="static" data-keyboard="false">
@@ -538,6 +367,12 @@ class ProjectsSnippet {
           </div>
         </form>
       </div>
+    </div>
+
+  val editorPropertyTemplate: NodeSeq =
+    <div class="form-group">
+      <label class="name"></label>
+      <input class="field"/>
     </div>
 
 }

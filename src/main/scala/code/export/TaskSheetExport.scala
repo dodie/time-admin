@@ -54,7 +54,7 @@ object TaskSheetExport {
       if (i == SATURDAY || i == SUNDAY) Some(styles.weekend) else None
     }
 
-  def taskTitle: Cell = Cell(value = S.?("export.tasksheet.project_identifier"), style = styles.header.withHorizontalAlignment(styles.left.horizontalAlignment.get))
+  def taskTitle: Cell = Cell(value = S.?("export.tasksheet.identifier"), style = styles.header.withHorizontalAlignment(styles.left.horizontalAlignment.get))
 
   def sumTitle: Cell = header(S.?("export.tasksheet.sum"))
 

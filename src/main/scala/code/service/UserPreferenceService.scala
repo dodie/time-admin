@@ -30,7 +30,7 @@ object UserPreferenceService {
 
     User.currentUser.flatMap(preference).map(_.value.get).getOrElse(defaultPreference)
   }
-  
+
   def getUserPreference(preference: UserPreferenceType): String = getUserPreference(preference.key)
 
   def setUserPreference(k: UserPreferenceNames.Value, v: String): Boolean = {

@@ -3,10 +3,8 @@ package service
 
 import java.text.Collator
 
-import code.model.mixin.HierarchicalItem
-import code.model.{Project, Task, TaskItem}
-import code.service.HierarchicalItemService.path
-import net.liftweb.common.{Box, Full}
+import code.model.{Task, TaskItem}
+import net.liftweb.common.{Box, Full, Empty}
 import net.liftweb.http.S
 import net.liftweb.mapper.By
 import net.liftweb.util.Props
@@ -18,11 +16,18 @@ import scala.language.postfixOps
  * @author David Csakvari
  */
 object TaskService {
+
+  def path(z: List[Task], pid: Box[Long], ps: List[Task]): List[Task] =
+    (for {
+      id <- pid
+      p <- ps find (_.id.get == id)
+    } yield path(p :: z, p.parent.box, ps)) getOrElse z
+
   def getTask(id: Long): Box[Task] = Task.findByKey(id)
 
   def getAllActiveTasks: List[ShowTaskData] = {
-    val ps = Project.findAll()
-    val ts = Task.findAll(By(Task.active, true))
+    val ps = Task.findAll
+    val ts = Task.findAll(By(Task.active, true), By(Task.selectable, true))
 
     ts map { t =>
       ShowTaskData(t, path(Nil, t.parent.box, ps))
@@ -44,11 +49,21 @@ object TaskService {
     }
   }
 
-  def move(what: Task, newParent: Project): Boolean = {
-    what.parent(newParent).save
+  def move(what: Task, newParent: Task): Boolean = {
+    if(!projectPath(Nil, Full(newParent)).contains(what))
+      what.parent(newParent).save()
+    else
+      false
   }
 
-  def isEmpty(task: Task): Boolean = TaskItem.findAll(By(TaskItem.task, task)).isEmpty
+  private def projectPath(z: List[Task], task: Box[Task]): List[Task] = task match {
+    case Full(t) => projectPath(t :: z, Task.findByKey(t.parent.get))
+    case _ => z
+  }
+
+  def moveToRoot(task: Task): Boolean = task.parent(Empty).save()
+
+  def isEmpty(task: Task): Boolean = TaskItem.findAll(By(TaskItem.task, task)).isEmpty && Task.findAll(By(Task.parent, task)).isEmpty
 
   def delete(task: Task): Boolean =
     if (task.active.get)
@@ -56,33 +71,23 @@ object TaskService {
     else if (isEmpty(task))
       task.delete_!
     else
-      throw new IllegalArgumentException("Tasks with TaskItems can not be deleted.")
+      throw new IllegalArgumentException("Tasks with TaskItems or SubTasks can not be deleted.")
 
   def merge(what: Task, into: Task): Boolean = {
     TaskItem.findAll(By(TaskItem.task, what)).foreach((ti: TaskItem) => ti.task(into).save)
-    delete(what)
+    Task.findAll(By(Task.parent, what)).foreach((task: Task) => move(task, into))
+
+    what.delete_!
   }
 
   def specify(task: Task, taskName: String): Task = {
     if (!task.specifiable.get) {
       throw new RuntimeException("Task is not specifiable!")
     }
-    val parent = Project.find(By(Project.parent, task.parent.get), By(Project.name, task.name.get))
-    val parentProject = if (parent.isEmpty) {
-      val rootProject = Project.find(By(Project.id, task.parent.get)).openOrThrowException("Project must be defined!")
-      val newParent = Project.create.name(task.name.get).active(true).parent(rootProject)
-      newParent.save
-      newParent
-    } else {
-      if (!parent.openOrThrowException("Project must be defined!").active.get) {
-        parent.openOrThrowException("Project must be defined!").active(true).save
-      }
-      parent.openOrThrowException("Project must be defined!")
-    }
 
-    val targetTask = Task.find(By(Task.parent, parentProject.id.get), By(Task.name, taskName))
+    val targetTask = Task.find(By(Task.parent, task.id.get), By(Task.name, taskName))
     if (targetTask.isEmpty) {
-      val specifiedTask = Task.create.name(taskName).active(true).specifiable(true).parent(parentProject)
+      val specifiedTask = Task.create.name(taskName).active(true).specifiable(true).selectable(true).parent(task)
       specifiedTask.save
       specifiedTask
     } else {
@@ -95,21 +100,21 @@ object TaskService {
 }
 
 /**
- * Task wrapper that contains the display name of the whole parent project structure, and comparable.
+ * Task wrapper that contains the display name of the whole parent structure, and comparable.
  */
-abstract class TaskDto[T <: TaskDto[_]](task: Box[Task], path: List[HierarchicalItem[_]]) extends Ordered[T] {
+abstract class TaskDto[T <: TaskDto[_]](task: Box[Task], path: List[Task]) extends Ordered[T] {
   lazy val taskName: String = task map (_.name.get) getOrElse ""
   lazy val projectName: String = path map (_.name.get) mkString "-"
   lazy val fullName: String = task map { t => s"$projectName-${t.name.get}" } getOrElse ""
 
-  lazy val color: Color = Color.get(taskName, projectName, task exists (_.active.get))
-  lazy val baseColor: Color =
+  lazy val color: Color = task map { t => Color.parse(t.color.get) getOrElse Color.get(taskName, projectName, task exists (_.active.get))} getOrElse Color.get(taskName, projectName, task exists (_.active.get))
+  lazy val baseColor: Color = 
     if (task.isEmpty) Color.white
-    else path.headOption map (_.color.get) flatMap Color.parse getOrElse Color.transparent
+    else (path ++ task).headOption map (_.color.get) flatMap Color.parse getOrElse Color.transparent
 
   private lazy val collator = Collator.getInstance(S.locale)
   def compare(that: T): Int = collator.compare(fullName, that.fullName)
 }
 
-case class ShowTaskData(task: Task, path: List[HierarchicalItem[_]]) extends TaskDto[ShowTaskData](Full(task), path)
+case class ShowTaskData(task: Task, path: List[Task]) extends TaskDto[ShowTaskData](Full(task), path)
 

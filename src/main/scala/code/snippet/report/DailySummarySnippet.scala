@@ -10,6 +10,7 @@ import com.github.nscala_time.time.Imports._
 import net.liftweb.http.S
 import net.liftweb.util.Helpers._
 
+import code.model.Task
 import scala.xml.NodeSeq
 
 /**

@@ -12,7 +12,7 @@ $('body').on('shown.bs.modal', '.modal', function () {
   $('.modal input')[0].focus();
 })
 jQuery(document).ready(function() {
-	// generate unique ids for projects and tasks for scrolling
+	// generate unique task id's for scrolling
 	$(".projectName").each(function(i) {
 		this.id = "project_" + i;
 	})
