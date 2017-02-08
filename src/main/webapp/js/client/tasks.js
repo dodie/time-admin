@@ -165,7 +165,7 @@ Raphael.fn.pieChart = function (cx, cy, r, values, colors, projects, projectColo
 		var p = sector(cx, cy, r * rMult, angle, angle + angleplus, {fill: colors[j], stroke: stroke, "stroke-width": 3});
 		angle += angleplus;
 		chart.push(p);
-		return {p: p, percent: parseInt(Math.abs(angleplus / 3.6)) + "%"};
+		return {p: p, percent: Math.round(Number(Math.abs(angleplus / 3.6))) + "%"};
 	};
 
 	for (var i = 0, ii = values.length; i < ii; i++) {
