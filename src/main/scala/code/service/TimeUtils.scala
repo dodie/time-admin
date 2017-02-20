@@ -228,7 +228,8 @@ object TimeUtils {
 
   def offsetToDailyInterval(offset: Int): Interval = new Interval(currentDayStartInMs(offset), currentDayEndInMs(offset))
 
-  lazy val monthNames = List(S.?("date.month.january"),
+  def monthNames: List[String] = List(
+    S.?("date.month.january"),
     S.?("date.month.february"),
     S.?("date.month.march"),
     S.?("date.month.april"),
@@ -241,7 +242,8 @@ object TimeUtils {
     S.?("date.month.november"),
     S.?("date.month.december"))
 
-  lazy val monthNamesShort = List(S.?("date.month.short.january"),
+  def monthNamesShort: List[String] = List(
+    S.?("date.month.short.january"),
     S.?("date.month.short.february"),
     S.?("date.month.short.march"),
     S.?("date.month.short.april"),
@@ -254,7 +256,8 @@ object TimeUtils {
     S.?("date.month.short.november"),
     S.?("date.month.short.december"))
 
-  lazy val dayNames = List(S.?("date.day.sunday"),
+  def dayNames: List[String] = List(
+    S.?("date.day.sunday"),
     S.?("date.day.monday"),
     S.?("date.day.tuesday"),
     S.?("date.day.wednesday"),
@@ -262,7 +265,8 @@ object TimeUtils {
     S.?("date.day.friday"),
     S.?("date.day.saturday"))
 
-  lazy val dayNamesShort = List(S.?("date.day.short.sunday"),
+  def dayNamesShort: List[String] = List(
+    S.?("date.day.short.sunday"),
     S.?("date.day.short.monday"),
     S.?("date.day.short.tuesday"),
     S.?("date.day.short.wednesday"),
