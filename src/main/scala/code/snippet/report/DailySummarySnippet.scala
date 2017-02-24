@@ -108,7 +108,7 @@ class DailySummarySnippet extends DateFunctions {
       }
 
       (
-        ".fragWrapper *" #> aggregatedTaskItems.map { t =>
+        ".fragWrapper *" #> aggregatedTaskItems.sorted.map { t =>
           ".minutes *" #> t.duration.minutes &
           ".name *" #> (if (t.fullName.isEmpty) S.?("task.pause") else t.fullName) &
           ".taskColorIndicator [style]" #> s"background-color:rgba${t.color};" &
