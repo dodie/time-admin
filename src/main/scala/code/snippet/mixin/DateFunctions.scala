@@ -2,17 +2,20 @@ package code
 package snippet
 package mixin
 
+import java.time.DayOfWeek
+import java.time.format.TextStyle
 import java.util.Date
 
 import code.commons.TimeUtils
 import code.commons.TimeUtils.{ISO_DATE_FORMAT, deltaInDays, monthNamesShort, parse}
 import code.snippet.Params.parseMonths
+import code.util.{DatePicker, MonthPicker}
 import net.liftweb.common.Box.box2Option
 import net.liftweb.http.S
 import net.liftweb.http.js.JE._
 import net.liftweb.util.Helpers._
-import org.joda.time.YearMonth
-import org.joda.time.format.DateTimeFormat
+import org.joda.time.{LocalDate, YearMonth}
+import org.joda.time.format.{DateTimeFormat, DateTimeFormatterBuilder}
 
 import scala.xml.NodeSeq
 
@@ -54,73 +57,42 @@ trait DateFunctions {
    */
   def selectedDay(in: NodeSeq): NodeSeq = {
     <form style="display:inline;">
-      <input class="input-sm" autocomplete="off" style="display:inline;" type="text" value={ TimeUtils.format(ISO_DATE_FORMAT, TimeUtils.currentDayStartInMs(offsetInDays)) } name={ PARAM_DATE } id="dateSelector" onchange="this.form.submit();"/>
+      <input class="input-sm" autocomplete="off" type="text" value={ currentFormattedDate } name="date" id="dateSelector" onchange="this.form.submit();"/>
       <script>
-        $('#dateSelector').datepicker({ daySelectorConfiguration }
-        );
+        $('#dateSelector').datepicker({ DatePicker.configuration.toString() });
       </script>
-      <span class="DayText">
-        {
-          TimeUtils.dayNumberToText(TimeUtils.currentDayOfWeek(offsetInDays))
-        }
-      </span>
+      <span class="DayText">{ currentFormattedDayOfWeek }</span>
     </form>
   }
 
-  private def daySelectorConfiguration = {
-    JsObj(
-      "dateFormat" -> "yy-mm-dd",
-      "maxDate" -> 0,
-      "firstDay" -> 1,
-      "monthNames" -> JsArray(TimeUtils.monthNames.map(x => Str(x))),
-      "monthNamesShort" -> JsArray(monthNamesShort.map(x => Str(x))),
-      "dayNames" -> JsArray(TimeUtils.dayNames.map(x => Str(x))),
-      "dayNamesMin" -> JsArray(TimeUtils.dayNamesShort.map(x => Str(x))),
-      "dayNamesShort" -> JsArray(TimeUtils.dayNamesShort.map(x => Str(x))),
-      "nextText" -> S.?("button.next"),
-      "prevText" -> S.?("button.previous")
-    ).toString
-  }
+  private def currentFormattedDayOfWeek: String =
+    DayOfWeek.of(LocalDate.now().plusDays(offsetInDays).getDayOfWeek).getDisplayName(TextStyle.FULL, S.locale)
+
+  private def currentFormattedDate: String =
+    DateTimeFormat.shortDate().withLocale(S.locale).print(LocalDate.now().plusDays(offsetInDays))
 
   /**
    * Month selector component.
    */
   def selectedMonth(in: NodeSeq): NodeSeq = {
     <form style="display:inline;" class="monthSelector">
-      <input type="hidden" id="dateSelectorValue" name={ PARAM_DATE } value={ TimeUtils.format(ISO_DATE_FORMAT, TimeUtils.currentMonthStartInMs(offsetInDays)) }/>
-      <div autocomplete="off" type="text" value={ TimeUtils.format(ISO_DATE_FORMAT, TimeUtils.currentMonthStartInMs(offsetInDays)) } id="dateSelector" onchange="$(this).closest('form').submit();"></div>
+      <input type="hidden" id="dateSelectorValue" name="date" value={ currentFormattedDate }/>
+      <div autocomplete="off" type="text" value={ currentFormattedDate } id="dateSelector" onchange="$(this).closest('form').submit();"></div>
       <script>
-        $('#dateSelector').datepicker({ monthSelectorConfiguration }
-        );
+        $('#dateSelector').datepicker({
+          val conf = MonthPicker.configuration
+          (conf +* JsObj(
+            "onChangeMonthYear" -> JsRaw(s"""
+              function(year, month, inst) {
+                var format = ${conf.props.toMap.get("dateFormat").map(_.toJsCmd).getOrElse("")};
+                $$('#dateSelectorValue').val($$.datepicker.formatDate(format, new Date(year, month, 1)));
+                $$('#dateSelector').closest('form').submit();
+              }
+            """)
+          )).toString()
+        });
       </script>
     </form>
-  }
-
-  private def monthSelectorConfiguration = {
-    JsObj(
-      "dateFormat" -> "yy-mm-dd",
-      "maxDate" -> 0,
-      "firstDay" -> 1,
-      "monthNames" -> JsArray(TimeUtils.monthNames.map(x => Str(x))),
-      "monthNamesShort" -> JsArray(monthNamesShort.map(x => Str(x))),
-      "dayNames" -> JsArray(TimeUtils.dayNames.map(x => Str(x))),
-      "dayNamesMin" -> JsArray(TimeUtils.dayNamesShort.map(x => Str(x))),
-      "dayNamesShort" -> JsArray(TimeUtils.dayNamesShort.map(x => Str(x))),
-      "nextText" -> S.?("button.next"),
-      "prevText" -> S.?("button.previous"),
-      "changeMonth" -> true,
-      "changeYear" -> true,
-      "defaultDate" -> JsRaw("new Date('" + TimeUtils.format(ISO_DATE_FORMAT, TimeUtils.currentMonthStartInMs(offsetInDays)) + "')"),
-      "onChangeMonthYear" -> JsRaw("""
-				function(year, month, inst) {
-					if(month < 10) {
-						month = "0" + month
-					}
-					document.getElementById('dateSelectorValue').value = year + "-" + month + "-01";
-					$(document.getElementById('dateSelector')).closest('form').submit();
-				}
-			""")
-    ).toString
   }
 
   def monthIntervalPicker(in: NodeSeq): NodeSeq = {
@@ -136,13 +108,6 @@ trait DateFunctions {
       }}}
 
     map(in)
-  }
-
-  /**
-   * Current date as text.
-   */
-  def currentDate(in: NodeSeq): NodeSeq = {
-    <span> { TimeUtils.format(ISO_DATE_FORMAT, TimeUtils.currentDayStartInMs(offsetInDays)) } </span>
   }
 
   /**
