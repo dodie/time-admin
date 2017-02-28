@@ -1,6 +1,5 @@
 package code.util
 
-import java.text.{DateFormat, SimpleDateFormat}
 import java.time.format.TextStyle
 import java.time.temporal.WeekFields
 import java.time.{DayOfWeek, Month}
@@ -11,15 +10,12 @@ import net.liftweb.http.js.JE._
 import net.liftweb.http.js.JsObj
 import org.joda.time.format.DateTimeFormat
 
-/**
-  * Created by suliatis on 2/28/17.
-  */
 protected class Picker {
   DateTimeFormat.shortDate().withLocale(S.locale)
 
   protected def dateShortPattern(l: Locale): String =
-  // for the datepicker 'M' means short month name instead of month number
-    DateFormat.getDateInstance(DateFormat.SHORT, l).asInstanceOf[SimpleDateFormat].toPattern.replaceAll("M", "m")
+    // for the datepicker 'M' means short month name instead of month number
+    DateTimeFormat.patternForStyle("S-", l).replaceAll("M", "m")
 
   protected def firstDayOfWeek(l: Locale): Num =
     Num((WeekFields.of(l).getFirstDayOfWeek.getValue + 1) % 7 - 1)
