@@ -10,12 +10,13 @@ import code.commons.TimeUtils
 import code.commons.TimeUtils.{ISO_DATE_FORMAT, deltaInDays, monthNamesShort, parse}
 import code.snippet.Params.parseMonths
 import code.util.{DatePicker, MonthPicker}
+import com.ibm.icu.text.DateTimePatternGenerator
 import net.liftweb.common.Box.box2Option
 import net.liftweb.http.S
 import net.liftweb.http.js.JE._
 import net.liftweb.util.Helpers._
+import org.joda.time.format.DateTimeFormat
 import org.joda.time.{LocalDate, YearMonth}
-import org.joda.time.format.{DateTimeFormat, DateTimeFormatterBuilder}
 
 import scala.xml.NodeSeq
 
@@ -110,18 +111,10 @@ trait DateFunctions {
     map(in)
   }
 
-  /**
-   * Current year as text.
-   */
-  def currentYear(in: NodeSeq): NodeSeq = {
-    <span> { TimeUtils.format(TimeUtils.YEAR_FORMAT, TimeUtils.currentDayStartInMs(offsetInDays)) } </span>
-  }
-
-  /**
-   * Current month name as text.
-   */
-  def currentMonth(in: NodeSeq): NodeSeq = {
-    <span> { TimeUtils.monthNumberToText(TimeUtils.currentMonth(offsetInDays)) } </span>
+  def currentYearMonth(in: NodeSeq): NodeSeq = {
+    val generator = DateTimePatternGenerator.getInstance(S.locale)
+    val pattern = generator.getBestPattern("yyyyMMMM")
+    <span>{ DateTimeFormat.forPattern(pattern).withLocale(S.locale).print(new YearMonth(LocalDate.now().plusDays(offsetInDays)))}</span>
   }
 
 }
