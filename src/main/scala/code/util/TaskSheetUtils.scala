@@ -25,10 +25,4 @@ object TaskSheetUtils {
 
   def sum(ts: TaskSheet): Duration =
     sumByDates(ts).values.foldLeft(Duration.millis(0))(_ + _)
-
-  def title(interval: Interval, scale: LocalDate => ReadablePartial): String = {
-    val now = LocalDate.now()
-    if (scale(now) == now) f"${interval.start.getYear}.${interval.start.getMonthOfYear}%02d"
-    else f"${interval.start.getYear}.${interval.start.getMonthOfYear}%02d - ${interval.end.minusDays(1).getYear}.${interval.end.minusDays(1).getMonthOfYear}%02d"
-  }
 }
