@@ -68,11 +68,11 @@ class Step extends ScalaDsl with EN with Matchers {
   }
 
   Then("""^I can not see the User pages$""") { () =>
-    userMenu should contain noneOf ("Settings", "Change password", "My profile", "Logout")
+    userMenu should contain noneOf ("Change password", "My profile", "Logout")
   }
 
   Then("""^I can see the User pages$""") { () =>
-    userMenu should contain allOf ("Settings", "Change password", "My profile", "Logout")
+    userMenu should contain allOf ("Change password", "My profile", "Logout")
   }
 
   Then("""^I can see the Registration page$""") { () =>

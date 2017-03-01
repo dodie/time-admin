@@ -1,29 +1,27 @@
 package bootstrap.liftweb
 
-import java.io.{ByteArrayInputStream, ByteArrayOutputStream, InputStream}
+import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 import java.net.URI
-
-import net.liftweb._
-import util._
-import common._
-import sitemap._
-import Loc._
-import mapper._
-import code.model._
-import code.service.SmtpMailer
-import code.export.{ExcelExport, TaskSheetExport}
-import net.liftweb.http.provider._
-import net.liftweb.http._
 import java.util.Locale
 
+import code.export.{ExcelExport, TaskSheetExport}
+import code.model._
+import code.service.SmtpMailer
 import code.service.TaskItemService.IntervalQuery
 import code.service.UserService.nonAdmin
 import code.snippet.Params.{parseInterval, parseUser}
 import code.util.IO.{using, xlsxResponse}
-import net.liftweb.db.DBLogEntry
-import net.liftweb.http.js.JE
 import net.liftmodules.JQueryModule
-import js.jquery.JQueryArtifacts
+import net.liftweb._
+import net.liftweb.common._
+import net.liftweb.db.DBLogEntry
+import net.liftweb.http._
+import net.liftweb.http.js.JE
+import net.liftweb.http.provider._
+import net.liftweb.mapper._
+import net.liftweb.sitemap.Loc._
+import net.liftweb.sitemap._
+import net.liftweb.util._
 
 
 
@@ -68,7 +66,6 @@ class Boot extends Loggable {
     Schemifier.schemify(true, Schemifier.infoF _, Role)
     Schemifier.schemify(true, Schemifier.infoF _, Task)
     Schemifier.schemify(true, Schemifier.infoF _, TaskItem)
-    Schemifier.schemify(true, Schemifier.infoF _, UserPreference)
     Schemifier.schemify(true, Schemifier.infoF _, UserRoles)
     Schemifier.schemify(true, Schemifier.infoF _, ExtSession)
 
@@ -123,7 +120,6 @@ class Boot extends Loggable {
       Menu(S ? "page.edituser") / "admin" / "user" >> If(adminUser _, S ? "no_permission") >> Hidden,
 
       // user pages
-      Menu(S ? "page.settings") / "client" / "settings" >> If((!anonymousUser) _, S ? "not_logged_in") >> Hidden,
       Menu(S ? "page.userspages") / "userpages" >> Hidden >> User.AddUserMenusUnder
     )
 
