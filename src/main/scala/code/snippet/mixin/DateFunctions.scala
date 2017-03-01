@@ -115,7 +115,7 @@ trait DateFunctions {
 
   def currentYearMonth(in: NodeSeq): NodeSeq = {
     val generator = DateTimePatternGenerator.getInstance(S.locale)
-    val pattern = generator.getBestPattern("yyyyMMMM")
+    val pattern = generator.getBestPattern("yMMMM")
     <span>{ DateTimeFormat.forPattern(pattern).withLocale(S.locale).print(new YearMonth(LocalDate.now().plusDays(offsetInDays))) }</span>
   }
 

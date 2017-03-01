@@ -15,7 +15,9 @@ import net.liftweb.util.Props
 import net.liftweb.http.S
 import code.service.ReportService
 import code.service.TaskItemService.IntervalQuery
-import org.joda.time.YearMonth
+import com.ibm.icu.text.DateTimePatternGenerator
+import org.joda.time.{LocalDate, YearMonth}
+import org.joda.time.format.DateTimeFormat
 
 /**
  * Excel export features.
@@ -29,6 +31,7 @@ object ExcelExport {
   def exportTimesheet(user: User, offset: Int) = {
     var fos: ByteArrayOutputStream = null;
     var array: Array[Byte] = null
+    val yearMonth = new YearMonth(LocalDate.now().plusDays(offset))
     try {
 
       // template
@@ -37,8 +40,11 @@ object ExcelExport {
 
       // parameters
       val userName = user.lastName + " " + user.firstName
-      val monthText = TimeUtils.currentYear(offset) + " " + TimeUtils.monthNumberToText(TimeUtils.currentMonth(offset))
-      val dates = ReportService.getTimesheetData(IntervalQuery(new YearMonth(TimeUtils.currentYear(offset), TimeUtils.currentMonth(offset) + 1).toInterval))
+
+      val generator = DateTimePatternGenerator.getInstance(S.locale)
+      val pattern = generator.getBestPattern("yMMMM")
+      val monthText = DateTimeFormat.forPattern(pattern).withLocale(S.locale).print(yearMonth)
+      val dates = ReportService.getTimesheetData(IntervalQuery(yearMonth.toInterval))
 
       // spreadsheet to export
       val sheet = workbook.getSheet("Timesheet")
@@ -89,7 +95,7 @@ object ExcelExport {
     }
 
     val contentStream = new ByteArrayInputStream(array)
-    val name = "timesheet_" + TimeUtils.currentYear(offset.toInt) + "-" + (TimeUtils.currentMonth(offset.toInt) + 1) + ".xls";
+    val name = s"timesheet_${yearMonth.toString}.xls";
 
     (contentStream, name)
   }
