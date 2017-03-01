@@ -29,7 +29,7 @@ object ReportService {
    * based on user preferences and the given offtime.
    */
   def calculateTimeRemovalFromLeaveTime(offtime: Long): Long =
-    User.currentUser filter (!_.subtractBreaks.get) map (_ => offtime) getOrElse 0L
+    User.currentUser filter (_.subtractBreaks.get) map (_ => offtime) getOrElse 0L
 
   /**
    * Processes the TaskItems in the given month defined by the offset (in days) from the current day,
