@@ -1,20 +1,15 @@
 package code
 package service
 
-import java.util.Date
-
 import code.commons.TimeUtils
 import code.model.{Task, User}
-import code.commons.TimeUtils.offsetToDailyInterval
 import code.service.TaskItemService.{IntervalQuery, getTaskItems}
 import code.util.ListToReducedMap._
 import com.github.nscala_time.time.Imports._
 import net.liftweb.common._
-import net.liftweb.http.S
 import net.liftweb.mapper.By
 import org.joda.time.{DateTime, Duration, Interval, LocalDate, _}
 
-import scala.collection.immutable.Seq
 import scala.language.postfixOps
 
 /**
@@ -36,47 +31,49 @@ object ReportService {
    * and returns data that can be used in time sheets.
    * @return a sequence of (dayOfMonth: String, arriveTime: String, leaveTime: String) tuples. Arrive and leave time strings are in hh:mm format.
    */
-  def getTimesheetData(i: IntervalQuery): List[(String,String,String,Double)] = {
+  def getTimesheetData(i: IntervalQuery): List[(Int,String,String,Double)] = {
     (for {
-      (d, ts) <- getTaskItems(i).sortBy(_.taskItem.start.get).groupBy(t => new LocalDate(t.taskItem.start.get))
+      (d, ts) <- getTaskItems(i) groupBy startDate mapValues (_ sortBy startDate)
       if trim(ts).nonEmpty
     } yield {
-      val breaks = calculateTimeRemovalFromLeaveTime(ts.find(_.task.isEmpty).map(_.duration).foldLeft(Duration.ZERO)(_ + _).getMillis)
+      val breaks = calculateTimeRemovalFromLeaveTime {
+        trim(ts) filter (_.task.isEmpty) map (_.duration.getMillis) sum
+      }
 
-      val last = ts.lastOption
       val first = ts.headOption
+      val last = ts.lastOption
 
       val arrive = if (first.isEmpty) {
         Left("-")
       } else {
-        val date = new Date(first.get.taskItem.start.get)
-        Right(date.getTime)
+        Right(first.get.taskItem.start.get)
       }
 
       val leave = if (last.isEmpty) {
         Left("-")
       } else {
         if (last.get.taskItem.task.get == 0) {
-          val date = new Date(last.get.taskItem.start.get - breaks)
-          Right(date.getTime)
+          Right(last.get.taskItem.start.get - breaks)
         } else {
           Left("...")
         }
       }
 
       def transform(e: Either[String, Long]) = e match {
-        case Right(time) => TimeUtils.format(TimeUtils.TIME_FORMAT, time)
+        case Right(time) => new LocalTime(time).toString(TimeUtils.TIME_FORMAT)
         case Left(err) => err
       }
 
       val sum = (arrive, leave) match {
-        case (Right(arriveTime), Right(leaveTime)) => (leaveTime - arriveTime) / (1000D * 60D * 60D)
+        case (Right(arriveTime), Right(leaveTime)) => (leaveTime - arriveTime) / (1000.0d * 60.0d * 60.0d)
         case _ => 0.0d
       }
 
-      (d.getDayOfMonth.toString, transform(arrive), transform(leave), sum)
+      (d.getDayOfMonth, transform(arrive), transform(leave), sum)
     }).toList.sortBy(_._1)
   }
+
+  def startDate(t: TaskItemWithDuration): LocalDate = new LocalDate(t.taskItem.start.get)
 
   type TaskSheet = Map[ReadablePartial, Map[TaskSheetItem,Duration]]
 
@@ -107,7 +104,7 @@ object ReportService {
   /**
    * Removes the Pause tasks from the begining and the end of the sequence.
    */
-  def trim(in: Seq[TaskItemWithDuration]): Seq[TaskItemWithDuration] = {
+  def trim(in: List[TaskItemWithDuration]): List[TaskItemWithDuration] = {
     in.dropWhile(_.taskItem.task.get == 0).reverse.dropWhile(_.taskItem.task.get == 0).reverse
   }
 }
