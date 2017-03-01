@@ -26,6 +26,7 @@ object I18n {
 
     private def generator(locale: Locale): DateTimePatternGenerator =
       DateTimePatternGenerator.getInstance(locale)
+
   }
 
 }

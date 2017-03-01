@@ -56,16 +56,13 @@ trait DateFunctions {
    */
   def selectedDay(in: NodeSeq): NodeSeq = {
     <form style="display:inline;">
-      <input class="input-sm" autocomplete="off" type="text" value={ currentFormattedDate } name="date" id="dateSelector" onchange="this.form.submit();"/>
+      <input type="hidden" name="date" value={ LocalDate.now().plusDays(offsetInDays).toString } />
+      <input class="form-control inline" autocomplete="off" type="text" value={ currentFormattedDate } id="dateSelector" onchange="this.form.submit();" />
       <script>
         $('#dateSelector').datepicker({ DatePicker.configuration.toString() });
       </script>
-      <span class="DayText">{ currentFormattedDayOfWeek }</span>
     </form>
   }
-
-  private def currentFormattedDayOfWeek: String =
-    DayOfWeek.of(LocalDate.now().plusDays(offsetInDays).getDayOfWeek).getDisplayName(TextStyle.FULL, S.locale)
 
   private def currentFormattedDate: String =
     DateTimeFormat.shortDate().withLocale(S.locale).print(LocalDate.now().plusDays(offsetInDays))
@@ -84,7 +81,7 @@ trait DateFunctions {
             "onChangeMonthYear" -> JsRaw(s"""
               function(year, month, inst) {
                 var format = ${conf.props.toMap.get("dateFormat").map(_.toJsCmd).getOrElse("")};
-                $$('#dateSelectorValue').val($$.datepicker.formatDate(format, new Date(year, month, 1)));
+                $$('#dateSelectorValue').val($$.datepicker.formatDate(format, new Date(year, month - 1, 1)));
                 $$('#dateSelector').closest('form').submit();
               }
             """)
