@@ -2,15 +2,13 @@ package code
 package snippet
 package mixin
 
-import java.time.{DayOfWeek, Month}
 import java.time.format.TextStyle
+import java.time.{DayOfWeek, Month}
 import java.util.Date
 
-import code.commons.TimeUtils
-import code.commons.TimeUtils.{ISO_DATE_FORMAT, deltaInDays, monthNamesShort, parse}
+import code.commons.TimeUtils.{ISO_DATE_FORMAT, deltaInDays, parse}
 import code.snippet.Params.parseMonths
 import code.util.{DatePicker, I18n, MonthPicker}
-import com.ibm.icu.text.DateTimePatternGenerator
 import net.liftweb.common.Box.box2Option
 import net.liftweb.http.S
 import net.liftweb.http.js.JE._
