@@ -20,7 +20,7 @@ protected class Picker {
   protected def firstDayOfWeek(l: Locale): Num =
     Num((WeekFields.of(l).getFirstDayOfWeek.getValue + 1) % 7 - 1)
 
-  protected def monthOfYear(s: TextStyle, l: Locale): JsArray =
+  protected def monthsOfYear(s: TextStyle, l: Locale): JsArray =
     JsArray(Month.values().toList map (_.getDisplayName(s, l)) map Str)
 
   protected def daysOfWeek(s: TextStyle, l: Locale): JsArray =
@@ -35,8 +35,8 @@ object DatePicker extends Picker {
     "dateFormat" -> Str(dateShortPattern(S.locale)),
     "maxDate" -> Num(0),
     "firstDay" -> firstDayOfWeek(S.locale),
-    "monthNames" -> monthOfYear(TextStyle.FULL, S.locale),
-    "monthNamesShort" -> monthOfYear(TextStyle.SHORT, S.locale),
+    "monthNames" -> monthsOfYear(TextStyle.FULL, S.locale),
+    "monthNamesShort" -> monthsOfYear(TextStyle.SHORT, S.locale),
     "dayNames" -> daysOfWeek(TextStyle.FULL, S.locale),
     "dayNamesShort" -> daysOfWeek(TextStyle.SHORT, S.locale),
     "dayNamesMin" -> daysOfWeek(TextStyle.NARROW, S.locale),

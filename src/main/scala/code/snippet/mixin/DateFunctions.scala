@@ -2,7 +2,7 @@ package code
 package snippet
 package mixin
 
-import java.time.DayOfWeek
+import java.time.{DayOfWeek, Month}
 import java.time.format.TextStyle
 import java.util.Date
 
@@ -100,12 +100,14 @@ trait DateFunctions {
     val months = parseMonths() getOrElse List(YearMonth.now())
     val pattern = DateTimeFormat.forPattern("yyyy. MM.")
 
+    val yearMonths = Month.values().toList map (m => m.getValue -> m.getDisplayName(TextStyle.SHORT, S.locale))
+
     val map =
       ".date-range-input-field [value]" #> { months mkString ";" } &
       ".date-range-input-display-from [data-value]" #> { months.headOption map pattern.print getOrElse "" } &
       ".date-range-input-display-to [data-value]" #> { months.tail.headOption map pattern.print getOrElse "" } &
-      ".month-selector" #> { ".month " #> { for (i <- 1 to 12) yield {
-        ".month [data-month]" #> i & ".month *" #> monthNamesShort(i - 1)
+      ".month-selector" #> { ".month " #> { yearMonths.map { case (num, text) =>
+        ".month [data-month]" #> num & ".month *" #> text
       }}}
 
     map(in)
@@ -114,7 +116,7 @@ trait DateFunctions {
   def currentYearMonth(in: NodeSeq): NodeSeq = {
     val generator = DateTimePatternGenerator.getInstance(S.locale)
     val pattern = generator.getBestPattern("yyyyMMMM")
-    <span>{ DateTimeFormat.forPattern(pattern).withLocale(S.locale).print(new YearMonth(LocalDate.now().plusDays(offsetInDays)))}</span>
+    <span>{ DateTimeFormat.forPattern(pattern).withLocale(S.locale).print(new YearMonth(LocalDate.now().plusDays(offsetInDays))) }</span>
   }
 
 }
