@@ -1,23 +1,20 @@
 package code
 package export
 
-import java.io._
-import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
+import java.io.{ByteArrayInputStream, ByteArrayOutputStream, _}
 
-import scala.collection.JavaConversions._
+import code.model._
+import code.service.ReportService
+import code.service.TaskItemService.IntervalQuery
+import code.util.I18n
+import net.liftweb.http.S
+import net.liftweb.util.Props
 import org.apache.poi.hssf.usermodel._
 import org.apache.poi.poifs.filesystem.POIFSFileSystem
 import org.apache.poi.ss.usermodel.Cell
-import code.commons.TimeUtils
-import code.model._
-import net.liftweb.util.Props
-import net.liftweb.http.S
-import code.service.ReportService
-import code.service.TaskItemService.IntervalQuery
-import com.ibm.icu.text.DateTimePatternGenerator
 import org.joda.time.{LocalDate, YearMonth}
-import org.joda.time.format.DateTimeFormat
+
+import scala.collection.JavaConversions._
 
 /**
  * Excel export features.
@@ -41,9 +38,7 @@ object ExcelExport {
       // parameters
       val userName = user.lastName + " " + user.firstName
 
-      val generator = DateTimePatternGenerator.getInstance(S.locale)
-      val pattern = generator.getBestPattern("yMMMM")
-      val monthText = DateTimeFormat.forPattern(pattern).withLocale(S.locale).print(yearMonth)
+      val monthText = I18n.Dates.printLongForm(yearMonth, S.locale)
       val dates = ReportService.getTimesheetData(IntervalQuery(yearMonth.toInterval))
 
       // spreadsheet to export

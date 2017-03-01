@@ -9,7 +9,7 @@ import java.util.Date
 import code.commons.TimeUtils
 import code.commons.TimeUtils.{ISO_DATE_FORMAT, deltaInDays, monthNamesShort, parse}
 import code.snippet.Params.parseMonths
-import code.util.{DatePicker, MonthPicker}
+import code.util.{DatePicker, I18n, MonthPicker}
 import com.ibm.icu.text.DateTimePatternGenerator
 import net.liftweb.common.Box.box2Option
 import net.liftweb.http.S
@@ -113,11 +113,8 @@ trait DateFunctions {
     map(in)
   }
 
-  def currentYearMonth(in: NodeSeq): NodeSeq = {
-    val generator = DateTimePatternGenerator.getInstance(S.locale)
-    val pattern = generator.getBestPattern("yMMMM")
-    <span>{ DateTimeFormat.forPattern(pattern).withLocale(S.locale).print(new YearMonth(LocalDate.now().plusDays(offsetInDays))) }</span>
-  }
+  def currentYearMonth(in: NodeSeq): NodeSeq =
+    <span>{ I18n.Dates.printLongForm(new YearMonth(LocalDate.now().plusDays(offsetInDays)), S.locale) }</span>
 
 }
 
