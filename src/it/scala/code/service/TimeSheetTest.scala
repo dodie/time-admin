@@ -7,9 +7,14 @@ import net.liftweb.common.{Box, Empty, Full}
 import net.liftweb.mapper.By
 import org.joda.time.{LocalDate, LocalTime, YearMonth}
 
+import scala.language.postfixOps
+
 class TimeSheetTest extends BaseSuite {
   describe("Time sheet data for any month") {
-    lazy val ts = ReportService.getTimesheetData(IntervalQuery(yearMonth(2016, 1).toInterval))
+    lazy val ts = {
+      User.currentUser map (_.subtractBreaks(true)) foreach (_.save())
+      ReportService.getTimesheetData(IntervalQuery(yearMonth(2016, 1).toInterval))
+    }
 
     it("should have log entries subtracted by the breaks") { withS(Empty, defaultUser()) {
       ts map { t => (t._1.toString, t._2, t._3, f"${t._4}%1.1f") } shouldBe List(
@@ -22,7 +27,7 @@ class TimeSheetTest extends BaseSuite {
 
   describe("Time sheet data for any month with disabled break subtraction") {
     lazy val ts = {
-      UserPreferenceService.setUserPreference(UserPreferenceNames.timesheetLeaveOfftime, "false")
+      User.currentUser map (_.subtractBreaks(false)) foreach (_.save())
       ReportService.getTimesheetData(IntervalQuery(yearMonth(2016, 1).toInterval))
     }
 
@@ -31,22 +36,6 @@ class TimeSheetTest extends BaseSuite {
         ("29", "08:30", "17:00", "8.5"),
         ("30", "17:00", "23:59", "7.0"),
         ("31", "00:00", "00:30", "0.5")
-      )
-    }}
-  }
-
-  describe("Time sheet data for any month with specified additional leave time") {
-    lazy val ts = {
-      UserPreferenceService.setUserPreference(UserPreferenceNames.timesheetLeaveOfftime, "false")
-      UserPreferenceService.setUserPreference(UserPreferenceNames.timesheetLeaveAdditionalTime, "-15")
-      ReportService.getTimesheetData(IntervalQuery(yearMonth(2016, 1).toInterval))
-    }
-
-    it("should have log entries subtracted by the given time") { withS(Empty, defaultUser()) {
-      ts map { t => (t._1.toString, t._2, t._3, f"${t._4}%1.2f") } shouldBe List(
-        ("29", "08:30", "16:45", "8.25"),
-        ("30", "17:00", "23:44", "6.75"),
-        ("31", "00:00", "00:15", "0.25")
       )
     }}
   }

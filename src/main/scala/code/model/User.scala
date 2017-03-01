@@ -1,16 +1,13 @@
 package code
 package model
 
-import net.liftweb.mapper._
 import net.liftweb.common._
-import scala.xml.NodeSeq
-
+import net.liftweb.http.S._
 import net.liftweb.http._
-import scala.xml.{NodeSeq, Node, Text, Elem}
+import net.liftweb.mapper._
 import net.liftweb.util.Helpers._
-import net.liftweb.common._
-import S._
-import net.liftweb.util.Helpers._
+
+import scala.xml.{Elem, NodeSeq}
 
 object User extends User with MetaMegaProtoUser[User] with ManyToMany {
   override def dbTableName = "users"
@@ -38,6 +35,12 @@ object User extends User with MetaMegaProtoUser[User] with ManyToMany {
             <span><lift:Msg id={fieldId} errorClass="edit_error_class"></lift:Msg></span>
           </div>
         </div>
+      } else if (field.isInstanceOf[SubtractBreaks[User]]) {
+        <div class="form-group">
+          <label for={fieldId}>{field.displayName}</label>
+          {form}
+          <span><lift:Msg id={fieldId} errorClass="edit_error_class"></lift:Msg></span>
+        </div>
       } else {
         <div class="form-group">
           <label for={fieldId}>{field.displayName}</label>
@@ -50,16 +53,16 @@ object User extends User with MetaMegaProtoUser[User] with ManyToMany {
 
   override def signupFields: List[FieldPointerType] = List(firstName, lastName, email, locale, password)
 
-  override def editFields: List[FieldPointerType] = List(firstName, lastName, email, locale)
+  override def editFields: List[FieldPointerType] = List(firstName, lastName, email, locale, subtractBreaks)
 
   override def signupXhtml(user: TheUserType) = {
-      (<form class="form-user" method="post" role="form" action={S.uri}>
-        <h1>{ S.?("sign.up") }</h1>
-        {localForm(user, false, signupFields)}
-        <div class="form-group">
-          <input class="btn btn-primary" type="submit" />
-        </div>
-    </form>)
+      <form class="form-user" method="post" role="form" action={S.uri}>
+        <h1>
+          {S.?("sign.up")}
+        </h1>{localForm(user, false, signupFields)}<div class="form-group">
+        <input class="btn btn-primary" type="submit"/>
+      </div>
+      </form>
   }
 
   // Why do I need to copy-paste this to enable validation?
@@ -327,5 +330,11 @@ object User extends User with MetaMegaProtoUser[User] with ManyToMany {
 
 class User extends MegaProtoUser[User] {
   def getSingleton = User
+
+  lazy val subtractBreaks: SubtractBreaks[User] = new SubtractBreaks(this)
+
+  class SubtractBreaks[T<:Mapper[T]](override val fieldOwner: T) extends MappedBoolean(fieldOwner) {
+    override def displayName: String = S.?("subtract.breaks")
+  }
 }
 

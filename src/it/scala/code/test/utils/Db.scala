@@ -26,7 +26,6 @@ object Db {
     Schemifier.schemify(true, Schemifier.infoF _, Role)
     Schemifier.schemify(true, Schemifier.infoF _, Task)
     Schemifier.schemify(true, Schemifier.infoF _, TaskItem)
-    Schemifier.schemify(true, Schemifier.infoF _, UserPreference)
     Schemifier.schemify(true, Schemifier.infoF _, UserRoles)
     Schemifier.schemify(true, Schemifier.infoF _, ExtSession)
   }
@@ -36,7 +35,6 @@ object Db {
     Role.bulkDelete_!!(mapper.DefaultConnectionIdentifier)
     Task.bulkDelete_!!(mapper.DefaultConnectionIdentifier)
     TaskItem.bulkDelete_!!(mapper.DefaultConnectionIdentifier)
-    UserPreference.bulkDelete_!!(mapper.DefaultConnectionIdentifier)
     UserRoles.bulkDelete_!!(mapper.DefaultConnectionIdentifier)
     ExtSession.bulkDelete_!!(mapper.DefaultConnectionIdentifier)
   }
