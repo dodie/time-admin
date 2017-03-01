@@ -2,8 +2,8 @@ package code
 package snippet
 package mixin
 
+import java.time.Month
 import java.time.format.TextStyle
-import java.time.{DayOfWeek, Month}
 import java.util.Date
 
 import code.commons.TimeUtils.{ISO_DATE_FORMAT, deltaInDays, parse}
@@ -11,7 +11,6 @@ import code.snippet.Params.parseMonths
 import code.util.{DatePicker, I18n, MonthPicker}
 import net.liftweb.common.Box.box2Option
 import net.liftweb.http.S
-import net.liftweb.http.js.JE._
 import net.liftweb.util.Helpers._
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.{LocalDate, YearMonth}
@@ -23,9 +22,6 @@ trait DateFunctions {
   private val PARAM_OFFSET = "offset"
   private val PARAM_DATE = "date"
 
-  /**
-   * Returns the day offset parameter.
-   */
   def offsetInDays: Int = {
     val offset = S.param(PARAM_OFFSET).map(_.toInt)
       .orElse(S.param(PARAM_DATE).map(s => deltaInDays(new Date(), parse(ISO_DATE_FORMAT, s))))
@@ -34,62 +30,27 @@ trait DateFunctions {
       .map(i => if (i > 0) 0 else i).getOrElse(0)
   }
 
-  /**
-   * Step to previous page.
-   */
   def pagingPrev(in: NodeSeq): NodeSeq = ("a [href]" #> s"?$PARAM_OFFSET=${offsetInDays - 1}") apply in
 
-  /**
-   * Step to next page.
-   */
   def pagingNext(in: NodeSeq): NodeSeq =
     if (offsetInDays + 1 > 0) ("a [title]" #> S.?("no_data")) apply in
     else ("a [href]" #> s"?$PARAM_OFFSET=${offsetInDays + 1}") apply in
 
-  /**
-   * Step to today's page.
-   */
   def pagingCurrent(in: NodeSeq): NodeSeq = ("a [href]" #> s"?$PARAM_OFFSET=0") apply in
 
-  /**
-   * Day selector component.
-   */
-  def selectedDay(in: NodeSeq): NodeSeq = {
+  def datePicker(in: NodeSeq): NodeSeq =
     <form style="display:inline;">
       <input type="hidden" name="date" value={ LocalDate.now().plusDays(offsetInDays).toString } />
-      <input class="form-control inline" autocomplete="off" type="text" value={ currentFormattedDate } id="dateSelector" onchange="this.form.submit();" />
-      <script>
-        $('#dateSelector').datepicker({ DatePicker.configuration.toString() });
-      </script>
+      <input class="date-picker form-control inline" autocomplete="off" type="text" />
+      <script>{DatePicker(".date-picker", "[name=date]", LocalDate.now().plusDays(offsetInDays)).toJsCmd}</script>
     </form>
-  }
 
-  private def currentFormattedDate: String =
-    DateTimeFormat.shortDate().withLocale(S.locale).print(LocalDate.now().plusDays(offsetInDays))
-
-  /**
-   * Month selector component.
-   */
-  def selectedMonth(in: NodeSeq): NodeSeq = {
-    <form style="display:inline;" class="monthSelector">
-      <input type="hidden" id="dateSelectorValue" name="date" value={ currentFormattedDate }/>
-      <div autocomplete="off" type="text" value={ currentFormattedDate } id="dateSelector" onchange="$(this).closest('form').submit();"></div>
-      <script>
-        $('#dateSelector').datepicker({
-          val conf = MonthPicker.configuration
-          (conf +* JsObj(
-            "onChangeMonthYear" -> JsRaw(s"""
-              function(year, month, inst) {
-                var format = ${conf.props.toMap.get("dateFormat").map(_.toJsCmd).getOrElse("")};
-                $$('#dateSelectorValue').val($$.datepicker.formatDate(format, new Date(year, month - 1, 1)));
-                $$('#dateSelector').closest('form').submit();
-              }
-            """)
-          )).toString()
-        });
-      </script>
+  def monthPicker(in: NodeSeq): NodeSeq =
+    <form style="display:inline;">
+      <input type="hidden" name="date" value={ LocalDate.now().plusDays(offsetInDays).toString } />
+      <input class="date-picker form-control inline" autocomplete="off" type="text" />
+      <script>{MonthPicker(".date-picker", "[name=date]", new YearMonth(LocalDate.now().plusDays(offsetInDays))).toJsCmd}</script>
     </form>
-  }
 
   def monthIntervalPicker(in: NodeSeq): NodeSeq = {
     val months = parseMonths() getOrElse List(YearMonth.now())
