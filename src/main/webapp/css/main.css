@@ -608,11 +608,7 @@ form.button {
 	max-width: 80%;
 }
 
-.taskName_info .tasksProjectName {
-	cursor: pointer;
-}
-
-.taskName_info .tasksTaskName {
+.taskName_info .taskFullName {
 	cursor: pointer;
 }
 
