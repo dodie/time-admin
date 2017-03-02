@@ -154,7 +154,7 @@ class TaskItemSnippet extends DateFunctions {
           ".taskColorIndicator [onclick]" #> onRowClick &
           ".tasksProjectName *" #> t.projectName &
           ".tasksTaskName *" #> t.task.name &
-          ".tasksTaskName [onclick]" #> onRowClick &
+          ".taskFullName [onclick]" #> onRowClick &
           ".tasksTaskDescription" #> PCDataXmlParser.apply(TaskService.getPreparedDescription(t.task))
         }
       } apply in

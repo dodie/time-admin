@@ -608,12 +608,10 @@ form.button {
 	max-width: 80%;
 }
 
-.taskName_info .tasksProjectName {
+.taskName_info .taskFullName {
 	cursor: pointer;
-}
-
-.taskName_info .tasksTaskName {
-	cursor: pointer;
+	color: inherit;
+	text-decoration: inherit;
 }
 
 .taskName_info input[name='newtaskname'] {

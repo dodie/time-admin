@@ -123,9 +123,11 @@
 											<input class="newTaskItemInput" type="text" name="timeoffset" value="" autocomplete="off" onfocus="this.value='';" onclick="arguments[0].stopPropagation();" onkeypress="return submitOnEnter(this, event)" placeholder="hh:mm"/>
 											<div class="taskColorIndicator">-&gt;</div>
 											<div class="taskName_info">
-												<span class="tasksProjectName"></span>
-												-
-												<span class="tasksTaskName"></span>
+												<a class="taskFullName">
+													<span class="tasksProjectName"></span>
+													-
+													<span class="tasksTaskName"></span>
+												</a>
 												<span style="display:none;" class="newtaskholder">
 													-
 													<input type="text" name="newtaskname" onkeypress="return submitOnEnter(this, event)"/>
