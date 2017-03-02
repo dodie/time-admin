@@ -71,6 +71,7 @@ object DatePicker {
       "startView" -> Num(0),
       "minViewMode" -> Num(0),
       "maxViewMode" -> Num(2),
+      "autoclose" -> JsTrue,
       "language" -> Str(S.locale.getLanguage)
     )
   }
@@ -115,6 +116,7 @@ object MonthPicker {
       "startView" -> Num(1),
       "minViewMode" -> Num(1),
       "maxViewMode" -> Num(2),
+      "autoclose" -> JsTrue,
       "language" -> Str(S.locale.getLanguage)
     )
   }
