@@ -610,6 +610,8 @@ form.button {
 
 .taskName_info .taskFullName {
 	cursor: pointer;
+	color: inherit;
+	text-decoration: inherit;
 }
 
 .taskName_info input[name='newtaskname'] {
