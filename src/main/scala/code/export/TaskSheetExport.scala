@@ -3,6 +3,7 @@ package code.export
 import code.model.User
 import code.service.ReportService
 import code.service.TaskItemService.IntervalQuery
+import code.util.{I18n, ISO}
 import code.util.TaskSheetUtils._
 import com.github.nscala_time.time.Imports._
 import com.norbitltd.spoiwo.model._
@@ -24,7 +25,7 @@ object TaskSheetExport {
     val ts = tasks(taskSheet)
 
     val userName = user.map(u => s"${u.lastName} ${u.firstName} ").getOrElse("")
-    val fullTitle = userName + title(i.interval, i.scale)
+    val fullTitle = userName + I18n.Dates.printLongForm(i.interval, S.locale)
 
     val columnWith = 0 -> (ds.length + 1)
 
@@ -46,7 +47,8 @@ object TaskSheetExport {
       style = styles.default
     ).convertAsXlsx()
 
-    (xlsx, s"tasksheet_${fullTitle.toLowerCase.replace(" ", "")}.xlsx")
+
+    (xlsx, s"tasksheet_${(userName + ISO.Dates.print(i.interval)).toLowerCase.replace(" ", "")}.xlsx")
   }
 
   def formatCell(d: ReadablePartial): Option[CellStyle] =

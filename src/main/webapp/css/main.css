@@ -32,6 +32,15 @@
 }
 
 /* -----
+ * Form Controls
+ * ----- */
+
+.form-control.inline {
+	display: inline;
+	width: auto;
+}
+
+/* -----
  * Login screen new
  * ----- */
 

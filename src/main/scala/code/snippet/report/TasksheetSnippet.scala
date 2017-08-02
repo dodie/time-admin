@@ -7,7 +7,7 @@ import code.service.UserService.nonAdmin
 import code.service.{ReportService, TaskSheetItem}
 import code.snippet.Params.{parseInterval, parseMonths, parseUser}
 import code.snippet.mixin.DateFunctions
-import code.util.TaskSheetUtils
+import code.util.{I18n, TaskSheetUtils}
 import code.util.TaskSheetUtils._
 import com.github.nscala_time.time.Imports._
 import net.liftweb.common.Box
@@ -38,7 +38,7 @@ class TasksheetSnippet extends DateFunctions {
 
   def title(in: NodeSeq): NodeSeq = {
     val i = parseInterval getOrElse IntervalQuery.thisMonth()
-    <span>{TaskSheetUtils.title(i.interval, i.scale)}</span>
+    <span>{I18n.Dates.printLongForm(i.interval, S.locale)}</span>
   }
 
   def dimensionSelector(in: NodeSeq): NodeSeq = {

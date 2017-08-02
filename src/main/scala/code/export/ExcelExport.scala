@@ -1,21 +1,20 @@
 package code
 package export
 
-import java.io._
-import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
+import java.io.{ByteArrayInputStream, ByteArrayOutputStream, _}
 
-import scala.collection.JavaConversions._
+import code.model._
+import code.service.ReportService
+import code.service.TaskItemService.IntervalQuery
+import code.util.I18n
+import net.liftweb.http.S
+import net.liftweb.util.Props
 import org.apache.poi.hssf.usermodel._
 import org.apache.poi.poifs.filesystem.POIFSFileSystem
 import org.apache.poi.ss.usermodel.Cell
-import code.commons.TimeUtils
-import code.model._
-import net.liftweb.util.Props
-import net.liftweb.http.S
-import code.service.ReportService
-import code.service.TaskItemService.IntervalQuery
-import org.joda.time.YearMonth
+import org.joda.time.{LocalDate, YearMonth}
+
+import scala.collection.JavaConversions._
 
 /**
  * Excel export features.
@@ -29,6 +28,7 @@ object ExcelExport {
   def exportTimesheet(user: User, offset: Int) = {
     var fos: ByteArrayOutputStream = null;
     var array: Array[Byte] = null
+    val yearMonth = new YearMonth(LocalDate.now().plusDays(offset))
     try {
 
       // template
@@ -37,8 +37,9 @@ object ExcelExport {
 
       // parameters
       val userName = user.lastName + " " + user.firstName
-      val monthText = TimeUtils.currentYear(offset) + " " + TimeUtils.monthNumberToText(TimeUtils.currentMonth(offset))
-      val dates = ReportService.getTimesheetData(IntervalQuery(new YearMonth(TimeUtils.currentYear(offset), TimeUtils.currentMonth(offset) + 1).toInterval))
+
+      val monthText = I18n.Dates.printLongForm(yearMonth, S.locale)
+      val dates = ReportService.getTimesheetData(IntervalQuery(yearMonth.toInterval))
 
       // spreadsheet to export
       val sheet = workbook.getSheet("Timesheet")
@@ -89,7 +90,7 @@ object ExcelExport {
     }
 
     val contentStream = new ByteArrayInputStream(array)
-    val name = "timesheet_" + TimeUtils.currentYear(offset.toInt) + "-" + (TimeUtils.currentMonth(offset.toInt) + 1) + ".xls";
+    val name = s"timesheet_${yearMonth.toString}.xls";
 
     (contentStream, name)
   }
