@@ -22,6 +22,7 @@ import net.liftweb.mapper._
 import net.liftweb.sitemap.Loc._
 import net.liftweb.sitemap._
 import net.liftweb.util._
+import code.api.Endpoints
 
 
 
@@ -233,5 +234,7 @@ class Boot extends Loggable {
           case _ => Full(JE.JsRaw(jsNotice).cmd)
         }
       ))
+      
+    LiftRules.dispatch.append(Endpoints)
   }
 }
