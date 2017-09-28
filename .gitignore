@@ -32,3 +32,4 @@ projectFilesBackup
 /src/main/resources/props/suliatis.props
 .cache-main
 .cache-tests
+/bin/
