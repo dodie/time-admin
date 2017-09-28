@@ -30,3 +30,5 @@ projectFilesBackup
 .ensime
 .ensime_cache
 /src/main/resources/props/suliatis.props
+.cache-main
+.cache-tests
