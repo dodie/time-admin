@@ -57,8 +57,7 @@ object Endpoints extends RestHelper {
       val end = date(endYear, endMonth, endDay)
       val intervalQuery = IntervalQuery(interval(start, end))
       
-      val userId = 1L// TODO: from actual user
-      val user = User.find(By(User.id, userId))
+      val user = User.find(By(User.email, "default@tar.hu")) // TODO: user
       
       decompose(
           TaskItemService.getTaskItems(intervalQuery, user)
@@ -67,28 +66,25 @@ object Endpoints extends RestHelper {
     
     //curl -X POST -H "Content-Type: application/json" -d '{"taskId":"2", "time":"1506601655521"}' http://localhost:8080/api/taskitems
     case "api" :: "taskitems" :: Nil JsonPost ((jsonData, req)) => {
-      val userId = 1L// TODO: from actual user
       val taskId = getLong(jsonData, "taskId")
       val time = getLong(jsonData, "time")
       
-      TaskItemService.insertTaskItem(taskId, time, User.find(By(User.id, userId)))
+      TaskItemService.insertTaskItem(taskId, time, User.find(By(User.email, "default@tar.hu"))) // TODO: user
       Some(JObject(JField("status", JString("OK"))))
     }
     
     //curl -X PUT -H "Content-Type: application/json" -d '{"taskId":"2", "time":"1506601655521"}' http://localhost:8080/api/taskitems/123
     case "api" :: "taskitems" :: AsLong(taskItemId) :: Nil JsonPut ((jsonData, req)) => {
-      val userId = 1L // TODO: from actual user
       val taskId = getLong(jsonData, "taskId")
       val time = getLong(jsonData, "time")
       
-      TaskItemService.editTaskItem(taskItemId, taskId, time, false, User.find(By(User.id, userId)))
+      TaskItemService.editTaskItem(taskItemId, taskId, time, false, User.find(By(User.email, "default@tar.hu"))) // TODO: user
       Some(JObject(JField("status", JString("OK"))))
     }
     
     //curl -X DELETE http://localhost:8080/api/taskitems/123
     case "api" :: "taskitems" :: AsLong(taskItemId) :: Nil JsonDelete req => {
-      val userId = 1L// TODO: from actual user
-      val user = User.find(By(User.id, userId))
+      val user = User.find(By(User.email, "default@tar.hu")) // TODO: user
       TaskItemService.deleteTaskItem(taskItemId, user)
       Some(JObject(JField("status", JString("OK"))))
     }

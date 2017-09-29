@@ -180,6 +180,11 @@ object TaskItemService {
    * The time value always converted to whole minutes.
    */
   def insertTaskItem(taskId: Long, time: Long, user: Box[User] = User.currentUser): Boolean = {
+
+    if (Task.find(By(Task.id, taskId)).isEmpty) {
+      throw new IllegalArgumentException("No task found with ID: " + taskId);
+    }
+
     // calculate insert time
     val insertTime = math.min(time, TimeUtils.currentTime)
 
@@ -204,6 +209,11 @@ object TaskItemService {
    * The time value always converted to whole minutes.
    */
   def editTaskItem(taskItemId: Long, taskId: Long, time: Long, split: Boolean = false, user: Box[User] = User.currentUser): Boolean = {
+
+    if (Task.find(By(Task.id, taskId)).isEmpty) {
+      throw new IllegalArgumentException("No task found with ID: " + taskId);
+    }
+
     // offset value that represents the given day
     val offset = math.abs(TimeUtils.getOffset(time)) * (-1)
 
