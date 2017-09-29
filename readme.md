@@ -10,6 +10,13 @@ Generate monthly timesheets from the collected data, that can be personalized wi
 an Excel template.
 
 
+Timeadmin API
+-------------
+If you are about to integrate your application with Timeadmin, check the
+[API Reference](https://github.com/dodie/time-admin/tree/master/api-reference.md) for
+detailed examples about the API.
+
+
 Contributing
 ------------
 Contributions are welcome! Please make sure to visit our
