@@ -235,6 +235,7 @@ class Boot extends Loggable {
         }
       ))
       
-    LiftRules.dispatch.append(Endpoints)
+    if (System.getenv("EXPOSE_TIMEADMIN_API") != null)
+      LiftRules.dispatch.append(Endpoints)
   }
 }
