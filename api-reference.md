@@ -79,7 +79,7 @@ GET /api/taskitems/[date-from]-[date-to]
 ----------------------------------------
 List all task items of the user for the given date interval.
 
-**_Important:_**: the endpoint is not feature complete, it is hard-coded to return the task items of the "default@tar.hu" user.
+**_Important:_**: the endpoint is not feature-complete, it is hard-coded to return the task items of the ```default@tar.hu``` user.
 
 
 **Example query:**
@@ -120,7 +120,7 @@ POST /api/taskitems
 -------------------
 Adds a new task item for the given user. The POST body has to contain the details of the new item in JSON format.
 
-**_Important:_**: the endpoint is not feature complete, it is hard-coded to return the task items of the "default@tar.hu" user.
+**_Important:_**: the endpoint is not feature-complete, it is hard-coded to return the task items of the ```default@tar.hu``` user.
 
 **Example:**
 ```
@@ -139,7 +139,7 @@ PUT /api/taskitems/[id]
 -----------------------
 Modifies the specified item. The body of the request has to contain the details of the item in JSON format.
 
-**_Important:_**: the endpoint is not feature complete, it is hard-coded to work with the task items of the "default@tar.hu" user.
+**_Important:_**: the endpoint is not feature-complete, it is hard-coded to work with the task items of the ```default@tar.hu``` user.
 
 **Example:**
 ```
@@ -158,7 +158,7 @@ DELETE /api/taskitems/[id]
 --------------------------
 Deletes the specified item.
 
-**_Important:_**: the endpoint is not feature complete, it is hard-coded to work with the task items of the "default@tar.hu" user.
+**_Important:_**: the endpoint is not feature-complete, it is hard-coded to work with the task items of the ```default@tar.hu``` user.
 
 **Example:**
 ```
