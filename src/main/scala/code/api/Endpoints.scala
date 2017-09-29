@@ -17,8 +17,19 @@ import org.joda.time.LocalDate
 import org.joda.time.Interval
 import com.github.nscala_time.time.Imports._
 
-// TODO: autentikáció, taskitemek szűkítése aktuális userre
-// TODO: hibakezelés, stb.
+/**
+ * A basic REST API to provide access to Timeadmin functions.
+ *
+ * The endpoint can be toggled via the EXPOSE_TIMEADMIN_API environment variable.
+ * By default, it's not enabled.
+ *
+ * TODO:
+ * Currently the API is Work In Progress, expect breaking changes.
+ *
+ * - Proper error handling is missing.
+ * - Authentication mechanism is missing.
+ *
+ */
 object Endpoints extends RestHelper {
   case class TaskDto(id: Long, taskName: String, projectName: String, fullName: String, color: Color)
   case class TaskItemDto(id: Long, taskId: Long, start: Long, duration: Long, user: Long)
