@@ -20,7 +20,7 @@ detailed examples about the API.
 Contributing
 ------------
 Contributions are welcome! Please make sure to visit our
-[contribution]((https://github.com/dodie/time-admin/tree/master/CONTRIBUTING.md)
+[contribution](https://github.com/dodie/time-admin/tree/master/CONTRIBUTING.md)
 and
 [development guide](https://github.com/dodie/time-admin/tree/master/development-guide.md)
 for details about the application.
