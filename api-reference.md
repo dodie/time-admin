@@ -6,7 +6,7 @@ The user can be specified with the ```ext_id``` cookie by supplying a special au
 
 There are two options to obtain such token:
 
-- Log in to Timeadmin, navigate to the *My Tokens* page and create a token, or
+- Sign in to Timeadmin, navigate to the *My Tokens* page and create a token, or
 - get it via an API call.
 
 For the latter, the API contains the following methods:
