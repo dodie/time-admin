@@ -181,7 +181,7 @@ object TaskItemService {
    */
   def insertTaskItem(taskId: Long, time: Long, user: Box[User] = User.currentUser): Boolean = {
 
-    if (Task.find(By(Task.id, taskId)).isEmpty) {
+    if (taskId != -1L && Task.find(By(Task.id, taskId)).isEmpty) {
       throw new IllegalArgumentException("No task found with ID: " + taskId);
     }
 
@@ -210,7 +210,7 @@ object TaskItemService {
    */
   def editTaskItem(taskItemId: Long, taskId: Long, time: Long, split: Boolean = false, user: Box[User] = User.currentUser): Boolean = {
 
-    if (Task.find(By(Task.id, taskId)).isEmpty) {
+    if (taskId != -1L && Task.find(By(Task.id, taskId)).isEmpty) {
       throw new IllegalArgumentException("No task found with ID: " + taskId);
     }
 
