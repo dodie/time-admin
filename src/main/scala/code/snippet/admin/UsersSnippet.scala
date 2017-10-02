@@ -56,6 +56,7 @@ class UsersSnippet {
     val menuItems = {
       if (!User.currentUser.isEmpty) {
         List(
+          ("/client/tokens", S.?("page.tokens")),
           ("/user_mgt/change_password", S.?("page.change_password")),
           ("/user_mgt/edit", S.?("page.my_profile")),
           ("/user_mgt/logout", S.?("page.logout"))
