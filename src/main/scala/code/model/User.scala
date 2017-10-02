@@ -239,6 +239,13 @@ object User extends User with MetaMegaProtoUser[User] with ManyToMany {
       </form>)
   }
 
+  def canLogin(username: String, password: String): Boolean = {
+    findUserByUserName(username) match {
+      case Full(user) if user.validated_? && user.testPassword(Some(password)) => return true
+      case _ => return false
+    }
+  }
+  
   override def login = {
     if (S.post_?) {
       S.param("username").
@@ -330,7 +337,7 @@ object User extends User with MetaMegaProtoUser[User] with ManyToMany {
 
 class User extends MegaProtoUser[User] {
   def getSingleton = User
-
+  
   lazy val subtractBreaks: SubtractBreaks[User] = new SubtractBreaks(this)
 
   class SubtractBreaks[T<:Mapper[T]](override val fieldOwner: T) extends MappedBoolean(fieldOwner) {

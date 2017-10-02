@@ -1,3 +1,59 @@
+Authentication and Authorization
+================================
+
+The methods in the API are available for authenticated users with CLIENT permission.
+The user can be specified with the ```ext_id``` cookie by supplying a special authentication token.
+
+There are two options to obtain such token:
+
+- Log in to Timeadmin, navigate to the *My Tokens* page and create a token, or
+- get it via an API call.
+
+For the latter, the API contains the following methods:
+
+
+POST /api/login
+---------------
+Post the login credentials in JSON format and get an authentication token.
+
+**Example:**
+
+```
+curl -X POST -H "Content-Type: application/json" -d '{"email":"default@tar.hu", "password":"abc123"}' <TIMEADMIN_URL>/api/login
+```
+
+**Example result:**
+
+```
+{
+  "token":"4HKL5MTDME40IS20CG2R5B5ARBPWZXXJ"
+}
+```
+
+
+POST /api/logout
+----------------
+Invalidate an authentication token.
+
+**Example:**
+
+```
+curl -X POST -H "Content-Type: application/json" -d '{"token":"4HKL5MTDME40IS20CG2R5B5ARBPWZXXJ"}' <TIMEADMIN_URL>/api/logout
+```
+
+**Example result:**
+
+```
+{
+  "status":"OK"
+}
+```
+
+
+Manage Task items
+=================
+
+
 GET /api/tasks
 --------------
 Get all available tasks in Timeadmin.
@@ -5,7 +61,7 @@ Get all available tasks in Timeadmin.
 **Example query:**
 
 ```
-curl http://time-admin.herokuapp.com/api/tasks
+curl -H 'Cookie: ext_id=<AUTH_TOKEN>;' <TIMEADMIN_URL>/api/tasks
 ```
 
 **Example result:**
@@ -84,7 +140,7 @@ List all task items of the user for the given date interval.
 
 **Example query:**
 ```
-curl http://time-admin.herokuapp.com/api/taskitems/20170601-20180602
+curl -H 'Cookie: ext_id=<AUTH_TOKEN>;' <TIMEADMIN_URL>/api/taskitems/20170601-20180602
 ```
 
 **Example result:**
@@ -124,7 +180,7 @@ Adds a new task item for the given user. The POST body has to contain the detail
 
 **Example:**
 ```
-curl -X POST -H "Content-Type: application/json" -d '{"taskId":"2", "time":"1506601655521"}' http://time-admin.herokuapp.com/api/taskitems
+curl -X POST -H "Content-Type: application/json" -H 'Cookie: ext_id=<AUTH_TOKEN>;' -d '{"taskId":"2", "time":"1506601655521"}' <TIMEADMIN_URL>/api/taskitems
 ```
 
 **Example result:**
@@ -143,7 +199,7 @@ Modifies the specified item. The body of the request has to contain the details 
 
 **Example:**
 ```
-curl -X PUT -H "Content-Type: application/json" -d '{"taskId":"2", "time":"1506601655521"}' http://time-admin.herokuapp.com/api/taskitems/123
+curl -X PUT -H "Content-Type: application/json" -H 'Cookie: ext_id=<AUTH_TOKEN>;' -d '{"taskId":"2", "time":"1506601655521"}' <TIMEADMIN_URL>/api/taskitems/123
 ```
 
 **Example result:**
@@ -162,7 +218,7 @@ Deletes the specified item.
 
 **Example:**
 ```
-curl -X DELETE http://time-admin.herokuapp.com/api/taskitems/123
+curl -X DELETE -H 'Cookie: ext_id=<AUTH_TOKEN>;' <TIMEADMIN_URL>/api/taskitems/123
 ```
 
 **Example result:**

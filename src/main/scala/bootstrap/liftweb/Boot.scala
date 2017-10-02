@@ -114,7 +114,8 @@ class Boot extends Loggable {
       Menu(S ? "page.tasks") / "client" / "tasks" >> If(clientUser _, S ? "no_permission"),
       Menu(S ? "page.timesheet") / "report" / "timesheet" >> If(clientUser _, S ? "no_permission"),
       Menu(S ? "page.tasksheet") / "report" / "tasksheet" >> If(clientUser _, S ? "no_permission"),
-
+      Menu(S ? "page.tokens") / "client" / "tokens" >> If(clientUser _, S ? "no_permission"),
+      
       // admin pages
       Menu(S ? "page.projects") / "admin" / "projects" >> If(adminUser _, S ? "no_permission"),
       Menu(S ? "page.users") / "admin" / "users" >> If(adminUser _, S ? "no_permission"),

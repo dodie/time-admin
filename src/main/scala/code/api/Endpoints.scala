@@ -16,18 +16,22 @@ import net.liftweb.mapper.By
 import org.joda.time.LocalDate
 import org.joda.time.Interval
 import com.github.nscala_time.time.Imports._
+import net.liftweb.common.Box
+import code.model.ExtSession
 
 /**
  * A basic REST API to provide access to Timeadmin functions.
  *
  * The endpoint can be toggled via the EXPOSE_TIMEADMIN_API environment variable.
  * By default, it's not enabled.
+ * 
+ * @see https://github.com/dodie/time-admin/blob/master/api-reference.md
  *
  * TODO:
  * Currently the API is Work In Progress, expect breaking changes.
  *
  * - Proper error handling is missing.
- * - Authentication mechanism is missing.
+ * - Return 403 if invalid user supplied.
  *
  */
 object Endpoints extends RestHelper {
@@ -38,55 +42,83 @@ object Endpoints extends RestHelper {
     (jsonData \ name).asInstanceOf[JString].values.toLong
   }
   
+  def getString(jsonData: JValue, name: String) = {
+    (jsonData \ name).asInstanceOf[JString].values
+  }
+  
+  val OK_RESPONSE = Some(JObject(JField("status", JString("OK"))))
+  val ERROR_RESPONSE = Some(JObject(JField("status", JString("ERROR"))))
+  
   val dateRange = """(\d\d\d\d)(\d\d)(\d\d)-(\d\d\d\d)(\d\d)(\d\d)""".r
   
   def date(year: String, monthOfYear: String, dayOfMonth: String): LocalDate = new LocalDate(year.toInt, monthOfYear.toInt, dayOfMonth.toInt)
   def interval(s : LocalDate, e:LocalDate) = new Interval(s.toInterval.start, e.toInterval.end)
   
+  def user(): Box[User] = {
+    if (User.currentUser.isEmpty) {
+      println("returning dummy")
+      User.find(By(User.email, "default@tar.hu")) // TODO: remove this
+    } else {
+      println("returning valid")
+      User.currentUser
+    }
+  }
+  
   serve {
-    //curl http://localhost:8080/api/tasks
+    case "api" :: "login" :: Nil JsonPost ((jsonData, req)) => {
+      val email = getString(jsonData, "email")
+      val password = getString(jsonData, "password")
+      
+      if (User.canLogin(email, password)) {
+        val extSession = ExtSession.create.userId(user.openOrThrowException("Current user must be defined!").userIdAsString).saveMe
+    	  Some(JObject(JField("token", JString(extSession.cookieId.get))))
+      } else {
+        ERROR_RESPONSE
+      }
+    }
+    
+    case "api" :: "logout" :: Nil JsonPost ((jsonData, req)) => {
+      val token = getString(jsonData, "token")
+      
+      ExtSession.find(By(ExtSession.cookieId, token)).foreach(_.delete_!)
+      OK_RESPONSE
+    }
+    
     case "api" :: "tasks" :: Nil JsonGet req => {
       decompose(
           TaskService.getAllActiveTasks
             .map(task => TaskDto(task.task.id.get, task.taskName, task.projectName, task.fullName, task.color)))
     }
     
-    //curl http://localhost:8080/api/taskitems/20170601-20180602
     case "api" :: "taskitems" :: dateRange(startYear, startMonth, startDay, endYear, endMonth, endDay) :: Nil JsonGet req => {
       val start = date(startYear, startMonth, startDay)
       val end = date(endYear, endMonth, endDay)
       val intervalQuery = IntervalQuery(interval(start, end))
-      
-      val user = User.find(By(User.email, "default@tar.hu")) // TODO: user
       
       decompose(
           TaskItemService.getTaskItems(intervalQuery, user)
             .map(taskItem => TaskItemDto(taskItem.taskItem.id.get, taskItem.taskItem.task.get, taskItem.taskItem.start.get, taskItem.duration.getMillis, taskItem.taskItem.user.get)))
     }
     
-    //curl -X POST -H "Content-Type: application/json" -d '{"taskId":"2", "time":"1506601655521"}' http://localhost:8080/api/taskitems
     case "api" :: "taskitems" :: Nil JsonPost ((jsonData, req)) => {
       val taskId = getLong(jsonData, "taskId")
       val time = getLong(jsonData, "time")
       
-      TaskItemService.insertTaskItem(taskId, time, User.find(By(User.email, "default@tar.hu"))) // TODO: user
-      Some(JObject(JField("status", JString("OK"))))
+      TaskItemService.insertTaskItem(taskId, time, user)
+      OK_RESPONSE
     }
     
-    //curl -X PUT -H "Content-Type: application/json" -d '{"taskId":"2", "time":"1506601655521"}' http://localhost:8080/api/taskitems/123
     case "api" :: "taskitems" :: AsLong(taskItemId) :: Nil JsonPut ((jsonData, req)) => {
       val taskId = getLong(jsonData, "taskId")
       val time = getLong(jsonData, "time")
       
-      TaskItemService.editTaskItem(taskItemId, taskId, time, false, User.find(By(User.email, "default@tar.hu"))) // TODO: user
-      Some(JObject(JField("status", JString("OK"))))
+      TaskItemService.editTaskItem(taskItemId, taskId, time, false, user)
+      OK_RESPONSE
     }
     
-    //curl -X DELETE http://localhost:8080/api/taskitems/123
     case "api" :: "taskitems" :: AsLong(taskItemId) :: Nil JsonDelete req => {
-      val user = User.find(By(User.email, "default@tar.hu")) // TODO: user
       TaskItemService.deleteTaskItem(taskItemId, user)
-      Some(JObject(JField("status", JString("OK"))))
+      OK_RESPONSE
     }
   }
 }
