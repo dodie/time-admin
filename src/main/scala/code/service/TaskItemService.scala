@@ -109,7 +109,7 @@ object TaskItemService {
 
     if (list.isEmpty) {
       // if the result is empty, then return a list that contains only a Pause item
-      List(TaskItemWithDuration(TaskItem.create.user(user).start(query.interval.startMillis + 1), Nil, 0 millis))
+      List(TaskItemWithDuration(TaskItem.create.user(user).task(-1).start(query.interval.startMillis + 1), Nil, 0 millis))
     } else {
       list
     }

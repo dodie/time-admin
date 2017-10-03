@@ -150,7 +150,7 @@ It returns a dummy taskitem if there are no items found for the specified interv
 [
   {
     "id":-1,
-    "taskId":0,
+    "taskId":-1,
     "start":1496268000001,
     "duration":0,
     "user":1
