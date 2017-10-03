@@ -25,7 +25,6 @@ class TokenSnippet {
         Reload
       })
     } apply in
-    
   }
   
   def add(in: NodeSeq): NodeSeq = {
