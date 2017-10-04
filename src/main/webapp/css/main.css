@@ -826,6 +826,14 @@ form.button {
 	padding: 0;
 }
 
+.timesheetTable tfoot {
+	border-top: 3px solid #b1b1b1;
+}
+
+.timesheetTable .table-footer input {
+	width: 100%;
+}
+
 .timesheetTable .QuickHelp[data-hint]:hover:after {
 	width: 200px;
 }

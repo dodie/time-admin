@@ -1,3 +1,4 @@
+// Chart
 $(document).ready(function() {
 	var labels = $(".day").map(function(){return this.innerHTML + ".";});
 	var data = $(".sum").map(function(){return this.innerHTML.replace(",", ".");}).filter(function(n,v) {return !isNaN(v);});
@@ -38,3 +39,30 @@ $(document).ready(function() {
 		});
 	}
 });
+
+// Expected workhours calculator
+$(document).ready(function() {
+	var dayCount = 0;
+	var sum = 0;
+	$("#timesheet-holder tr > td.sum").each(function() {
+		var val = parseFloat(this.textContent, 10);
+		if (val != 0) dayCount += 1;
+		sum += parseFloat(this.textContent, 10);
+	});
+	function update() {
+		$(".dayCount").val(dayCount);
+		var expected = dayCount * parseFloat($(".workhours").val(), 10);
+		var diff = sum - expected;
+		var color = diff > 0 ? "green" : "red";
+		$(".expected").html(expected);
+	
+		$(".diff").html(diff);
+		$(".diff").css("color", color);
+	}
+	$("#timesheet-holder").on("change",".dayCount, .workhours",function(){
+		dayCount = parseInt($(".dayCount").val(),10);
+		update();
+	});
+	update();
+});
+

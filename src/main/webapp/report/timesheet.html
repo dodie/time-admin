@@ -37,10 +37,34 @@
 						</tbody>
 						<tfoot>
 							<tr class="table-footer">
-								<td>Σ</td>
+								<td><lift:loc>timesheet.calculator.sum</lift:loc></td>
 								<td></td>
 								<td></td>
 								<td class="sumtotal"></td>
+							</tr>
+							<tr class="table-footer">
+								<td><lift:loc>timesheet.calculator.days</lift:loc></td>
+								<td></td>
+								<td></td>
+								<td><input type="number" class="dayCount"/></td>
+							</tr>
+							<tr class="table-footer">
+								<td><lift:loc>timesheet.calculator.workhours</lift:loc></td>
+								<td></td>
+								<td></td>
+								<td><input type="number" class="workhours" value="8"/></td>
+							</tr>
+							<tr class="table-footer">
+								<td><lift:loc>timesheet.calculator.expected_summary</lift:loc></td>
+								<td></td>
+								<td></td>
+								<td><span class="expected"></span></td>
+							</tr>
+							<tr class="table-footer">
+								<td><lift:loc>timesheet.calculator.diff</lift:loc></td>
+								<td></td>
+								<td></td>
+								<td><span class="diff"></span></td>
 							</tr>
 						</tfoot>
 					</table>
