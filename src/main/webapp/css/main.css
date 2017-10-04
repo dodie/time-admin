@@ -381,6 +381,10 @@ input[type="text"] {
 	margin-top: 10px;
 }
 
+.date-selectors .date-picker.form-control.inline {
+	text-align: center;
+}
+
 .tasksPage .date-selectors {
 	text-align: right;
 }

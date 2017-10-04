@@ -44,7 +44,7 @@ object DatePicker {
   )
 
   private def configuration(input: String, date: LocalDate): JsObj = {
-    val format = Localization.pattern("yyMd")
+    val format = Localization.pattern("yyyyMMdd")
 
     JsObj(
       "format" -> JsObj(
@@ -90,7 +90,7 @@ object MonthPicker {
   )
 
   private def configuration(input: String, date: YearMonth): JsObj = {
-    val format = Localization.pattern("yyM")
+    val format = Localization.pattern("yyyyMM")
 
     JsObj(
       "format" -> JsObj(
