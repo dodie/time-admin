@@ -57,7 +57,7 @@ object Endpoints extends RestHelper with ClientsOnly with HandlingErrors {
         
         if (User.canLogin(email, password)) {
           val userIdAsString = User.find(By(User.email, email)).openOrThrowException("Current user must be defined!").userIdAsString
-          val extSession = ExtSession.create.userId(userIdAsString).saveMe
+          val extSession = ExtSession.create.userId(userIdAsString).tokentype(ExtSession.TOKEN_TYPE_CLIENT_API).saveMe
             Some(JObject(JField("token", JString(extSession.cookieId.get))))
         } else {
           ERROR_RESPONSE

@@ -19,6 +19,7 @@ class TokenSnippet {
     
     ".token" #> sessions.map { session =>
       ".token-cookieId *" #> session.cookieId.get &
+      ".token-type *" #> session.tokentype.get &
       ".token-expiration *" #> session.expiration.get &
       ".token-remove [onClick]" #> SHtml.onEvent(s => {
         session.delete_!
