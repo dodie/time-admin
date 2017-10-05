@@ -22,12 +22,12 @@ import code.model.ExtSession
 /**
  * A basic REST API to provide access to Timeadmin functions.
  *
- * The endpoint can be toggled via the EXPOSE_TIMEADMIN_API environment variable.
+ * The API is Work-In-Progress. For now the endpoint can be toggled via the EXPOSE_TIMEADMIN_API environment variable.
  * By default, it's not enabled.
- * 
+ *
  * @see https://github.com/dodie/time-admin/blob/master/api-reference.md
  */
-object Endpoints extends RestHelper with ClientsOnly {
+object Endpoints extends RestHelper with ClientsOnly with HandlingErrors {
   case class TaskDto(id: Long, taskName: String, projectName: String, fullName: String, color: Color)
   case class TaskItemDto(id: Long, taskId: Long, start: Long, duration: Long, user: Long)
 
@@ -50,63 +50,68 @@ object Endpoints extends RestHelper with ClientsOnly {
   def user(): Box[User] = User.currentUser
   
   serve {
-    case "api" :: "login" :: Nil JsonPost ((jsonData, req)) => {
-      val email = getString(jsonData, "email")
-      val password = getString(jsonData, "password")
-      
-      if (User.canLogin(email, password)) {
-        val extSession = ExtSession.create.userId(user.openOrThrowException("Current user must be defined!").userIdAsString).saveMe
-    	  Some(JObject(JField("token", JString(extSession.cookieId.get))))
-      } else {
-        ERROR_RESPONSE
+    handlingErrors {
+      case "api" :: "login" :: Nil JsonPost ((jsonData, req)) => {
+        val email = getString(jsonData, "email")
+        val password = getString(jsonData, "password")
+        
+        if (User.canLogin(email, password)) {
+          val userIdAsString = User.find(By(User.email, email)).openOrThrowException("Current user must be defined!").userIdAsString
+          val extSession = ExtSession.create.userId(userIdAsString).saveMe
+            Some(JObject(JField("token", JString(extSession.cookieId.get))))
+        } else {
+          ERROR_RESPONSE
+        }
       }
-    }
-    
-    case "api" :: "logout" :: Nil JsonPost ((jsonData, req)) => {
-      val token = getString(jsonData, "token")
       
-      ExtSession.find(By(ExtSession.cookieId, token)).foreach(_.delete_!)
-      OK_RESPONSE
+      case "api" :: "logout" :: Nil JsonPost ((jsonData, req)) => {
+        val token = getString(jsonData, "token")
+        
+        ExtSession.find(By(ExtSession.cookieId, token)).foreach(_.delete_!)
+        OK_RESPONSE
+      }
     }
   }
   
   serve {
-    clientsOnly {
-      case "api" :: "tasks" :: Nil JsonGet req => {
-        decompose(
-            TaskService.getAllActiveTasks
-              .map(task => TaskDto(task.task.id.get, task.taskName, task.projectName, task.fullName, task.color)))
-      }
-      
-      case "api" :: "taskitems" :: dateRange(startYear, startMonth, startDay, endYear, endMonth, endDay) :: Nil JsonGet req => {
-        val start = date(startYear, startMonth, startDay)
-        val end = date(endYear, endMonth, endDay)
-        val intervalQuery = IntervalQuery(interval(start, end))
+    handlingErrors {
+      clientsOnly {
+        case "api" :: "tasks" :: Nil JsonGet req => {
+          decompose(
+              TaskService.getAllActiveTasks
+                .map(task => TaskDto(task.task.id.get, task.taskName, task.projectName, task.fullName, task.color)))
+        }
         
-        decompose(
-            TaskItemService.getTaskItems(intervalQuery, user)
-              .map(taskItem => TaskItemDto(taskItem.taskItem.id.get, taskItem.taskItem.task.get, taskItem.taskItem.start.get, taskItem.duration.getMillis, taskItem.taskItem.user.get)))
-      }
-      
-      case "api" :: "taskitems" :: Nil JsonPost ((jsonData, req)) => {
-        val taskId = getLong(jsonData, "taskId")
-        val time = getLong(jsonData, "time")
+        case "api" :: "taskitems" :: dateRange(startYear, startMonth, startDay, endYear, endMonth, endDay) :: Nil JsonGet req => {
+          val start = date(startYear, startMonth, startDay)
+          val end = date(endYear, endMonth, endDay)
+          val intervalQuery = IntervalQuery(interval(start, end))
+          
+          decompose(
+              TaskItemService.getTaskItems(intervalQuery, user)
+                .map(taskItem => TaskItemDto(taskItem.taskItem.id.get, taskItem.taskItem.task.get, taskItem.taskItem.start.get, taskItem.duration.getMillis, taskItem.taskItem.user.get)))
+        }
         
-        TaskItemService.insertTaskItem(taskId, time, user)
-        OK_RESPONSE
-      }
-      
-      case "api" :: "taskitems" :: AsLong(taskItemId) :: Nil JsonPut ((jsonData, req)) => {
-        val taskId = getLong(jsonData, "taskId")
-        val time = getLong(jsonData, "time")
+        case "api" :: "taskitems" :: Nil JsonPost ((jsonData, req)) => {
+          val taskId = getLong(jsonData, "taskId")
+          val time = getLong(jsonData, "time")
+          
+          TaskItemService.insertTaskItem(taskId, time, user)
+          OK_RESPONSE
+        }
         
-        TaskItemService.editTaskItem(taskItemId, taskId, time, false, user)
-        OK_RESPONSE
-      }
-      
-      case "api" :: "taskitems" :: AsLong(taskItemId) :: Nil JsonDelete req => {
-        TaskItemService.deleteTaskItem(taskItemId, user)
-        OK_RESPONSE
+        case "api" :: "taskitems" :: AsLong(taskItemId) :: Nil JsonPut ((jsonData, req)) => {
+          val taskId = getLong(jsonData, "taskId")
+          val time = getLong(jsonData, "time")
+          
+          TaskItemService.editTaskItem(taskItemId, taskId, time, false, user)
+          OK_RESPONSE
+        }
+        
+        case "api" :: "taskitems" :: AsLong(taskItemId) :: Nil JsonDelete req => {
+          TaskItemService.deleteTaskItem(taskItemId, user)
+          OK_RESPONSE
+        }
       }
     }
   }
