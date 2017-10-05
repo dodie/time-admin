@@ -50,26 +50,28 @@ object Endpoints extends RestHelper with ClientsOnly {
   def user(): Box[User] = User.currentUser
   
   serve {
+    case "api" :: "login" :: Nil JsonPost ((jsonData, req)) => {
+      val email = getString(jsonData, "email")
+      val password = getString(jsonData, "password")
+      
+      if (User.canLogin(email, password)) {
+        val extSession = ExtSession.create.userId(user.openOrThrowException("Current user must be defined!").userIdAsString).saveMe
+    	  Some(JObject(JField("token", JString(extSession.cookieId.get))))
+      } else {
+        ERROR_RESPONSE
+      }
+    }
+    
+    case "api" :: "logout" :: Nil JsonPost ((jsonData, req)) => {
+      val token = getString(jsonData, "token")
+      
+      ExtSession.find(By(ExtSession.cookieId, token)).foreach(_.delete_!)
+      OK_RESPONSE
+    }
+  }
+  
+  serve {
     clientsOnly {
-      case "api" :: "login" :: Nil JsonPost ((jsonData, req)) => {
-        val email = getString(jsonData, "email")
-        val password = getString(jsonData, "password")
-        
-        if (User.canLogin(email, password)) {
-          val extSession = ExtSession.create.userId(user.openOrThrowException("Current user must be defined!").userIdAsString).saveMe
-      	  Some(JObject(JField("token", JString(extSession.cookieId.get))))
-        } else {
-          ERROR_RESPONSE
-        }
-      }
-      
-      case "api" :: "logout" :: Nil JsonPost ((jsonData, req)) => {
-        val token = getString(jsonData, "token")
-        
-        ExtSession.find(By(ExtSession.cookieId, token)).foreach(_.delete_!)
-        OK_RESPONSE
-      }
-      
       case "api" :: "tasks" :: Nil JsonGet req => {
         decompose(
             TaskService.getAllActiveTasks
