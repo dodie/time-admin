@@ -34,8 +34,14 @@ displayed on the login page.
 
 
 ## Step 4. Make your changes
-Make your changes and verify that the application works correctly. Add tests for your modifications where possible.
-Make the whole test suite pass (Step 2).
+Make your changes then verify that the application works correctly and pass the test suite (Step 2).
+
+Please use the following guidelines:
+
+- Make sure to respect existing formatting conventions. (Follow the same coding style as the code that you are modifying.)
+- Update documentation for the change you are making.
+- Add tests for your modifications where possible.
+- Write descriptive commit messages and add each logical change to a separate commit to make code review easier.
 
 
 ## Step 5. Push and [submit a Pull Request](https://github.com/dodie/scott/compare/)
