@@ -135,9 +135,6 @@ GET /api/taskitems/[date-from]-[date-to]
 ----------------------------------------
 List all task items of the user for the given date interval.
 
-**_Important:_**: the endpoint is not feature-complete, it is hard-coded to return the task items of the ```default@tar.hu``` user.
-
-
 **Example query:**
 ```
 curl -H 'Cookie: ext_id=<AUTH_TOKEN>;' <TIMEADMIN_URL>/api/taskitems/20170601-20180602
@@ -176,8 +173,6 @@ POST /api/taskitems
 -------------------
 Adds a new task item for the given user. The POST body has to contain the details of the new item in JSON format.
 
-**_Important:_**: the endpoint is not feature-complete, it is hard-coded to return the task items of the ```default@tar.hu``` user.
-
 **Example:**
 ```
 curl -X POST -H "Content-Type: application/json" -H 'Cookie: ext_id=<AUTH_TOKEN>;' -d '{"taskId":"2", "time":"1506601655521"}' <TIMEADMIN_URL>/api/taskitems
@@ -186,7 +181,8 @@ curl -X POST -H "Content-Type: application/json" -H 'Cookie: ext_id=<AUTH_TOKEN>
 **Example result:**
 ```
 {
-  "status":"OK"
+  "status":"OK",
+  "id":"<NEW-TASKITEM-ID>"
 }
 ```
 
@@ -194,8 +190,6 @@ curl -X POST -H "Content-Type: application/json" -H 'Cookie: ext_id=<AUTH_TOKEN>
 PUT /api/taskitems/[id]
 -----------------------
 Modifies the specified item. The body of the request has to contain the details of the item in JSON format.
-
-**_Important:_**: the endpoint is not feature-complete, it is hard-coded to work with the task items of the ```default@tar.hu``` user.
 
 **Example:**
 ```
@@ -213,8 +207,6 @@ curl -X PUT -H "Content-Type: application/json" -H 'Cookie: ext_id=<AUTH_TOKEN>;
 DELETE /api/taskitems/[id]
 --------------------------
 Deletes the specified item.
-
-**_Important:_**: the endpoint is not feature-complete, it is hard-coded to work with the task items of the ```default@tar.hu``` user.
 
 **Example:**
 ```

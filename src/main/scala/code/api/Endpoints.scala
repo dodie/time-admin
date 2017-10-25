@@ -40,7 +40,10 @@ object Endpoints extends RestHelper with ClientsOnly with HandlingErrors {
   }
   
   val OK_RESPONSE = Some(JObject(JField("status", JString("OK"))))
+  def OK_RESPONSE_WITH_ID(id: Long) = Some(JObject(JField("status", JString("OK")), JField("id", JString(id.toString()))))
   val ERROR_RESPONSE = Some(JObject(JField("status", JString("ERROR"))))
+  
+  
   
   val dateRange = """(\d\d\d\d)(\d\d)(\d\d)-(\d\d\d\d)(\d\d)(\d\d)""".r
   
@@ -96,8 +99,8 @@ object Endpoints extends RestHelper with ClientsOnly with HandlingErrors {
           val taskId = getLong(jsonData, "taskId")
           val time = getLong(jsonData, "time")
           
-          TaskItemService.insertTaskItem(taskId, time, user)
-          OK_RESPONSE
+          val taskItem = TaskItemService.insertTaskItem(taskId, time, user)
+          OK_RESPONSE_WITH_ID(taskItem.id.get)
         }
         
         case "api" :: "taskitems" :: AsLong(taskItemId) :: Nil JsonPut ((jsonData, req)) => {

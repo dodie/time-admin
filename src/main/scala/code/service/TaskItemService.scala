@@ -179,7 +179,7 @@ object TaskItemService {
    *
    * The time value always converted to whole minutes.
    */
-  def insertTaskItem(taskId: Long, time: Long, user: Box[User] = User.currentUser): Boolean = {
+  def insertTaskItem(taskId: Long, time: Long, user: Box[User] = User.currentUser): TaskItem = {
 
     if (taskId != -1L && Task.find(By(Task.id, taskId)).isEmpty) {
       throw new IllegalArgumentException("No task found with ID: " + taskId);
@@ -192,7 +192,9 @@ object TaskItemService {
     TaskItem.findAll(By(TaskItem.user, user.openOrThrowException("Current user must be defined!")), By(TaskItem.start, insertTime)).foreach(_.delete_!)
 
     // create item
-    TaskItem.create.task(taskId).user(user.openOrThrowException("Current user must be defined!")).start(insertTime).save
+    val taskItem = TaskItem.create.task(taskId).user(user.openOrThrowException("Current user must be defined!")).start(insertTime)
+    taskItem.save
+    taskItem
   }
 
   /**
