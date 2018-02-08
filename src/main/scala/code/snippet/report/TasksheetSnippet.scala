@@ -31,8 +31,11 @@ class TasksheetSnippet extends DateFunctions {
    * Tasksheet download link.
    */
   def tasksheetExportLink(in: NodeSeq): NodeSeq = {
-    val params = "interval" -> (parseMonths() getOrElse List(YearMonth.now()) mkString ";") ::
-      (S.param("user") map (u => List("user" -> u)) getOrElse Nil)
+    val params = 
+      "interval" -> (parseMonths() getOrElse List(YearMonth.now()) mkString ";") ::
+      "dimension" -> S.param("dimension").getOrElse("minutes") ::
+      (S.param("user") map (u => List("user" -> u)) getOrElse Nil) 
+      
     ("a [href]" #> s"/export/tasksheet?${ params map { case (k, v) => k + "=" + v } mkString "&" }").apply(in)
   }
 

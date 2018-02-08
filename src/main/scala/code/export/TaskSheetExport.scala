@@ -17,18 +17,30 @@ import org.joda.time.{DateTimeFieldType, ReadablePartial}
 import scala.util.Try
 
 object TaskSheetExport {
-
-  def workbook(i: IntervalQuery, user: Box[User]): (XSSFWorkbook, String) = {
+  
+  def workbook(i: IntervalQuery, user: Box[User], dimension: String): (XSSFWorkbook, String) = {
     val taskSheet = ReportService.taskSheetData(i, user)
 
     val ds = dates(taskSheet)
     val ts = tasks(taskSheet)
+    
+    def toDimension(minutes: Long): Double = {
+      if (dimension == "minutes") {
+        minutes
+      } else if (dimension == "hours") {
+        minutes / 60.0d
+      } else if (dimension == "manDays") {
+         (minutes / 60.0d) / 8.0d
+      } else {
+        throw new RuntimeException("Unknown dimension.")
+      }
+    }
 
     val userName = user.map(u => s"${u.lastName} ${u.firstName} ").getOrElse("")
     val fullTitle = userName + I18n.Dates.printLongForm(i.interval, S.locale)
 
     val columnWith = 0 -> (ds.length + 1)
-
+    
     val xlsx = Sheet(
       name = fullTitle,
       rows =
@@ -36,10 +48,10 @@ object TaskSheetExport {
           Row(taskTitle :: (ds.map(d => header(d.toString)) :+ sumTitle)) :: {
           ts.map { t =>
             Row(left(t.name) :: (ds.map { d =>
-              value(duration(taskSheet, d, t).minutes).withDefaultStyle(formatCell(d))
-            } :+ summary(sumByTasks(taskSheet)(t).minutes)))
+              value(toDimension(duration(taskSheet, d, t).minutes)).withDefaultStyle(formatCell(d))
+            } :+ summary(toDimension(sumByTasks(taskSheet)(t).minutes))))
           } :+
-            Row(sumFooter :: (ds.map { d => footer(sumByDates(taskSheet)(d).minutes) } :+ footer(sum(taskSheet).minutes)))
+            Row(sumFooter :: (ds.map { d => footer(toDimension(sumByDates(taskSheet)(d).minutes)) } :+ footer(toDimension(sum(taskSheet).minutes))))
         },
       columns = autoSizedColumns(range(columnWith)),
       mergedRegions = List(CellRange(0 -> 0, columnWith)),

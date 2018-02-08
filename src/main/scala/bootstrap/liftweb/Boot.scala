@@ -188,9 +188,10 @@ class Boot extends Loggable {
           if (!clientUser) {
             Full(RedirectResponse("/"))
           } else {
+            val dimension = S.param("dimension").getOrElse("minutes");
             val interval = parseInterval getOrElse IntervalQuery.thisMonth()
             val user = User.currentUser filter nonAdmin or parseUser()
-            val (xlsx, name) = TaskSheetExport.workbook(interval, user)
+            val (xlsx, name) = TaskSheetExport.workbook(interval, user, dimension)
 
             val contentStream = using(new ByteArrayOutputStream()) { out =>
               xlsx.write(out)
