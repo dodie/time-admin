@@ -38,7 +38,7 @@ class TimesheetSnippet extends DateFunctions {
             ".day *" #> row._1 &
               ".from *" #> row._2 &
               ".to *" #> row._3 &
-              ".sum *" #> f"${row._4}%1.1f"
+              ".sum *" #> (f"${row._4}%1.1f").replace(".", ",") // TODO
           }
         ) &
         ".sumtotal *" #> f"${timesheetData.map(row => Try(row._4.toDouble).getOrElse(0.0d)).sum}%1.1f"

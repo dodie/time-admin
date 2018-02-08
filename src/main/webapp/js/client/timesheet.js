@@ -52,7 +52,7 @@ $(document).ready(function() {
 	function update() {
 		$(".dayCount").val(dayCount);
 		var expected = dayCount * parseFloat($(".workhours").val(), 10);
-		var diff = sum - expected;
+		var diff = parseFloat(sum - expected).toFixed(2);
 		var color = diff > 0 ? "green" : "red";
 		$(".expected").html(expected);
 	
