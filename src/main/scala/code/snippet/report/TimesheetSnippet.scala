@@ -2,6 +2,7 @@ package code.snippet
 
 import code.commons.TimeUtils
 
+import net.liftweb.http.S
 import scala.xml.NodeSeq
 import code.service.ReportService
 import code.service.TaskItemService.IntervalQuery
@@ -30,6 +31,13 @@ class TimesheetSnippet extends DateFunctions {
    * Timesheet display.
    */
   def timesheet(in: NodeSeq): NodeSeq = {
+    def decimalsToLocale(value: String): String = {
+      if (S.locale.toString == "hu")
+        value.replace(".", ",")
+      else
+        value
+    }
+
     val timesheetData = ReportService.getTimesheetData(IntervalQuery(new YearMonth(TimeUtils.currentYear(offsetInDays), TimeUtils.currentMonth(offsetInDays) + 1).toInterval))
     if (timesheetData.nonEmpty) {
       (
@@ -38,10 +46,10 @@ class TimesheetSnippet extends DateFunctions {
             ".day *" #> row._1 &
               ".from *" #> row._2 &
               ".to *" #> row._3 &
-              ".sum *" #> (f"${row._4}%1.1f").replace(".", ",") // TODO
+              ".sum *" #> decimalsToLocale(f"${row._4}%1.1f")
           }
         ) &
-        ".sumtotal *" #> f"${timesheetData.map(row => Try(row._4.toDouble).getOrElse(0.0d)).sum}%1.1f"
+        ".sumtotal *" #> decimalsToLocale(f"${timesheetData.map(row => Try(row._4.toDouble).getOrElse(0.0d)).sum}%1.1f")
       ).apply(in)
     } else {
       <lift:embed what="no_data"/>
