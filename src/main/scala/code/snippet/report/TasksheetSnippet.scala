@@ -31,17 +31,25 @@ class TasksheetSnippet extends DateFunctions {
    * Tasksheet download link.
    */
   def tasksheetExportLink(in: NodeSeq): NodeSeq = {
-    val params = 
+    val params =
       "interval" -> (parseMonths() getOrElse List(YearMonth.now()) mkString ";") ::
       "dimension" -> S.param("dimension").getOrElse("minutes") ::
-      (S.param("user") map (u => List("user" -> u)) getOrElse Nil) 
-      
+      "taskFilter" -> S.param("taskFilter").getOrElse("") ::
+      (S.param("user") map (u => List("user" -> u)) getOrElse Nil)
+
     ("a [href]" #> s"/export/tasksheet?${ params map { case (k, v) => k + "=" + v } mkString "&" }").apply(in)
   }
 
   def title(in: NodeSeq): NodeSeq = {
     val i = parseInterval getOrElse IntervalQuery.thisMonth()
     <span>{I18n.Dates.printLongForm(i.interval, S.locale)}</span>
+  }
+
+  def taskFilter(in: NodeSeq): NodeSeq = {
+    (
+      "* [value]" #> S.param("taskFilter").getOrElse("") &
+      "* [placeholder]" #> S.loc("tasksheet.filter.task")
+    ) apply in
   }
 
   def dimensionSelector(in: NodeSeq): NodeSeq = {
@@ -54,12 +62,13 @@ class TasksheetSnippet extends DateFunctions {
   def tasksheet(in: NodeSeq): NodeSeq = {
     val i = parseInterval getOrElse IntervalQuery.thisMonth()
     val user = User.currentUser filter nonAdmin or parseUser()
+    val taskFilter = S.param("taskFilter").getOrElse("")
 
-    renderTaskSheet(i, user)(in)
+    renderTaskSheet(i, user, taskFilter)(in)
   }
 
-  def renderTaskSheet(i: IntervalQuery, u: Box[User]): CssSel = {
-    val taskSheet = ReportService.taskSheetData(i, u)
+  def renderTaskSheet(i: IntervalQuery, u: Box[User], taskFilter: String): CssSel = {
+    val taskSheet = ReportService.taskSheetData(i, u, taskFilter)
     val durations = new Durations(taskSheet)
 
     ".dayHeader" #> dates(taskSheet).map(d => ".dayHeader *" #> printDateHeader(d)) &

@@ -77,15 +77,13 @@ object ReportService {
 
   type TaskSheet = Map[ReadablePartial, Map[TaskSheetItem,Duration]]
 
-  def taskSheetData(i: IntervalQuery, u: Box[User]): TaskSheet = {
-    val ps = Task.findAll(By(Task.selectable, false))
-
+  def taskSheetData(i: IntervalQuery, u: Box[User], taskFilter: String = ""): TaskSheet = {
     val ds = dates(i.interval, i.scale).map(d => d -> (Nil: List[TaskItemWithDuration])).toMap
 
-    (ds ++ taskItemsExceptPause(i, u).groupBy(t => i.scale(new LocalDate(t.taskItem.start.get))))
-      .mapValues(_.map(taskSheetItemWithDuration(_, ps)).leftReducedMap(Duration.ZERO)(_ + _))
+    (ds ++ taskItemsExceptPause(i, u, taskFilter).groupBy(t => i.scale(new LocalDate(t.taskItem.start.get))))
+      .mapValues(_.map(taskSheetItemWithDuration(_)).leftReducedMap(Duration.ZERO)(_ + _))
   }
-  
+
   def getCollaborators(user: User) = {
     val interval = IntervalQuery(new Interval(IntervalQuery.thisMonth().interval.start.minusMonths(3), IntervalQuery.thisMonth().interval.end), d => new YearMonth(d))
     val collaborators = for (otherUser <- User.findAll if user != otherUser) yield (otherUser, collaboration(interval, user, otherUser))
@@ -93,20 +91,20 @@ object ReportService {
       item1._2.toList.map(item => item._2.plus(item._3).getMillis).sum > item2._2.toList.map(item => item._2.plus(item._3).getMillis).sum
     })
   }
-  
+
   def collaboration(i: IntervalQuery, u1: User, u2: User) = {
     val tasksheet1 = taskSheetData(i, Full(u1))
     val tasksheet2 = taskSheetData(i, Full(u2))
-    
+
     val commonTasks = for (
         (interval1, items1) <- tasksheet1;
         (interval2, items2) <- tasksheet2;
         i1 <- items1;
         i2 <- items2
-        
+
         if interval1 == interval2 && i1._1.name == i2._1.name
     ) yield (i1._1, i1._2, i2._2)
-    
+
     commonTasks
       .groupBy(_._1)
       .mapValues(i => i.reduce((acc, i2) => (i2._1, i2._2.plus(acc._2), i2._3.plus(acc._3))))
@@ -124,10 +122,10 @@ object ReportService {
 
     } map (i.start.toLocalDate.plusDays(_)) toList
 
-  def taskItemsExceptPause(i: IntervalQuery, u: Box[User]): List[TaskItemWithDuration] =
-    getTaskItems(i, u) filter (_.taskName != "")
+  def taskItemsExceptPause(i: IntervalQuery, u: Box[User], taskFilter: String): List[TaskItemWithDuration] =
+    getTaskItems(i, u) filter (t => (if (taskFilter == "") t.taskName != "" else t.taskName != "" && t.fullName.contains(taskFilter)))
 
-  def taskSheetItemWithDuration(t: TaskItemWithDuration, ps: List[Task]): (TaskSheetItem, Duration) =
+  def taskSheetItemWithDuration(t: TaskItemWithDuration): (TaskSheetItem, Duration) =
     (TaskSheetItem(t.task map (_.id.get) getOrElse 0L, t.fullName), new Duration(t.duration))
 
   /**

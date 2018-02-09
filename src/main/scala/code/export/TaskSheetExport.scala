@@ -17,13 +17,13 @@ import org.joda.time.{DateTimeFieldType, ReadablePartial}
 import scala.util.Try
 
 object TaskSheetExport {
-  
-  def workbook(i: IntervalQuery, user: Box[User], dimension: String): (XSSFWorkbook, String) = {
-    val taskSheet = ReportService.taskSheetData(i, user)
+
+  def workbook(i: IntervalQuery, user: Box[User], dimension: String, taskFilter: String): (XSSFWorkbook, String) = {
+    val taskSheet = ReportService.taskSheetData(i, user, taskFilter)
 
     val ds = dates(taskSheet)
     val ts = tasks(taskSheet)
-    
+
     def toDimension(minutes: Long): Double = {
       if (dimension == "minutes") {
         minutes
@@ -40,7 +40,7 @@ object TaskSheetExport {
     val fullTitle = userName + I18n.Dates.printLongForm(i.interval, S.locale)
 
     val columnWith = 0 -> (ds.length + 1)
-    
+
     val xlsx = Sheet(
       name = fullTitle,
       rows =
