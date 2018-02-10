@@ -40,7 +40,7 @@ object ReportService {
         trim(ts) filter (_.task.isEmpty) map (_.duration.getMillis) sum
       }
 
-      val first = ts.headOption
+      val first = trim(ts).headOption
       val last = ts.lastOption
 
       val arrive = if (first.isEmpty) {
