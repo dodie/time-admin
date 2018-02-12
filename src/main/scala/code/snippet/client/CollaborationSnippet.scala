@@ -11,7 +11,8 @@ class CollaborationSnippet {
 	private def user = User.currentUser.openOrThrowException("Current user must be defined!")
 
   def list(in: NodeSeq): NodeSeq = {
-    val collaborators = ReportService.getCollaborators(user)
+    val collaborators =
+      ReportService.getCollaborators(user).filter(c => !c._2.isEmpty)
     
     ".collaborator" #> collaborators.map { collaborator =>
       ".collaborator-name *" #> collaborator._1.niceName &
