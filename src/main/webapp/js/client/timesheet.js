@@ -45,13 +45,15 @@ $(document).ready(function() {
 	var dayCount = 0;
 	var sum = 0;
 	$("#timesheet-holder tr > td.sum").each(function() {
-		var val = parseFloat(this.textContent, 10);
+		var rowVal = this.textContent.replace(",",".");
+		var val = parseFloat(rowVal, 10);
 		if (val != 0) dayCount += 1;
-		sum += parseFloat(this.textContent, 10);
+		sum += parseFloat(rowVal, 10);
 	});
 	function update() {
 		$(".dayCount").val(dayCount);
-		var expected = dayCount * parseFloat($(".workhours").val(), 10);
+		var rowVal = $(".workhours").val().replace(",",".");
+		var expected = dayCount * parseFloat(rowVal, 10);
 		var diff = parseFloat(sum - expected).toFixed(2);
 		var color = diff > 0 ? "green" : "red";
 		$(".expected").html(expected);
