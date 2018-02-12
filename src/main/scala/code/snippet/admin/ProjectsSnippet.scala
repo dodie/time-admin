@@ -110,7 +110,13 @@ class ProjectsSnippet {
 
     Sorting.quickSort(data)(new Ordering[Task] {
       def compare(x: Task, y: Task): Int = {
-        collator.compare(x.name.get, y.name.get)
+        if (x.selectable.get && !y.selectable.get) {
+          1
+        } else if (!x.selectable.get && y.selectable.get) {
+          -1
+        } else {
+          collator.compare(x.name.get, y.name.get)
+        }
       }
     })
 
