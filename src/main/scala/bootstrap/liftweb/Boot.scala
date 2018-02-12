@@ -71,7 +71,17 @@ class Boot extends Loggable {
     Schemifier.schemify(true, Schemifier.infoF _, ExtSession)
 
     // Use extended session
-    LiftRules.earlyInStateful.append(ExtSession.testCookieEarlyInStateful)
+    LiftRules.earlyInStateful.append(req => {
+      S.findCookie("ext_id").foreach(cookie => {
+        if (User.currentUser.isEmpty) {
+          ExtSession.find(By(ExtSession.cookieId, cookie.value openOr "")).foreach(session => {
+            if (session.tokentype == ExtSession.TOKEN_TYPE_WEB) {
+              ExtSession.testCookieEarlyInStateful(req);
+            }
+          })
+        }
+      })
+    })
 
     // Snippets
     LiftRules.addToPackages("code")
