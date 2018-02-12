@@ -16,6 +16,7 @@ class TokenSnippet {
 
   def list(in: NodeSeq): NodeSeq = {
     val sessions = ExtSession.findAll(By(ExtSession.userId, user.userIdAsString))
+    .filter(session => session.tokentype != ExtSession.TOKEN_TYPE_WEB)
     
     ".token" #> sessions.map { session =>
       ".token-cookieId *" #> session.cookieId.get &
