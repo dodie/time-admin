@@ -31,7 +31,7 @@ class TokenSnippet {
   
   def add(in: NodeSeq): NodeSeq = {
     "input [onClick]" #> SHtml.onEvent(s => {
-      ExtSession.create.userId(user.userIdAsString).saveMe
+      ExtSession.create.userId(user.userIdAsString).tokentype(ExtSession.TOKEN_TYPE_CLIENT_API).saveMe
       Reload
     }) apply in
   }
