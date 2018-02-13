@@ -32,10 +32,10 @@ object TaskItemService {
   def alwaysTrue[T <: Mapper[T]]: QueryParam[T] = BySql[T]("1=1", IHaveValidatedThisSQL("suliatis", "2016-11-10"))
 
   /**
-   * Returns a sequence with the task item entries on the given day.
+   * Returns a sequence with the task item entries on the given interval.
    * The ordering is determined by the item's start time.
    */
-  def getTaskItems(query: IntervalQuery, user: Box[User] = User.currentUser): List[TaskItemWithDuration] = {
+  def getTaskItems(query: IntervalQuery, user: Box[User] = User.currentUser, removeForgottenLastItem: Boolean = false): List[TaskItemWithDuration] = {
     lazy val allTasks = Task.findAll
 
     def toTimeline(taskItems: List[TaskItem]): List[TaskItemWithDuration] = {
@@ -105,7 +105,25 @@ object TaskItemService {
 
     val taskItems = lastPartTaskItemBeforePeriodThatMightCount ::: taskItemsForPeriod
 
-    val list = taskItems.groupBy(_.user.get).flatMap(userItems => toTimeline(userItems._2).dropWhile(_.taskItem.task.get == 0)).toList
+    val list = taskItems.groupBy(_.user.get).flatMap(userItems => {
+
+      /*
+       * Check final item in taskItemsForPeriod to see if that is the users last entry to the DB.
+       * If so, and it's older than 24 h assume that the user forgot to administer times spent and
+       * change the offending item to a pause at the end.
+       */
+      if (removeForgottenLastItem) {
+        val lastEntry = TaskItem.findAll(OrderBy(TaskItem.start, Descending),
+          MaxRows(1),
+          By(TaskItem.user, userItems._1)).last
+
+        if (userItems._2.last == lastEntry && userItems._2.last.start.get < TimeUtils.currentTime - 86400000) {
+          userItems._2.last.task(0)
+        }
+      }
+
+      toTimeline(userItems._2).dropWhile(_.taskItem.task.get == 0)
+    }).toList
 
     if (list.isEmpty) {
       // if the result is empty, then return a list that contains only a Pause item
