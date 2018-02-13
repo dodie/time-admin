@@ -1,5 +1,13 @@
-Authentication and Authorization
-================================
+# Enabling the Timeadmin API
+The API provides a basic REST API to provide access to Timeadmin functions.
+
+By default, th API is not enabled. It can enabled with the following configuration property:
+```api.enable=true```
+
+
+# Methods
+
+## Authentication and Authorization
 
 The methods in the API are available for authenticated users with CLIENT permission.
 The user can be specified with the ```ext_id``` cookie by supplying a special authentication token.
@@ -12,8 +20,8 @@ There are two options to obtain such token:
 For the latter, the API contains the following methods:
 
 
-POST /api/login
----------------
+### POST /api/login
+
 Post the login credentials in JSON format and get an authentication token.
 
 **Example:**
@@ -31,8 +39,8 @@ curl -X POST -H "Content-Type: application/json" -d '{"email":"default@tar.hu", 
 ```
 
 
-POST /api/logout
-----------------
+### POST /api/logout
+
 Invalidate an authentication token.
 
 **Example:**
@@ -50,12 +58,11 @@ curl -X POST -H "Content-Type: application/json" -d '{"token":"4HKL5MTDME40IS20C
 ```
 
 
-Manage Task items
-=================
+## Manage Task items
 
 
-GET /api/tasks
---------------
+### GET /api/tasks
+
 Get all available tasks in Timeadmin.
 
 **Example query:**
@@ -131,8 +138,8 @@ curl -H 'Cookie: ext_id=<AUTH_TOKEN>;' <TIMEADMIN_URL>/api/tasks
 ```
 
 
-GET /api/taskitems/[date-from]-[date-to]
-----------------------------------------
+### GET /api/taskitems/[date-from]-[date-to]
+
 List all task items of the user for the given date interval.
 
 **Example query:**
@@ -169,8 +176,8 @@ Or it returns the taskitems for that period:
 ```
 
 
-POST /api/taskitems
--------------------
+### POST /api/taskitems
+
 Adds a new task item for the given user. The POST body has to contain the details of the new item in JSON format.
 
 **Example:**
@@ -187,8 +194,8 @@ curl -X POST -H "Content-Type: application/json" -H 'Cookie: ext_id=<AUTH_TOKEN>
 ```
 
 
-PUT /api/taskitems/[id]
------------------------
+### PUT /api/taskitems/[id]
+
 Modifies the specified item. The body of the request has to contain the details of the item in JSON format.
 
 **Example:**
@@ -204,8 +211,8 @@ curl -X PUT -H "Content-Type: application/json" -H 'Cookie: ext_id=<AUTH_TOKEN>;
 ```
 
 
-DELETE /api/taskitems/[id]
---------------------------
+### DELETE /api/taskitems/[id]
+
 Deletes the specified item.
 
 **Example:**

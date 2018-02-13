@@ -22,9 +22,9 @@ import code.model.ExtSession
 /**
  * A basic REST API to provide access to Timeadmin functions.
  *
- * The API is Work-In-Progress. For now the endpoint can be toggled via the EXPOSE_TIMEADMIN_API environment variable.
- * By default, it's not enabled.
- *
+ * By default, th API is not enabled. It can enabled with the following configuration property:
+ * <code>api.enable=true</code>
+ * 
  * @see https://github.com/dodie/time-admin/blob/master/api-reference.md
  */
 object Endpoints extends RestHelper with ClientsOnly with HandlingErrors {

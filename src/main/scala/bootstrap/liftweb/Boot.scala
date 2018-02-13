@@ -248,8 +248,10 @@ class Boot extends Loggable {
           case _ => Full(JE.JsRaw(jsNotice).cmd)
         }
       ))
-      
-    if (System.getenv("EXPOSE_TIMEADMIN_API") != null)
+    
+    val isApiEnabled = Props.get("api.enable") openOr "false"
+    if (isApiEnabled == "true") {
       LiftRules.dispatch.append(Endpoints)
+    }
   }
 }
