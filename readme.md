@@ -9,13 +9,13 @@ timeline of activities in a given day, or monthly summaries.
 ![Tasks](https://github.com/dodie/time-admin/blob/master/docs/screenshots/tasks.png "Tasks")
 
 
-It can generate monthly timesheets from the collected data, that can be personalized with
+It can generate monthly **timesheets** from the collected data, that can be personalized with
 an Excel template.
 
 ![Timesheet](https://github.com/dodie/time-admin/blob/master/docs/screenshots/timesheet.png "Timesheet")
 
 
-The collected data can provide insights about the time spent by the team.
+The **collected data** can provide insights about the time spent by the team.
 
 ![Tasksheet](https://github.com/dodie/time-admin/blob/master/docs/screenshots/tasksheet.png "Tasksheet")
 
