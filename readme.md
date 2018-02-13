@@ -26,5 +26,5 @@ and
 for details about the application.
 
 If you are looking for issues, see [Issues marked with the help-wanted tag](https://github.com/dodie/time-admin/issues?q=is%3Aissue+label%3A%22help+wanted%22+is%3Aopen) or the
-[Ideas](https://github.com/dodie/time-admin/wiki/Ideas) wiki page
+[Ideas](https://github.com/dodie/time-admin/wiki/Ideas) wiki page.
 
