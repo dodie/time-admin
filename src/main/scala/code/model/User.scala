@@ -6,8 +6,10 @@ import net.liftweb.http.S._
 import net.liftweb.http._
 import net.liftweb.mapper._
 import net.liftweb.util.Helpers._
+import scala.xml.transform._
 
 import scala.xml.{Elem, NodeSeq}
+import scala.xml.Node
 
 object User extends User with MetaMegaProtoUser[User] with ManyToMany {
   override def dbTableName = "users"
@@ -34,6 +36,22 @@ object User extends User with MetaMegaProtoUser[User] with ManyToMany {
             {form.map(e => (((e.asInstanceOf[Elem] \\ "input").drop(1).head).asInstanceOf[Elem]) % ("class" -> "form-control"))}
             <span><lift:Msg id={fieldId} errorClass="edit_error_class"></lift:Msg></span>
           </div>
+        </div>
+      } else if (fieldId == "users_locale") {
+        val localeNode = form.map(_.asInstanceOf[Elem] % ("class" -> "form-control"));
+        val removeIt = new RewriteRule {
+          override def transform(n: Node): NodeSeq = n match {
+            case e: Elem if (e.label == "option" && ((e \ "@value").text != "hu") && ((e \ "@value").text != "en_US")) => NodeSeq.Empty
+            case n => n
+          }
+        }
+      
+        val transformedLocaleNode = new RuleTransformer(removeIt).transform(localeNode)
+        
+        <div class="form-group">
+          <label for={fieldId}>{field.displayName}</label>
+          {transformedLocaleNode}
+          <span><lift:Msg id={fieldId} errorClass="edit_error_class"></lift:Msg></span>
         </div>
       } else if (field.isInstanceOf[SubtractBreaks[User]]) {
         <div class="form-group">
