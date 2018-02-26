@@ -23,6 +23,7 @@ import net.liftweb.sitemap.Loc._
 import net.liftweb.sitemap._
 import net.liftweb.util._
 import code.api.Endpoints
+import java.io.FileInputStream
 
 
 
@@ -32,6 +33,11 @@ import code.api.Endpoints
  */
 class Boot extends Loggable {
   def boot() {
+    // Look for configuration options in the external properties file if provided via -DexternalConfig=<path>
+    val externalConfig = Props.get("externalConfig").foreach(filename => {
+      Props.whereToLook = () => ((filename, () => Full(new FileInputStream(filename))) :: Nil)
+    })
+    
     // DB config
     if (!DB.jndiJdbcConnAvailable_?) {
       val vendor = Option(System.getenv("DATABASE_URL")).map(new URI(_)).map { uri =>
