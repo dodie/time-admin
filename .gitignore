@@ -24,6 +24,7 @@ project/build/**/*
 src/main/resources/props/**
 !src/main/resources/props/default.props
 !src/main/resources/props/default.log4j.xml
+!src/main/resources/props/production.default.log4j.xml
 .idea
 .idea_modules
 projectFilesBackup
