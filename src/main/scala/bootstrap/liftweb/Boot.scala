@@ -86,8 +86,8 @@ class Boot extends Loggable {
         if (User.currentUser.isEmpty) {
           ExtSession.find(By(ExtSession.cookieId, cookie.value openOr "")).foreach(session => {
             ExtSession.testCookieEarlyInStateful(req)
-            if (session.tokentype == ExtSession.TOKEN_TYPE_WEB) {
-              S.set("session_type", "web")
+            if (session.tokentype == ExtSession.TOKEN_TYPE_CLIENT_API) {
+              S.set("session_type", "client-api")
             }
           })
         }
@@ -117,7 +117,7 @@ class Boot extends Loggable {
       }
     }
     
-    def isWebSession = S.get("session_type").getOrElse("") == "web";
+    def isWebSession = !(S.get("session_type").getOrElse("") == "client-api")
 
     def adminUser = hasRole(adminRole) && isWebSession
 
