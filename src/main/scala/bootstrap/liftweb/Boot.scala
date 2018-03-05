@@ -83,8 +83,9 @@ class Boot extends Loggable {
       S.findCookie("ext_id").foreach(cookie => {
         if (User.currentUser.isEmpty) {
           ExtSession.find(By(ExtSession.cookieId, cookie.value openOr "")).foreach(session => {
+            ExtSession.testCookieEarlyInStateful(req)
             if (session.tokentype == ExtSession.TOKEN_TYPE_WEB) {
-              ExtSession.testCookieEarlyInStateful(req);
+              S.set("session_type", "web")
             }
           })
         }
@@ -113,10 +114,12 @@ class Boot extends Loggable {
         case _ => false
       }
     }
+    
+    def isWebSession = S.get("session_type").getOrElse("") == "web";
 
-    def adminUser = hasRole(adminRole)
+    def adminUser = hasRole(adminRole) && isWebSession
 
-    def clientUser = hasRole(clientRole)
+    def clientUser = hasRole(clientRole) && isWebSession
 
     def freshUser = !anonymousUser && !adminUser && !clientUser
 
