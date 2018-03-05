@@ -34,12 +34,14 @@ import java.io.FileInputStream
 class Boot extends Loggable {
   def boot() {
     // Look for configuration options in the external properties file if provided via -DexternalConfig=<path>
-    val externalConfig = System.getenv("externalConfig")
+    val externalConfig = System.getProperty("externalConfig")
     if (externalConfig != null) {
-      logger.info("Using external configuration: " + externalConfig);
+      logger.info("Using configuration from classpath and external file: " + externalConfig);
       Props.whereToLook = () => ((externalConfig, () => Full(new FileInputStream(externalConfig))) :: Nil)
+    } else {
+      logger.info("Using configuration from classpath");
     }
-      
+
     // DB config
     if (!DB.jndiJdbcConnAvailable_?) {
       val vendor = Option(System.getenv("DATABASE_URL")).map(new URI(_)).map { uri =>
