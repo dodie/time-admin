@@ -80,8 +80,8 @@ db.password = 1234
 ```
 
 It also provides an opportunity to customize the Timesheet Excel template by providing its path via
-the ```export.excel.timesheet_template``` key. For a starter
-[this template](https://github.com/dodie/time-admin/blob/master/docs/exceltemplate/timesheet_template.xls). 
+the ```export.excel.timesheet_template``` key. To get you started, see
+[this template](https://github.com/dodie/time-admin/blob/master/docs/exceltemplate/timesheet_template.xls) file. 
 
 Timeadmin also has user management with password recovery. For this to work, an SMTP has to be configured.
 See the following settings for an example:
