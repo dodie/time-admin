@@ -20,6 +20,11 @@ The **collected data** can provide insights about the time spent by the team.
 ![Tasksheet](https://github.com/dodie/time-admin/blob/master/docs/screenshots/tasksheet.png "Tasksheet")
 
 
+Running it locally
+------------------
+See [this](https://github.com/dodie/time-admin/blob/master/development-guide.md#running) guide for instructions.
+
+
 Timeadmin API
 -------------
 If you are about to integrate your application with Timeadmin, check the
