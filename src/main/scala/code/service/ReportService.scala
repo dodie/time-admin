@@ -31,9 +31,9 @@ object ReportService {
    * and returns data that can be used in time sheets.
    * @return a sequence of (dayOfMonth: String, arriveTime: String, leaveTime: String) tuples. Arrive and leave time strings are in hh:mm format.
    */
-  def getTimesheetData(i: IntervalQuery): List[(Int,String,String,Double)] = {
+  def getTimesheetData(i: IntervalQuery, user: Box[User]): List[(Int,String,String,Double)] = {
     (for {
-      (d, ts) <- getTaskItems(i) groupBy startDate mapValues (_ sortBy startDate)
+      (d, ts) <- getTaskItems(i, user) groupBy startDate mapValues (_ sortBy startDate)
       if trim(ts).nonEmpty
     } yield {
       val breaks = calculateTimeRemovalFromLeaveTime {

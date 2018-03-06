@@ -27,9 +27,6 @@ import scala.xml.NodeSeq
  */
 class TasksheetSnippet extends DateFunctions {
 
-  /**
-   * Tasksheet download link.
-   */
   def tasksheetExportLink(in: NodeSeq): NodeSeq = {
     val params =
       "interval" -> (parseMonths() getOrElse List(YearMonth.now()) mkString ";") ::

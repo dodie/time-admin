@@ -22,20 +22,13 @@ import scala.language.{postfixOps, reflectiveCalls}
  */
 object TaskItemService {
 
-  /**
-   * Returns the last option for the given day.
-   */
-  def getLastTaskItemForDay(offset: Int): Option[TaskItemWithDuration] = {
-    getTaskItems(IntervalQuery(TimeUtils.offsetToDailyInterval(offset))).lastOption
-  }
-
   def alwaysTrue[T <: Mapper[T]]: QueryParam[T] = BySql[T]("1=1", IHaveValidatedThisSQL("suliatis", "2016-11-10"))
 
   /**
    * Returns a sequence with the task item entries on the given interval.
    * The ordering is determined by the item's start time.
    */
-  def getTaskItems(query: IntervalQuery, user: Box[User] = User.currentUser, removeForgottenLastItem: Boolean = false): List[TaskItemWithDuration] = {
+  def getTaskItems(query: IntervalQuery, user: Box[User], removeForgottenLastItem: Boolean = false): List[TaskItemWithDuration] = {
     lazy val allTasks = Task.findAll
 
     def toTimeline(taskItems: List[TaskItem]): List[TaskItemWithDuration] = {
@@ -303,6 +296,10 @@ object TaskItemService {
    * The time value always converted to whole minutes.
    */
   def appendTaskItem(taskId: Long, time: Long): Boolean = {
+    def getLastTaskItemForDay(offset: Int): Option[TaskItemWithDuration] = {
+      getTaskItems(IntervalQuery(TimeUtils.offsetToDailyInterval(offset)), User.currentUser).lastOption
+    }
+  
     val now = TimeUtils.currentTime
     val dayStart = TimeUtils.currentDayStartInMs(0)
     val actualTaskItemStart = {

@@ -86,11 +86,15 @@ class UsersSnippet {
     }
   }
 
-  def selectUser(in: NodeSeq): NodeSeq =
+  def selectUser(in: NodeSeq): NodeSeq = selectUser(in, false)
+
+  def selectUserWithEveryBody(in: NodeSeq): NodeSeq = selectUser(in, true)
+    
+  def selectUser(in: NodeSeq, addEverybodyOption: Boolean): NodeSeq =
     User.currentUser filter nonAdmin map { _ =>
       "select [style]" #> "display:none;" & "option" #> ""
     } getOrElse {
-      "select" #> ("option" #> (everybody :: {
+      val tr = {
         val users = User.findAll
         val userRoles = UserRoles.findAll
         val (active, inactive) = (users sortWith niceName) partition {user => userRoles.exists(_.user == user)}
@@ -100,7 +104,12 @@ class UsersSnippet {
         }) ::: (inactive map { u =>
           option(u, selected = parseUser().exists(_.id.get == u.id.get)) & "option [style]" #> "background:#efefef"
         })
-      }))
+      }
+      
+      if (addEverybodyOption)
+        "select" #> ("option" #> (everybody :: tr))
+      else
+        "select" #> ("option" #> tr)
     } apply in
 
   private def option(u: User, selected: Boolean): CssSel = {

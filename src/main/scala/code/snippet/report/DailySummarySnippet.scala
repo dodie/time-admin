@@ -11,6 +11,7 @@ import net.liftweb.http.S
 import net.liftweb.util.Helpers._
 
 import code.model.Task
+import code.model.User
 import scala.xml.NodeSeq
 
 /**
@@ -24,7 +25,7 @@ class DailySummarySnippet extends DateFunctions {
    */
   def summaryForToday(in: NodeSeq): NodeSeq = {
 
-    val taskItems = TaskItemService.getTaskItems(IntervalQuery(TimeUtils.offsetToDailyInterval(offsetInDays)))
+    val taskItems = TaskItemService.getTaskItems(IntervalQuery(TimeUtils.offsetToDailyInterval(offsetInDays)), User.currentUser)
     // All task today for current user
     val aggregatedTaskItems = taskItems
       .groupBy(_.task)

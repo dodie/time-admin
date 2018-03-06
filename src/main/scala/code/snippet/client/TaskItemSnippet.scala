@@ -1,6 +1,7 @@
 package code
 package snippet
 
+import code.model.User
 import code.commons.TimeUtils
 import code.service.TaskItemService.IntervalQuery
 import code.service._
@@ -22,7 +23,7 @@ import scala.xml.{NodeSeq, Text}
 class TaskItemSnippet extends DateFunctions {
 
   /** All task items today for current user. */
-  lazy val taskItems: List[TaskItemWithDuration] = TaskItemService.getTaskItems(IntervalQuery(TimeUtils.offsetToDailyInterval(offsetInDays)))
+  lazy val taskItems: List[TaskItemWithDuration] = TaskItemService.getTaskItems(IntervalQuery(TimeUtils.offsetToDailyInterval(offsetInDays)), User.currentUser)
 
   /** All tasks. */
   lazy val tasks: List[ShowTaskData] = TaskService.getAllActiveTasks

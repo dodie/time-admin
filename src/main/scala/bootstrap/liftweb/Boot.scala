@@ -193,7 +193,8 @@ class Boot extends Loggable {
           if (!clientUser) {
             Full(RedirectResponse("/"))
           } else {
-            val (contentStream, fileName) = ExcelExport.exportTimesheet(User.currentUser.openOrThrowException("No user found!"), offset.toInt)
+            val user = User.currentUser filter nonAdmin or parseUser()
+            val (contentStream, fileName) = ExcelExport.exportTimesheet(user, offset.toInt)
             Full(StreamingResponse(contentStream, () =>
               contentStream.close,
               contentStream.available,

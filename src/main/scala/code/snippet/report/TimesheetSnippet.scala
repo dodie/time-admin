@@ -2,6 +2,9 @@ package code.snippet
 
 import code.commons.TimeUtils
 
+import code.snippet.Params.parseUser
+import code.service.UserService.nonAdmin
+import code.model.User
 import net.liftweb.http.S
 import scala.xml.NodeSeq
 import code.service.ReportService
@@ -18,13 +21,11 @@ import scala.util.Try
  */
 class TimesheetSnippet extends DateFunctions {
 
-  /**
-   * Tasksheet download link.
-   */
   def timesheetExportLink(in: NodeSeq): NodeSeq = {
-    (
-      "a [href]" #> ("/export/timesheet/" + offsetInDays)
-    ).apply(in)
+    val params =
+      (S.param("user") map (u => List("user" -> u)) getOrElse Nil)
+      
+    ("a [href]" #> s"/export/timesheet/${offsetInDays}?${ params map { case (k, v) => k + "=" + v } mkString "&" }").apply(in)
   }
 
   /**
@@ -38,7 +39,8 @@ class TimesheetSnippet extends DateFunctions {
         value
     }
 
-    val timesheetData = ReportService.getTimesheetData(IntervalQuery(new YearMonth(TimeUtils.currentYear(offsetInDays), TimeUtils.currentMonth(offsetInDays) + 1).toInterval))
+    val user = User.currentUser filter nonAdmin or parseUser()
+    val timesheetData = ReportService.getTimesheetData(IntervalQuery(new YearMonth(TimeUtils.currentYear(offsetInDays), TimeUtils.currentMonth(offsetInDays) + 1).toInterval), user)
     if (timesheetData.nonEmpty) {
       (
         ".item *" #> timesheetData.map(

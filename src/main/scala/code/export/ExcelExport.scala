@@ -13,6 +13,7 @@ import org.apache.poi.hssf.usermodel._
 import org.apache.poi.poifs.filesystem.POIFSFileSystem
 import org.apache.poi.ss.usermodel.Cell
 import org.joda.time.{LocalDate, YearMonth}
+import net.liftweb.common.Box
 
 import scala.collection.JavaConversions._
 
@@ -25,7 +26,8 @@ object ExcelExport {
   /**
    * Timesheet Excel export.
    */
-  def exportTimesheet(user: User, offset: Int) = {
+  def exportTimesheet(userBox: Box[User], offset: Int) = {
+    val user = userBox.openOrThrowException("No user found!")
     var fos: ByteArrayOutputStream = null;
     var array: Array[Byte] = null
     val yearMonth = new YearMonth(LocalDate.now().plusDays(offset))
@@ -39,7 +41,7 @@ object ExcelExport {
       val userName = user.lastName + " " + user.firstName
 
       val monthText = I18n.Dates.printLongForm(yearMonth, S.locale)
-      val dates = ReportService.getTimesheetData(IntervalQuery(yearMonth.toInterval))
+      val dates = ReportService.getTimesheetData(IntervalQuery(yearMonth.toInterval), userBox)
 
       // spreadsheet to export
       val sheet = workbook.getSheet("Timesheet")
