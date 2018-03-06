@@ -13,7 +13,7 @@ class TimeSheetTest extends BaseSuite {
   describe("Time sheet data for any month") {
     lazy val ts = {
       User.currentUser map (_.subtractBreaks(true)) foreach (_.save())
-      ReportService.getTimesheetData(IntervalQuery(yearMonth(2016, 1).toInterval))
+      ReportService.getTimesheetData(IntervalQuery(yearMonth(2016, 1).toInterval), User.currentUser)
     }
 
     it("should have log entries subtracted by the breaks") { withS(Empty, defaultUser()) {
@@ -28,7 +28,7 @@ class TimeSheetTest extends BaseSuite {
   describe("Time sheet data for any month with disabled break subtraction") {
     lazy val ts = {
       User.currentUser map (_.subtractBreaks(false)) foreach (_.save())
-      ReportService.getTimesheetData(IntervalQuery(yearMonth(2016, 1).toInterval))
+      ReportService.getTimesheetData(IntervalQuery(yearMonth(2016, 1).toInterval), User.currentUser)
     }
 
     it("should have log entries with breaks") { withS(Empty, defaultUser()) {
