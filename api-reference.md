@@ -141,6 +141,7 @@ curl -H 'Cookie: ext_id=<AUTH_TOKEN>;' <TIMEADMIN_URL>/api/tasks
 ### GET /api/taskitems/[date-from]-[date-to]
 
 List all task items of the user for the given date interval.
+The dates are in **YYYYMMDD** format.
 
 **Example query:**
 ```
