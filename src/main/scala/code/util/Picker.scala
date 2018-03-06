@@ -88,6 +88,13 @@ object MonthPicker {
 
   def apply(input: String, alt: String, date: YearMonth): JsRaw = JsRaw(
     s"""
+       | var prevDateValue = null;
+       | $$('.date-picker').focus(function(e) {
+       |   prevDateValue = $$('.date-picker').val();
+       | });
+       | $$('.date-picker').blur(function(e) {
+       |   $$('.date-picker').val(prevDateValue);
+       | });
        | $$.fn.datepicker.dates['${S.locale.getLanguage}'] = ${Localization.dates.toString()};
        | $$('$input').datepicker(${configuration(input, date).toString()}).on('changeDate', function(e) {
        |   $$('$alt').val($$.format.date(e.date, 'yyyy-MM-dd'));
