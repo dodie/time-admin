@@ -39,7 +39,7 @@ libraryDependencies ++= {
     "info.cukes"                  %% "cucumber-scala"           % cukesVersion          % "e2e",
     "info.cukes"                  % "cucumber-junit"            % cukesVersion          % "e2e",
     "info.cukes"                  % "cucumber-picocontainer"    % cukesVersion          % "e2e",
-    "junit"                       % "junit"                     % "4.11"                % "e2e",
+    "junit"                       % "junit"                     % "4.12"                % "e2e",
     "com.novocode"                % "junit-interface"           % "0.10"                % "e2e",
     "com.h2database"              % "h2"                        % "1.3.167",
     "postgresql"                  % "postgresql"                % "8.4-701.jdbc4",
