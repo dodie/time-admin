@@ -41,7 +41,7 @@ libraryDependencies ++= {
     "info.cukes"                  % "cucumber-picocontainer"    % cukesVersion          % "e2e",
     "junit"                       % "junit"                     % "4.12"                % "e2e",
     "com.novocode"                % "junit-interface"           % "0.10"                % "e2e",
-    "com.h2database"              % "h2"                        % "1.3.167",
+    "com.h2database"              % "h2"                        % "1.3.176",
     "postgresql"                  % "postgresql"                % "8.4-701.jdbc4",
     "com.github.nscala-time"      %% "nscala-time"              % "2.14.0",
     "com.norbitltd"               %% "spoiwo"                   % "1.1.1",
