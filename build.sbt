@@ -32,7 +32,7 @@ libraryDependencies ++= {
     "org.eclipse.jetty"           % "jetty-plus"                % "8.1.7.v20120910"     % "compile,container,test,it,e2e",
     "org.eclipse.jetty.orbit"     % "javax.servlet"             % "3.0.0.v201112011016" % "compile,container,test,e2e" artifacts Artifact("javax.servlet", "jar", "jar"),
     "log4j"                       % "log4j"                     % "1.2.17",
-    "org.slf4j"                   % "slf4j-log4j12"             % "1.7.21",
+    "org.slf4j"                   % "slf4j-log4j12"             % "1.7.25",
     "org.specs2"                  %% "specs2"                   % "3.7"                 % "test,it,e2e",
     "org.scalatest"               %% "scalatest"                % "2.2.4"               % "test,it,e2e",
     "org.seleniumhq.selenium"     % "selenium-firefox-driver"   % "3.14.0"              % "test,it,e2e",
