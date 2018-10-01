@@ -11,7 +11,6 @@ import org.eclipse.jetty.server.nio.SelectChannelConnector
 import org.eclipse.jetty.server.{ Handler, Server }
 import org.eclipse.jetty.webapp.WebAppContext
 import org.openqa.selenium.firefox.FirefoxDriver
-import org.openqa.selenium.firefox.FirefoxProfile
 import org.openqa.selenium.WebDriver
 import java.util.concurrent.TimeUnit
 
@@ -35,9 +34,7 @@ object FeatureTest {
 
   @BeforeClass
   def startup() {
-    val profile = new FirefoxProfile()
-    profile.setPreference("intl.accept_languages", "en")
-    webDriver = new FirefoxDriver(profile)
+    webDriver = new FirefoxDriver()
 
     val scc = new SelectChannelConnector
     scc.setPort(port)

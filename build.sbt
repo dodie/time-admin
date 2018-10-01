@@ -35,7 +35,7 @@ libraryDependencies ++= {
     "org.slf4j"                   % "slf4j-log4j12"             % "1.7.21",
     "org.specs2"                  %% "specs2"                   % "3.7"                 % "test,it,e2e",
     "org.scalatest"               %% "scalatest"                % "2.2.4"               % "test,it,e2e",
-    "org.seleniumhq.selenium"     % "selenium-firefox-driver"   % "2.53.1"              % "test,it,e2e",
+    "org.seleniumhq.selenium"     % "selenium-firefox-driver"   % "3.14.0"              % "test,it,e2e",
     "info.cukes"                  %% "cucumber-scala"           % cukesVersion          % "e2e",
     "info.cukes"                  % "cucumber-junit"            % cukesVersion          % "e2e",
     "info.cukes"                  % "cucumber-picocontainer"    % cukesVersion          % "e2e",
