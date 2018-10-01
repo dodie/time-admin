@@ -22,6 +22,7 @@ scalacOptions ++= Seq("-deprecation", "-unchecked", "-Ywarn-unused-import")
 
 libraryDependencies ++= {
   val liftVersion = "3.0.1"
+  val cukesVersion = "1.2.2"
   Seq(
     "net.liftweb"                 %% "lift-webkit"              % liftVersion           % "compile",
     "net.liftweb"                 %% "lift-mapper"              % liftVersion           % "compile",
@@ -35,9 +36,9 @@ libraryDependencies ++= {
     "org.specs2"                  %% "specs2"                   % "3.7"                 % "test,it,e2e",
     "org.scalatest"               %% "scalatest"                % "2.2.4"               % "test,it,e2e",
     "org.seleniumhq.selenium"     % "selenium-firefox-driver"   % "2.53.1"              % "test,it,e2e",
-    "info.cukes"                  %% "cucumber-scala"           % "1.2.2"               % "e2e",
-    "info.cukes"                  % "cucumber-junit"            % "1.2.2"               % "e2e",
-    "info.cukes"                  % "cucumber-picocontainer"    % "1.2.2"               % "e2e",
+    "info.cukes"                  %% "cucumber-scala"           % cukesVersion          % "e2e",
+    "info.cukes"                  % "cucumber-junit"            % cukesVersion          % "e2e",
+    "info.cukes"                  % "cucumber-picocontainer"    % cukesVersion          % "e2e",
     "junit"                       % "junit"                     % "4.11"                % "e2e",
     "com.novocode"                % "junit-interface"           % "0.10"                % "e2e",
     "com.h2database"              % "h2"                        % "1.3.167",
