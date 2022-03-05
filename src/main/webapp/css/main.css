@@ -40,6 +40,12 @@
 	width: auto;
 }
 
+.form-control[type="checkbox"] {
+	display: inline!important;
+	width: auto!important;
+	height: auto!important;
+}
+
 /* -----
  * Login screen new
  * ----- */
