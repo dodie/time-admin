@@ -1,10 +1,12 @@
 Getting started
 ---------------
 
-Timeadmin is based on the [Lift web framework](http://liftweb.net/) and the
-[Simple Build Tool (SBT)](http://www.scala-sbt.org/).
-Various build tasks can be issued from the *SBT shell* (```./sbt``` or ```sbt.bat```
-in the project root directory).
+Timeadmin is based on the [Lift web framework](http://liftweb.net/).
+
+First, download SBT [Simple Build Tool (SBT) version 0.13.18](http://www.scala-sbt.org/).
+
+Various build tasks can be issued from the *SBT shell*. To start that, run `sbt` in the
+project root directory.
 
 To start the application with an embedded HTTP server issue the ```container:start```
 command in the *SBT prompt*. Timeadmin will be published to port 8080, and be available
@@ -57,7 +59,7 @@ Running
 Issue the following command to create a WAR file:
 
 ```
-./sbt clean compile package
+sbt clean compile package
 ```
 
 You can deploy it to a standard Web container. Timeadmin is tested with the latest
