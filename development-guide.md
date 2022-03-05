@@ -60,17 +60,20 @@ Issue the following command to create a WAR file:
 ./sbt clean compile package
 ```
 
-You can deploy it to a standard Web container. Timeadmin is tested with the latest versions of Tomcat.
+You can deploy it to a standard Web container. Timeadmin is tested with the latest
+versions of Tomcat.
 
 
 ### Configuration
 
-If necessary, you can supply custom configuration to your instance by setting the ```-DexternalConfig=<path>```
-variable for the application. The default configuration file can be found in the 
-[default.props](https://github.com/dodie/time-admin/blob/master/src/main/resources/props/default.props) file.
+If necessary, you can supply custom configuration to your instance by setting the
+```-DexternalConfig=<path>``` variable for the application. The default configuration file
+can be found in the
+[default.props](https://github.com/dodie/time-admin/blob/master/src/main/resources/props/default.props)
+file.
 
-By default Timeadmin provides an in-memory HSQL database, but it can be configured to use a PostgreSQL instance
-by providing the relevant settings in the properties file. For example:
+By default Timeadmin provides an in-memory HSQL database, but it can be configured to use
+a PostgreSQL instance by providing the relevant settings in the properties file. For example:
 
 ```
 db.driver = org.postgresql.Driver
@@ -79,12 +82,13 @@ db.user = postgres
 db.password = 1234
 ```
 
-It also provides an opportunity to customize the Timesheet Excel template by providing its path via
-the ```export.excel.timesheet_template``` key. To get you started, see
-[this template](https://github.com/dodie/time-admin/blob/master/docs/exceltemplate/timesheet_template.xls) file. 
+It also provides an opportunity to customize the Timesheet Excel template by providing its
+path via the ```export.excel.timesheet_template``` key. To get you started, see
+[this template](https://github.com/dodie/time-admin/blob/master/docs/exceltemplate/timesheet_template.xls)
+file.
 
-Timeadmin also has user management with password recovery. For this to work, an SMTP has to be configured.
-See the following settings for an example:
+Timeadmin also has user management with password recovery. For this to work, an SMTP has to
+be configured.  See the following settings for an example:
 
 ```
 mail.smtp.host = localhost
@@ -99,14 +103,15 @@ Application structure in nutshell
 ---------------------------------
 
 - scala/bootstrap.liftweb.Boot:
-Configures the Timeadmin, eg. sets DB access based on the configuration and initializes the sitemap and available URLs.
-Responsible for defining authorization rules at the page level.
+Configures the Timeadmin, eg. sets DB access based on the configuration and initializes the
+sitemap and available URLs. Responsible for defining authorization rules at the page level.
 - scala/code.model._:
 Data model classes. Timeadmin uses Schemifier.
 - scala/code.service._:
 Place of utilities, complex calculations, and data queries and derived data representation.
 - scala/code.snippet._:
-Snippets are rendering components that provide dynamic data on the pages. Most of the snippets are stateless.
+Snippets are rendering components that provide dynamic data on the pages. Most of the
+snippets are stateless.
 - webapp/admin, webapp/client, webapp/index.html and freshuser.html:
 Page templates. Defines layout and snippets for each page.
 - webapp/templates-hidden:

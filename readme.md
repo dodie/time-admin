@@ -1,5 +1,4 @@
 [![License](https://img.shields.io/github/license/dodie/time-admin.svg)](https://github.com/dodie/time-admin/blob/master/LICENSE)
-![Build status](https://codeship.com/projects/4f07ee90-0c8c-0133-c466-26254b7e5948/status?branch=master "Build status")
 
 *Timeadmin* is a simple web-based tool for time tracking to measure the time spent
 on various tasks by collaborators working on small or large projects.
