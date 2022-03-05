@@ -77,8 +77,6 @@ object ExcelExport {
       // write sheet
       fos = new ByteArrayOutputStream()
       workbook.write(fos)
-    } catch {
-      case e: Exception => e.printStackTrace
     } finally {
       if (fos != null) {
         try {
