@@ -10,9 +10,9 @@ scalaVersion := "2.11.7"
 
 parallelExecution in Test := false
 
-resolvers ++= Seq("snapshots"     at "http://oss.sonatype.org/content/repositories/snapshots",
-                  "staging"       at "http://oss.sonatype.org/content/repositories/staging",
-                  "releases"      at "http://oss.sonatype.org/content/repositories/releases")
+resolvers ++= Seq("snapshots"     at "https://oss.sonatype.org/content/repositories/snapshots",
+                  "staging"       at "https://oss.sonatype.org/content/repositories/staging",
+                  "releases"      at "https://oss.sonatype.org/content/repositories/releases")
 
 unmanagedResourceDirectories in Test <+= baseDirectory { _ / "src/main/webapp" }
 

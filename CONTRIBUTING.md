@@ -15,18 +15,24 @@ git clone git@github.com:your-username/time-admin.git
 
 ```
 cd time-admin
-./sbt test it:test
+sbt test it:test
 ```
 
 The test suite contain end-to-end tests that exercise the whole application through a real browser.
-You can run them with ```./sbt e2e:test```.
+You can run them with ```sbt e2e:test```.
 
 
 ## Step 3. Start the application
 
+Execute the following command:
 ```
 cd time-admin
-./sbt container:start
+sbt
+```
+
+Then in the SBT shell, run:
+```
+container:start
 ```
 
 Launch a web browser on [http://localhost:8080](http://localhost:8080) and log in to Timeadmin with the default user
