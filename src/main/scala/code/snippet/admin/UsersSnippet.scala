@@ -89,7 +89,7 @@ class UsersSnippet {
   def selectUser(in: NodeSeq): NodeSeq = selectUser(in, false)
 
   def selectUserWithEveryBody(in: NodeSeq): NodeSeq = selectUser(in, true)
-    
+
   def selectUser(in: NodeSeq, addEverybodyOption: Boolean): NodeSeq =
     User.currentUser filter nonAdmin map { _ =>
       "select [style]" #> "display:none;" & "option" #> ""
@@ -105,7 +105,7 @@ class UsersSnippet {
           option(u, selected = parseUser().exists(_.id.get == u.id.get)) & "option [style]" #> "background:#efefef"
         })
       }
-      
+
       if (addEverybodyOption)
         "select" #> ("option" #> (everybody :: tr))
       else
@@ -134,17 +134,25 @@ class UsersSnippet {
       ".user-row" #> {
         users.map(user => {
           ".userName *" #> user.niceName &
-            ".userName [href]" #> ("/admin/user.html?edit=" + user.id.get) &
-            ".userRole" #> roles.map(role => {
-              "input [name]" #> (user.id.get + "_" + role.id.get) &
-                (
-                  if (UserRoles.findAll(By(UserRoles.user, user), By(UserRoles.role, role)).nonEmpty) {
-                    "input [checked]" #> "true"
-                  } else {
-                    "input [unchecked]" #> "true"
-                  }
-                )
-            })
+          ".userName [href]" #> ("/admin/user.html?edit=" + user.id.get) &
+          ".validated input [name]" #> (user.id.get + "_validated") &
+          (
+            if (user.validated.get) {
+              ".validated input [checked]" #> "true"
+            } else {
+              ".validated input [unchecked]" #> "true"
+            }
+          ) &
+          ".userRole" #> roles.map(role => {
+            "input [name]" #> (user.id.get + "_" + role.id.get) &
+              (
+                if (UserRoles.findAll(By(UserRoles.user, user), By(UserRoles.role, role)).nonEmpty) {
+                  "input [checked]" #> "true"
+                } else {
+                  "input [unchecked]" #> "true"
+                }
+              )
+          })
         })
       }
     ).apply(in)
@@ -159,7 +167,6 @@ class UsersSnippet {
     if (!userIdBox.isEmpty) {
       val user = User.findByKey(userIdBox.openOrThrowException("User id must be defined!").toLong)
       User.edit(user.openOrThrowException("User must be defined!"))
-      //user.get.toForm(Full("save"), "/admin/users")
     } else {
       <lift:embed what="no_data"/>
     }
@@ -178,6 +185,13 @@ class UsersSnippet {
 
         var changed = false
         for (user <- users) {
+          val validated = S.param(user.id.get + "_validated").getOrElse("off").equalsIgnoreCase("on")
+          if (user.validated.get != validated) {
+            println("updating")
+            println(validated)
+            user.validated(validated).save()
+            changed = true
+          }
           for (role <- roles) {
             val roleMapParamBox = S.param(user.id.get + "_" + role.id.get).getOrElse("off")
             val roleMapParam = roleMapParamBox.equalsIgnoreCase("on")
