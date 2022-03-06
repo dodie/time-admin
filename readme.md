@@ -19,9 +19,49 @@ The **collected data** can provide insights about the time spent by the team.
 ![Tasksheet](https://github.com/dodie/time-admin/blob/master/docs/screenshots/tasksheet.png "Tasksheet")
 
 
-Running it locally
-------------------
-See [this](https://github.com/dodie/time-admin/blob/master/development-guide.md#running) guide for instructions.
+Usage
+-----
+
+Deploy the WAR file to a web container, such as Tomcat.
+
+You can supply custom configuration to your instance by setting the ```-DexternalConfig=<path>```
+variable for the application. The default configuration file can be found in the
+[default.props](https://github.com/dodie/time-admin/blob/master/src/main/resources/props/default.props)
+file.
+
+
+## Configure the DB
+
+By default Timeadmin provides an in-memory HSQL database, but it can be configured to use
+a PostgreSQL instance by providing the relevant settings in the properties file:
+
+```
+db.driver = org.postgresql.Driver
+db.url = jdbc:postgresql://127.0.0.1:5432/timeadmin
+db.user = postgres
+db.password = 1234
+```
+
+
+## Configure SMTP
+
+For the password recovery feature an SMTP has to be configured:
+
+```
+mail.smtp.host = localhost
+mail.smtp.port = 22
+mail.smtp.auth = false
+mail.smtp.user = user@domain
+mail.smtp.pass = 1234
+```
+
+
+## Feature configurations
+
+- `export.excel.timesheet_template`: specify a custom excel template for the Timesheet export.
+- `user.subtract_breaks`: specify the default value of subtract breaks for new users, false by default.
+- `mantis.bugs.view.url`: if this URL is specified, when an issue ID is detected, it will be converted to
+  a link to the bug tracker.
 
 
 Timeadmin API
@@ -29,6 +69,11 @@ Timeadmin API
 If you are about to integrate your application with Timeadmin, check the
 [API Reference](https://github.com/dodie/time-admin/tree/master/api-reference.md) for
 detailed examples about the API.
+
+
+Development guide
+-----------------
+See [this](https://github.com/dodie/time-admin/blob/master/development-guide.md#running) guide for instructions.
 
 
 Contributing
