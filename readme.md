@@ -30,7 +30,7 @@ variable for the application. The default configuration file can be found in the
 file.
 
 
-## Configure the DB
+### Configure the DB
 
 By default Timeadmin provides an in-memory HSQL database, but it can be configured to use
 a PostgreSQL instance by providing the relevant settings in the properties file:
@@ -43,7 +43,7 @@ db.password = 1234
 ```
 
 
-## Configure SMTP
+### Configure SMTP
 
 For the password recovery feature an SMTP has to be configured:
 
@@ -56,7 +56,7 @@ mail.smtp.pass = 1234
 ```
 
 
-## Feature configurations
+### Feature configurations
 
 - `export.excel.timesheet_template`: specify a custom excel template for the Timesheet export.
 - `user.subtract_breaks`: specify the default value of subtract breaks for new users, false by default.
