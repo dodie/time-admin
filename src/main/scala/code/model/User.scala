@@ -6,6 +6,7 @@ import net.liftweb.http.S._
 import net.liftweb.http._
 import net.liftweb.mapper._
 import net.liftweb.util.Helpers._
+import net.liftweb.util.Props
 import scala.xml.transform._
 
 import scala.xml.{Elem, NodeSeq}
@@ -45,9 +46,9 @@ object User extends User with MetaMegaProtoUser[User] with ManyToMany {
             case n => n
           }
         }
-      
+
         val transformedLocaleNode = new RuleTransformer(removeIt).transform(localeNode)
-        
+
         <div class="form-group">
           <label for={fieldId}>{field.displayName}</label>
           {transformedLocaleNode}
@@ -263,7 +264,7 @@ object User extends User with MetaMegaProtoUser[User] with ManyToMany {
       case _ => return false
     }
   }
-  
+
   override def login = {
     if (S.post_?) {
       S.param("username").
@@ -355,11 +356,12 @@ object User extends User with MetaMegaProtoUser[User] with ManyToMany {
 
 class User extends MegaProtoUser[User] {
   def getSingleton = User
-  
+
   lazy val subtractBreaks: SubtractBreaks[User] = new SubtractBreaks(this)
 
   class SubtractBreaks[T<:Mapper[T]](override val fieldOwner: T) extends MappedBoolean(fieldOwner) {
     override def displayName: String = S.?("subtract.breaks")
+    override def defaultValue = Props.getBool("user.subtract_breaks", false)
   }
 }
 

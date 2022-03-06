@@ -16,16 +16,23 @@
 #db.password = 1234
 
 
-# Timesheet Excel export template
-export.excel.timesheet_template = docs/exceltemplate/timesheet_template.xls
-
-# Optional - Mantis bug view URL.
-#mantis.bugs.view.url = http://<host_of_mantis>/view.php?id=
-
 # Mail Configuration
+# ------------------
+# | Timeadmin's password recovery feature works via e-mail.
+# | To enable this feature, configure e-mail sending.
+
 #mail.smtp.host = localhost
 #mail.smtp.port = 22
 #mail.smtp.auth = false
 #mail.smtp.user = user@domain
 #mail.smtp.pass = 1234
+
+# Timesheet Excel export template
+export.excel.timesheet_template = docs/exceltemplate/timesheet_template.xls
+
+# User settings
+#user.subtract_breaks = true
+
+# Mantis bug view URL.
+#mantis.bugs.view.url = http://<host_of_mantis>/view.php?id=
 

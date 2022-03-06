@@ -66,41 +66,6 @@ You can deploy it to a standard Web container. Timeadmin is tested with the late
 versions of Tomcat.
 
 
-### Configuration
-
-If necessary, you can supply custom configuration to your instance by setting the
-```-DexternalConfig=<path>``` variable for the application. The default configuration file
-can be found in the
-[default.props](https://github.com/dodie/time-admin/blob/master/src/main/resources/props/default.props)
-file.
-
-By default Timeadmin provides an in-memory HSQL database, but it can be configured to use
-a PostgreSQL instance by providing the relevant settings in the properties file. For example:
-
-```
-db.driver = org.postgresql.Driver
-db.url = jdbc:postgresql://127.0.0.1:5432/timeadmin
-db.user = postgres
-db.password = 1234
-```
-
-It also provides an opportunity to customize the Timesheet Excel template by providing its
-path via the ```export.excel.timesheet_template``` key. To get you started, see
-[this template](https://github.com/dodie/time-admin/blob/master/docs/exceltemplate/timesheet_template.xls)
-file.
-
-Timeadmin also has user management with password recovery. For this to work, an SMTP has to
-be configured.  See the following settings for an example:
-
-```
-mail.smtp.host = localhost
-mail.smtp.port = 22
-mail.smtp.auth = false
-mail.smtp.user = user@domain
-mail.smtp.pass = 1234
-```
-
-
 Application structure in nutshell
 ---------------------------------
 
