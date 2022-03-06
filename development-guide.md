@@ -1,9 +1,11 @@
 Getting started
 ---------------
 
-Timeadmin is based on the [Lift web framework](http://liftweb.net/).
+Prerequisites:
+- Java 8
+- [Simple Build Tool (SBT) version 0.13.18](http://www.scala-sbt.org/).
 
-First, download SBT [Simple Build Tool (SBT) version 0.13.18](http://www.scala-sbt.org/).
+Timeadmin is based on the [Lift web framework](http://liftweb.net/).
 
 Various build tasks can be issued from the *SBT shell*. To start that, run `sbt` in the
 project root directory.
