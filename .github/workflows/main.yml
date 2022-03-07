@@ -20,5 +20,7 @@ jobs:
         distribution: 'temurin'
     - name: Build
       run: sbt clean compile package
-    - name: Test
-      run: sbt test-all
+    - name: Unit Test
+      run: sbt test
+    - name: Integration Test
+      run: sbt it:test
