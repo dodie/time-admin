@@ -35,8 +35,8 @@ object FeatureTest {
 
   @BeforeClass
   def startup() {
-    FirefoxOptions options = new FirefoxOptions();
-    options.setHeadless(true);
+    val options = new FirefoxOptions()
+    options.setHeadless(true)
     webDriver = new FirefoxDriver(options)
 
     val scc = new SelectChannelConnector
